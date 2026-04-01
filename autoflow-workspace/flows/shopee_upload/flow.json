@@ -1,0 +1,43 @@
+{
+  "name": "Shopee Video Upload",
+  "platform": "shopee",
+  "batch": true,
+  "batch_fields": [
+    { "key": "video_path", "label": "Video File", "required": true, "placeholder": "/path/to/video.mp4" },
+    { "key": "caption", "label": "Caption", "placeholder": "Product description..." },
+    { "key": "hashtags", "label": "Hashtags", "placeholder": "#shopee #promo" },
+    { "key": "product_url", "label": "Product URL", "required": true, "placeholder": "https://shopee.co.id/..." }
+  ],
+  "steps": [
+    { "action": "kill_app", "package": "com.shopee.id", "description": "Force stop Shopee" },
+    { "action": "push_file", "local_path": "{{video_path}}", "remote_path": "/sdcard/DCIM/AutoFlow/", "description": "Push video to device", "stop_on_fail": true },
+    { "action": "media_scan", "path": "/sdcard/DCIM/AutoFlow/", "description": "Refresh media gallery" },
+    { "action": "wait", "duration": 2, "description": "Wait for media scan" },
+    { "action": "open_app", "package": "com.shopee.id", "description": "Open Shopee" },
+    { "action": "wait", "duration": 5, "description": "Wait for Shopee to load" },
+    { "action": "click", "target": "btn_me.png", "description": "Tap Me / Profile tab", "timeout": 10 },
+    { "action": "wait", "duration": 2, "description": "Wait for profile" },
+    { "action": "click", "target": "btn_video.png", "description": "Tap Video / Shopee Video tab", "timeout": 10 },
+    { "action": "wait", "duration": 2, "description": "Wait for video section" },
+    { "action": "click", "target": "btn_upload_video.png", "description": "Tap Upload Video", "timeout": 10 },
+    { "action": "wait", "duration": 3, "description": "Wait for gallery" },
+    { "action": "click", "target": "video_thumbnail.png", "description": "Select video from gallery", "timeout": 10, "optional": true },
+    { "action": "click", "target": "btn_next.png", "description": "Tap Next / Confirm", "timeout": 10 },
+    { "action": "wait", "duration": 3, "description": "Wait for editor" },
+    { "action": "click", "target": "btn_next_edit.png", "description": "Skip editing", "timeout": 10, "optional": true },
+    { "action": "wait", "duration": 2, "description": "Wait for post screen" },
+    { "action": "click", "target": "caption_field.png", "description": "Tap caption field", "timeout": 10 },
+    { "action": "type_text", "text": "{{caption}} {{hashtags}}", "description": "Type caption and hashtags" },
+    { "action": "click", "target": "btn_add_product.png", "description": "Tap Add Product", "timeout": 10 },
+    { "action": "wait", "duration": 2, "description": "Wait for product search" },
+    { "action": "click", "target": "product_search.png", "description": "Tap product search field", "timeout": 10 },
+    { "action": "type_text", "text": "{{product_url}}", "description": "Paste product URL" },
+    { "action": "click", "target": "btn_search.png", "description": "Tap Search", "timeout": 10 },
+    { "action": "wait", "duration": 3, "description": "Wait for search results" },
+    { "action": "click", "target": "product_result.png", "description": "Select product from results", "timeout": 10, "optional": true },
+    { "action": "click", "target": "btn_confirm_product.png", "description": "Confirm product selection", "timeout": 10, "optional": true },
+    { "action": "click", "target": "btn_publish.png", "description": "Tap Publish / Post", "timeout": 10 },
+    { "action": "wait", "duration": 5, "description": "Wait for upload" },
+    { "action": "click", "target": "upload_complete.png", "description": "Wait for upload confirmation", "timeout": 120, "optional": true }
+  ]
+}
