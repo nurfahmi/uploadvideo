@@ -74,10 +74,15 @@ export function renderSidebar() {
         <span id="status-dot" class="w-2 h-2 rounded-full ${state.isRunning ? 'bg-amber-500 animate-pulse' : 'bg-slate-600'} shrink-0"></span>
         ${collapsed ? '' : `<span id="status-label" class="text-[10px] text-slate-500 font-medium">${state.isRunning ? 'Running' : 'Idle'}</span>`}
       </div>
-      <button id="btn-start" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold ${collapsed ? 'p-2' : 'px-3 py-2'} rounded-lg transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-        ${state.isRunning ? 'disabled' : ''}>
-        ${collapsed ? '<svg class="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' : `▶ Start`}
-      </button>
+      ${state.isRunning ? `
+        <button id="btn-stop" class="w-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold ${collapsed ? 'p-2' : 'px-3 py-2'} rounded-lg transition-all hover:shadow-lg hover:shadow-red-500/20 active:scale-95 cursor-pointer">
+          ${collapsed ? '<svg class="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>' : 'Stop'}
+        </button>
+      ` : `
+        <button id="btn-start" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold ${collapsed ? 'p-2' : 'px-3 py-2'} rounded-lg transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 cursor-pointer">
+          ${collapsed ? '<svg class="w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' : 'Start'}
+        </button>
+      `}
     </div>
   `;
 }
@@ -102,8 +107,12 @@ export function initSidebar() {
     }
 
     if (e.target.closest('#btn-start')) {
-      // Emit start event — app.js handles the logic
       import('../state.js').then(m => m.emit('start-automation'));
+      return;
+    }
+
+    if (e.target.closest('#btn-stop')) {
+      import('../state.js').then(m => m.emit('stop-automation'));
       return;
     }
   });

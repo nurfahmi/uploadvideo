@@ -52,8 +52,9 @@ async function initApp(config) {
     await loadFlow();
   });
 
-  // Handle start automation event from sidebar
+  // Handle start/stop automation events from sidebar
   on('start-automation', startAutomation);
+  on('stop-automation', stopAutomation);
 }
 
 // ── Flow Loading ──────────────────────────────────────
@@ -105,9 +106,25 @@ async function startAutomation() {
   }
 }
 
+// ── Stop Automation ───────────────────────────────────
+
+async function stopAutomation() {
+  try {
+    await invoke('stop_automation');
+    set('isRunning', false);
+    appendLog('[SYSTEM] Automation stopped by user');
+  } catch (err) {
+    appendLog('[ERROR] Stop failed: ' + err);
+  }
+}
+
 // ── Engine Log Listener ───────────────────────────────
 
 function setupEngineListener() {
+  listen('engine-stopped', () => {
+    set('isRunning', false);
+  });
+
   listen('engine-log', (e) => {
     appendLog(e.payload);
 

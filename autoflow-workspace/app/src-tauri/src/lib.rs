@@ -2,7 +2,12 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::sync::Mutex;
 use tauri::{Emitter, Manager};
+
+// ── Process Tracking ──────────────────────────────────────
+
+static RUNNING_PIDS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
 
 // ── Path Resolution ───────────────────────────────────────
 
@@ -56,7 +61,12 @@ fn resolve_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, String> {
 
     // Fallback: dev mode (CWD-relative, existing behavior)
     let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
-    let candidates = vec![cwd.join("../flows"), cwd.join("../../flows")];
+    let candidates = vec![
+        cwd.join("../flows"),
+        cwd.join("../../flows"),
+        cwd.join("../../../flows"),       // from target/debug/
+        cwd.join("flows"),                 // if CWD is project root
+    ];
     for p in &candidates {
         if p.exists() {
             let flows_dir = p.canonicalize().map_err(|e| e.to_string())?;
@@ -348,6 +358,9 @@ fn start_automation(
 
             match child {
                 Ok(mut process) => {
+                    let pid = process.id();
+                    if let Ok(mut pids) = RUNNING_PIDS.lock() { pids.push(pid); }
+
                     if let Some(stdout) = process.stdout.take() {
                         let reader = BufReader::new(stdout);
                         for line in reader.lines().map_while(Result::ok) {
@@ -357,6 +370,7 @@ fn start_automation(
                     }
                     match process.wait() {
                         Ok(s) => {
+                            if let Ok(mut pids) = RUNNING_PIDS.lock() { pids.retain(|&p| p != pid); }
                             let msg = if s.success() {
                                 format!("[{}] Engine finished successfully", short)
                             } else {
@@ -364,7 +378,10 @@ fn start_automation(
                             };
                             let _ = app.emit("engine-log", &msg);
                         }
-                        Err(e) => { let _ = app.emit("engine-log", format!("[{}] ERROR: {}", short, e)); }
+                        Err(e) => {
+                            if let Ok(mut pids) = RUNNING_PIDS.lock() { pids.retain(|&p| p != pid); }
+                            let _ = app.emit("engine-log", format!("[{}] ERROR: {}", short, e));
+                        }
                     }
                 }
                 Err(e) => { let _ = app.emit("engine-log", format!("[{}] ERROR: Spawn failed: {}", short, e)); }
@@ -373,6 +390,48 @@ fn start_automation(
     }
 
     Ok(format!("{} engine(s) started", count))
+}
+
+#[tauri::command]
+fn stop_automation(app_handle: tauri::AppHandle) -> Result<String, String> {
+    let pids = if let Ok(mut pids) = RUNNING_PIDS.lock() {
+        let snapshot = pids.clone();
+        pids.clear();
+        snapshot
+    } else {
+        return Err("Could not access process list".to_string());
+    };
+
+    if pids.is_empty() {
+        return Ok("No running engines".to_string());
+    }
+
+    let count = pids.len();
+    for pid in &pids {
+        // Kill process tree: kill the python process and its children
+        #[cfg(unix)]
+        {
+            unsafe {
+                libc::kill(*pid as i32, libc::SIGTERM);
+            }
+            // Also kill process group to catch child ADB processes
+            unsafe {
+                libc::kill(-(*pid as i32), libc::SIGTERM);
+            }
+        }
+        #[cfg(windows)]
+        {
+            let _ = Command::new("taskkill")
+                .args(&["/F", "/T", "/PID", &pid.to_string()])
+                .output();
+        }
+    }
+
+    let _ = app_handle.emit("engine-log",
+        format!("[SYSTEM] Stopped {} engine(s)", count));
+    let _ = app_handle.emit("engine-stopped", count);
+
+    Ok(format!("{} engine(s) stopped", count))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -391,7 +450,8 @@ pub fn run() {
             save_config,
             get_history,
             append_history,
-            check_device_health
+            check_device_health,
+            stop_automation
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
