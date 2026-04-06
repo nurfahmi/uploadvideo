@@ -12,6 +12,9 @@ import subprocess
 import re
 
 
+ADB_PATH = "adb"
+
+
 def log(message):
     print(f"[ENGINE] {message}")
     sys.stdout.flush()
@@ -19,7 +22,7 @@ def log(message):
 
 def adb(device_id, *args, timeout=30):
     """Run an ADB command and return stdout."""
-    cmd = ["adb", "-s", device_id, *args]
+    cmd = [ADB_PATH, "-s", device_id, *args]
     log(f"  -> ADB: {' '.join(cmd)}")
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -352,7 +355,7 @@ def action_screenshot(device_id, step, flow_path):
     adb(device_id, "exec-out", "screencap", "-p", timeout=10)
     # Use shell redirect approach
     subprocess.run(
-        f'adb -s {device_id} exec-out screencap -p > "{output_path}"',
+        f'"{ADB_PATH}" -s {device_id} exec-out screencap -p > "{output_path}"',
         shell=True, timeout=15
     )
     log(f"  -> Screenshot saved: {output_path}")
@@ -605,7 +608,11 @@ def main():
     parser.add_argument("--device", required=True, help="Android device ID")
     parser.add_argument("--flow_path", required=True, help="Path to the flow directory")
     parser.add_argument("--vars", default="{}", help="JSON string of variables")
+    parser.add_argument("--adb_path", default="adb", help="Path to ADB binary")
     args = parser.parse_args()
+
+    global ADB_PATH
+    ADB_PATH = args.adb_path
 
     try:
         variables = json.loads(args.vars)

@@ -1,0 +1,10 @@
+{
+  "bundle": {
+    "resources": [
+      "../resources/python/**/*",
+      "../resources/adb/**/*",
+      "../resources/engine/**/*",
+      "../resources/flows/**/*"
+    ]
+  }
+}

@@ -1,33 +1,104 @@
 use std::fs;
 use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
-fn resolve_flows_dir() -> Result<std::path::PathBuf, String> {
-    let candidates = vec![
-        std::path::PathBuf::from("../flows"),
-        std::path::PathBuf::from("../../flows"),
-    ];
-    let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
-    for p in &candidates {
-        let full = cwd.join(p);
-        if full.exists() {
-            return full.canonicalize().map_err(|e| e.to_string());
+// ── Path Resolution ───────────────────────────────────────
+
+struct AppPaths {
+    python_bin: PathBuf,
+    adb_bin: PathBuf,
+    engine_script: PathBuf,
+    flows_dir: PathBuf,
+    data_dir: PathBuf, // writable dir for config, user data
+}
+
+fn resolve_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, String> {
+    // Try bundled paths first (production mode)
+    if let Ok(resource_dir) = app_handle.path().resource_dir() {
+        let python_bin = if cfg!(target_os = "windows") {
+            resource_dir.join("python").join("python.exe")
+        } else {
+            resource_dir.join("python").join("bin").join("python3")
+        };
+        let adb_bin = if cfg!(target_os = "windows") {
+            resource_dir.join("adb").join("adb.exe")
+        } else {
+            resource_dir.join("adb").join("adb")
+        };
+        let engine_script = resource_dir.join("engine").join("engine.py");
+
+        if python_bin.exists() && engine_script.exists() {
+            // Production: flows + config in app_data_dir (writable)
+            let data_dir = app_handle.path().app_data_dir()
+                .map_err(|e| format!("Cannot resolve app data dir: {}", e))?;
+            let flows_dir = data_dir.join("flows");
+
+            // First launch: create flows dir + copy templates
+            if !flows_dir.exists() {
+                fs::create_dir_all(&flows_dir).map_err(|e| e.to_string())?;
+                let bundled_flows = resource_dir.join("flows");
+                if bundled_flows.exists() {
+                    copy_dir_recursive(&bundled_flows, &flows_dir)?;
+                }
+            }
+
+            return Ok(AppPaths {
+                python_bin,
+                adb_bin,
+                engine_script,
+                flows_dir,
+                data_dir,
+            });
         }
     }
-    Err("Flows directory not found".to_string())
+
+    // Fallback: dev mode (CWD-relative, existing behavior)
+    let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
+    let candidates = vec![cwd.join("../flows"), cwd.join("../../flows")];
+    for p in &candidates {
+        if p.exists() {
+            let flows_dir = p.canonicalize().map_err(|e| e.to_string())?;
+            let data_dir = flows_dir.parent()
+                .ok_or("Cannot resolve project root")?
+                .to_path_buf();
+            return Ok(AppPaths {
+                python_bin: PathBuf::from("python3"),
+                adb_bin: PathBuf::from("adb"),
+                engine_script: data_dir.join("engine").join("engine.py"),
+                flows_dir,
+                data_dir,
+            });
+        }
+    }
+
+    Err("Could not resolve app paths (neither bundled nor dev)".to_string())
 }
 
-fn resolve_project_root() -> Result<std::path::PathBuf, String> {
-    let flows = resolve_flows_dir()?;
-    flows.parent().map(|p| p.to_path_buf()).ok_or("Cannot resolve project root".to_string())
+fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
+    fs::create_dir_all(dst).map_err(|e| e.to_string())?;
+    for entry in fs::read_dir(src).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
 }
+
+// ── Commands ──────────────────────────────────────────────
 
 #[tauri::command]
-fn get_available_flows() -> Result<Vec<String>, String> {
-    let flows_dir = resolve_flows_dir()?;
+fn get_available_flows(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let paths = resolve_paths(&app_handle)?;
     let mut names: Vec<String> = Vec::new();
-    for entry in fs::read_dir(&flows_dir).map_err(|e| e.to_string())? {
+    if !paths.flows_dir.exists() { return Ok(names); }
+    for entry in fs::read_dir(&paths.flows_dir).map_err(|e| e.to_string())? {
         let entry = entry.map_err(|e| e.to_string())?;
         if entry.path().is_dir() && entry.path().join("flow.json").exists() {
             if let Some(name) = entry.file_name().to_str() {
@@ -40,9 +111,9 @@ fn get_available_flows() -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-fn get_flow_details(flow_name: String) -> Result<serde_json::Value, String> {
-    let flows_dir = resolve_flows_dir()?;
-    let path = flows_dir.join(&flow_name).join("flow.json");
+fn get_flow_details(flow_name: String, app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.flows_dir.join(&flow_name).join("flow.json");
     if !path.exists() {
         return Err(format!("flow.json not found for '{}'", flow_name));
     }
@@ -51,23 +122,22 @@ fn get_flow_details(flow_name: String) -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
-fn save_flow(flow_name: String, content: String) -> Result<(), String> {
-    let flows_dir = resolve_flows_dir()?;
-    let dir_path = flows_dir.join(&flow_name);
+fn save_flow(flow_name: String, content: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let paths = resolve_paths(&app_handle)?;
+    let dir_path = paths.flows_dir.join(&flow_name);
     if !dir_path.exists() {
         fs::create_dir_all(&dir_path).map_err(|e| e.to_string())?;
     }
     let path = dir_path.join("flow.json");
-    // Validate JSON before saving
     let _: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("Invalid JSON: {}", e))?;
     fs::write(&path, &content).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn capture_screen(device_id: String, flow_name: String) -> Result<String, String> {
-    let flows_dir = resolve_flows_dir()?;
-    let flow_dir = flows_dir.join(&flow_name);
+fn capture_screen(device_id: String, flow_name: String, app_handle: tauri::AppHandle) -> Result<String, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let flow_dir = paths.flows_dir.join(&flow_name);
     if !flow_dir.exists() {
         fs::create_dir_all(&flow_dir).map_err(|e| e.to_string())?;
     }
@@ -79,7 +149,7 @@ fn capture_screen(device_id: String, flow_name: String) -> Result<String, String
     let filename = format!("screenshot_{}.png", ts);
     let output_path = flow_dir.join(&filename);
 
-    let result = Command::new("adb")
+    let result = Command::new(&paths.adb_bin)
         .arg("-s").arg(&device_id)
         .arg("exec-out")
         .arg("screencap").arg("-p")
@@ -96,9 +166,9 @@ fn capture_screen(device_id: String, flow_name: String) -> Result<String, String
 }
 
 #[tauri::command]
-fn list_flow_images(flow_name: String) -> Result<Vec<String>, String> {
-    let flows_dir = resolve_flows_dir()?;
-    let flow_dir = flows_dir.join(&flow_name);
+fn list_flow_images(flow_name: String, app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let flow_dir = paths.flows_dir.join(&flow_name);
     if !flow_dir.exists() { return Ok(vec![]); }
 
     let mut images: Vec<String> = Vec::new();
@@ -114,8 +184,96 @@ fn list_flow_images(flow_name: String) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-fn list_devices() -> Result<Vec<Vec<String>>, String> {
-    let output = Command::new("adb")
+fn get_config(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.data_dir.join("config.json");
+    if !path.exists() {
+        return Ok(serde_json::json!({
+            "onboarding_completed": false,
+            "selected_platforms": []
+        }));
+    }
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn save_config(config: serde_json::Value, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let paths = resolve_paths(&app_handle)?;
+    let config_path = paths.data_dir.join("config.json");
+    if !paths.data_dir.exists() {
+        fs::create_dir_all(&paths.data_dir).map_err(|e| e.to_string())?;
+    }
+    let content = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
+    fs::write(&config_path, &content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_history(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.data_dir.join("history.json");
+    if !path.exists() {
+        return Ok(serde_json::json!([]));
+    }
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn append_history(records: Vec<serde_json::Value>, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.data_dir.join("history.json");
+    if !paths.data_dir.exists() {
+        fs::create_dir_all(&paths.data_dir).map_err(|e| e.to_string())?;
+    }
+    let mut history: Vec<serde_json::Value> = if path.exists() {
+        let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        serde_json::from_str(&content).unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+    history.extend(records);
+    let content = serde_json::to_string_pretty(&history).map_err(|e| e.to_string())?;
+    fs::write(&path, &content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn check_device_health(device_id: String, app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    // Check connection
+    let state_output = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("get-state")
+        .output()
+        .map_err(|e| format!("adb failed: {}", e))?;
+    let connected = String::from_utf8_lossy(&state_output.stdout).trim().contains("device");
+
+    // Get battery level
+    let battery: Option<i64> = if connected {
+        let batt_output = Command::new(&paths.adb_bin)
+            .arg("-s").arg(&device_id)
+            .arg("shell").arg("dumpsys battery")
+            .output()
+            .ok();
+        batt_output.and_then(|o| {
+            let stdout = String::from_utf8_lossy(&o.stdout);
+            stdout.lines()
+                .find(|l| l.trim().starts_with("level:"))
+                .and_then(|l| l.split(':').nth(1))
+                .and_then(|v| v.trim().parse().ok())
+        })
+    } else { None };
+
+    Ok(serde_json::json!({
+        "connected": connected,
+        "battery": battery
+    }))
+}
+
+#[tauri::command]
+fn list_devices(app_handle: tauri::AppHandle) -> Result<Vec<Vec<String>>, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let output = Command::new(&paths.adb_bin)
         .arg("devices")
         .arg("-l")
         .output()
@@ -131,9 +289,7 @@ fn list_devices() -> Result<Vec<Vec<String>>, String> {
         if parts.len() < 2 { continue; }
         let id = parts[0].trim().to_string();
         let rest = parts[1].trim();
-        // Skip offline/unauthorized
         if rest.starts_with("offline") || rest.starts_with("unauthorized") { continue; }
-        // Try to extract model name from "device ... model:XXX"
         let model = rest.split_whitespace()
             .find(|s| s.starts_with("model:"))
             .map(|s| s.trim_start_matches("model:").to_string())
@@ -150,15 +306,17 @@ fn start_automation(
     vars: String,
     app_handle: tauri::AppHandle,
 ) -> Result<String, String> {
-    let root = resolve_project_root()?;
-    let flow_path = root.join("flows").join(&flow_name);
-    let engine_path = root.join("engine").join("engine.py");
+    let paths = resolve_paths(&app_handle)?;
+    let flow_path = paths.flows_dir.join(&flow_name);
+    let engine_script = &paths.engine_script;
 
     if !flow_path.exists() { return Err(format!("Flow '{}' not found", flow_name)); }
-    if !engine_path.exists() { return Err(format!("engine.py not found")); }
+    if !engine_script.exists() { return Err("engine.py not found".to_string()); }
 
     let flow_str = flow_path.to_str().ok_or("Invalid path")?.to_string();
-    let engine_str = engine_path.to_str().ok_or("Invalid path")?.to_string();
+    let engine_str = engine_script.to_str().ok_or("Invalid path")?.to_string();
+    let python_str = paths.python_bin.to_str().ok_or("Invalid path")?.to_string();
+    let adb_str = paths.adb_bin.to_str().ok_or("Invalid path")?.to_string();
     let count = device_ids.len();
 
     let _ = app_handle.emit("engine-log",
@@ -168,6 +326,8 @@ fn start_automation(
         let app = app_handle.clone();
         let engine = engine_str.clone();
         let flow = flow_str.clone();
+        let python = python_str.clone();
+        let adb = adb_str.clone();
         let v = vars.clone();
         let dev = device_id.clone();
         let short = if dev.len() > 8 { dev[dev.len()-6..].to_string() } else { dev.clone() };
@@ -176,11 +336,12 @@ fn start_automation(
             let _ = app.emit("engine-log",
                 format!("[{}] Spawning engine...", short));
 
-            let child = Command::new("python3")
+            let child = Command::new(&python)
                 .arg(&engine)
                 .arg("--device").arg(&dev)
                 .arg("--flow_path").arg(&flow)
                 .arg("--vars").arg(&v)
+                .arg("--adb_path").arg(&adb)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn();
@@ -197,9 +358,9 @@ fn start_automation(
                     match process.wait() {
                         Ok(s) => {
                             let msg = if s.success() {
-                                format!("[{}] ✅ Engine finished successfully", short)
+                                format!("[{}] Engine finished successfully", short)
                             } else {
-                                format!("[{}] ❌ Engine exited with code: {}", short, s)
+                                format!("[{}] Engine exited with code: {}", short, s)
                             };
                             let _ = app.emit("engine-log", &msg);
                         }
@@ -225,7 +386,12 @@ pub fn run() {
             capture_screen,
             list_flow_images,
             list_devices,
-            start_automation
+            start_automation,
+            get_config,
+            save_config,
+            get_history,
+            append_history,
+            check_device_health
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

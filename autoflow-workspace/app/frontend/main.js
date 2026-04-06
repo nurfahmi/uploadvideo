@@ -58,11 +58,23 @@ const $$ = (s) => document.querySelectorAll(s);
 const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 // ── Init ───────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
+async function initApp(config) {
+  const defaultPlatform = (config?.selected_platforms && config.selected_platforms[0]) || 'tiktok_upload';
   bindEvents();
   setupListener();
   await refreshDevices();
-  await switchPlatform('tiktok_upload');
+  await switchPlatform(defaultPlatform);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  let config = {};
+  try { config = await invoke('get_config'); } catch (e) { console.warn('get_config failed:', e); }
+
+  if (!config.onboarding_completed) {
+    onboarding.init(() => initApp(config));
+    return;
+  }
+  initApp(config);
 });
 
 // ── Events ─────────────────────────────────────────────
@@ -456,7 +468,10 @@ async function refreshDevices() {
     devices = await invoke('list_devices');
     renderDevices();
     if (devices.length) appendLog(`[SYSTEM] Found ${devices.length} device(s)`);
-    else appendLog('[SYSTEM] No devices found — connect via USB and enable debugging');
+    else {
+      appendLog('[SYSTEM] No devices found — connect via USB and enable debugging');
+      if (typeof hpGuide !== 'undefined') hpGuide.show();
+    }
   } catch (err) {
     appendLog('[ERROR] ' + err);
     devices = [];

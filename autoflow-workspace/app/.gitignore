@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Bundled resources (downloaded by setup scripts)
+resources/python/
+resources/adb/
+resources/engine/
+resources/flows/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

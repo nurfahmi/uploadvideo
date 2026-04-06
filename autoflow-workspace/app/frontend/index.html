@@ -20,155 +20,61 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
+<body class="bg-slate-950 text-slate-100 h-screen flex overflow-hidden select-none">
 
-  <!-- Header -->
-  <header class="bg-slate-900 border-b border-slate-800 px-5 py-2.5 flex items-center gap-4 shrink-0">
-    <div class="flex items-center gap-2.5 mr-3">
-      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-        <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      <span class="text-sm font-bold tracking-tight">AutoFlow</span>
-    </div>
+  <!-- Sidebar -->
+  <aside id="sidebar" class="flex flex-col bg-slate-900 border-r border-slate-800 shrink-0 transition-all duration-200" style="width:200px">
+    <!-- Rendered by sidebar.js -->
+  </aside>
 
-    <!-- Platform Tabs -->
-    <div class="flex bg-slate-800 rounded-lg p-0.5 gap-0.5" id="platform-tabs">
-      <button data-platform="tiktok_upload" class="platform-tab px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer">🎵 TikTok</button>
-      <button data-platform="shopee_upload" class="platform-tab px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer">🛒 Shopee</button>
-    </div>
+  <!-- Main Area -->
+  <div class="flex-1 flex flex-col min-w-0">
 
-    <div class="flex-1"></div>
+    <!-- Page Header -->
+    <header class="bg-slate-900/50 border-b border-slate-800 px-5 py-2.5 flex items-center justify-between shrink-0">
+      <h1 id="page-title" class="text-sm font-semibold text-slate-200">Dashboard</h1>
+      <div id="page-actions" class="flex items-center gap-2"></div>
+    </header>
 
-    <!-- Status + Start -->
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-1.5">
-        <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
-        <span id="status-label" class="text-[10px] text-slate-500 font-medium">Idle</span>
-      </div>
-      <button id="btn-start"
-        class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-1.5 rounded-md transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none cursor-pointer">
-        ▶ Start
-      </button>
-    </div>
-  </header>
+    <!-- Page Content -->
+    <main id="page-content" class="flex-1 overflow-hidden flex flex-col min-h-0">
+      <div id="page-dashboard" class="page-panel hidden flex-1 overflow-auto"></div>
+      <div id="page-queue" class="page-panel hidden flex-1 flex flex-col min-h-0"></div>
+      <div id="page-devices" class="page-panel hidden flex-1 overflow-auto"></div>
+      <div id="page-editor" class="page-panel hidden flex-1 overflow-auto"></div>
+      <div id="page-history" class="page-panel hidden flex-1 overflow-auto"></div>
+      <div id="page-settings" class="page-panel hidden flex-1 overflow-auto"></div>
+    </main>
 
-  <!-- Content Tabs -->
-  <nav class="bg-slate-900/50 border-b border-slate-800 px-5 flex gap-1 shrink-0">
-    <button id="tab-queue" class="content-tab px-4 py-2 text-xs font-medium border-b-2 transition-all cursor-pointer">📋 Upload Queue</button>
-    <button id="tab-devices" class="content-tab px-4 py-2 text-xs font-medium border-b-2 transition-all cursor-pointer">📱 Devices</button>
-    <button id="tab-editor" class="content-tab px-4 py-2 text-xs font-medium border-b-2 transition-all cursor-pointer">⚙️ Flow Editor</button>
-  </nav>
-
-  <!-- Main Content -->
-  <main class="flex-1 overflow-hidden flex flex-col min-h-0">
-
-    <!-- Queue Panel -->
-    <div id="panel-queue" class="flex-1 flex flex-col min-h-0">
-      <div class="flex items-center justify-between px-5 py-2 bg-slate-900/30 border-b border-slate-800 shrink-0">
-        <span id="queue-count" class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">0 items</span>
-        <div class="flex items-center gap-3">
-          <button id="btn-import-csv" class="text-xs text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 font-medium cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            Import CSV
-          </button>
-          <input type="file" id="csv-file-input" accept=".csv,.tsv,.txt" class="hidden" />
-          <button id="btn-add-row" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 font-medium cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Add Row
+    <!-- Console Panel -->
+    <div id="console-panel" class="border-t border-slate-800 flex flex-col shrink-0 transition-all duration-200" style="height:200px">
+      <div class="flex items-center justify-between px-5 py-1.5 bg-slate-900/70 border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="flex gap-1">
+            <span class="w-2 h-2 rounded-full bg-red-500/70"></span>
+            <span class="w-2 h-2 rounded-full bg-amber-500/70"></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500/70"></span>
+          </div>
+          <span class="text-[10px] text-slate-600 font-mono ml-1">console</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-clear-logs" class="text-[10px] text-slate-600 hover:text-slate-400 transition-colors cursor-pointer">Clear</button>
+          <button id="btn-toggle-console" class="p-0.5 text-slate-600 hover:text-slate-400 transition-colors cursor-pointer">
+            <svg id="console-chevron" class="w-3.5 h-3.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
           </button>
         </div>
       </div>
-      <div class="flex-1 overflow-auto">
-        <table class="w-full text-xs">
-          <thead class="sticky top-0 bg-slate-900 z-10">
-            <tr id="queue-header" class="border-b border-slate-800"></tr>
-          </thead>
-          <tbody id="queue-body"></tbody>
-        </table>
+      <div id="console-output" class="flex-1 overflow-y-auto bg-slate-950 px-4 py-2 font-mono text-[11px] leading-relaxed">
+        <p class="text-slate-600 italic">Waiting for engine output...</p>
       </div>
-    </div>
-
-    <!-- Devices Panel -->
-    <div id="panel-devices" class="flex-1 overflow-auto hidden">
-      <div class="p-5">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="text-sm font-semibold text-slate-200">Connected Devices</h3>
-            <p id="devices-subtitle" class="text-[10px] text-slate-500 mt-0.5">Select devices to run automation on</p>
-          </div>
-          <button id="btn-refresh-devices"
-            class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-md transition-colors font-medium cursor-pointer flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Scan Devices
-          </button>
-        </div>
-        <div id="device-list" class="space-y-2">
-          <div class="text-xs text-slate-600 italic py-8 text-center">Click "Scan Devices" to detect connected phones</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Editor Panel -->
-    <div id="panel-editor" class="flex-1 overflow-auto hidden">
-      <div class="p-5 space-y-3">
-        <div class="flex items-center justify-between mb-2">
-          <div>
-            <h3 id="editor-flow-name" class="text-sm font-semibold text-slate-200"></h3>
-            <p id="editor-step-count" class="text-[10px] text-slate-500 mt-0.5"></p>
-          </div>
-          <div class="flex gap-2 items-center">
-            <!-- Screenshot device picker + capture -->
-            <select id="device-select"
-              class="bg-slate-800 border border-slate-700 rounded-md px-2 py-1 text-[11px] text-slate-200 w-36 focus:outline-none focus:border-sky-500 transition-all">
-              <option value="">No device</option>
-            </select>
-            <button id="btn-capture" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1 rounded-md transition-colors font-medium cursor-pointer">📸 Capture</button>
-            <div class="w-px h-5 bg-slate-700"></div>
-            <button id="btn-add-step" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 font-medium cursor-pointer">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-              Add Step
-            </button>
-            <button id="btn-save-flow" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-md transition-colors font-medium cursor-pointer">💾 Save</button>
-          </div>
-        </div>
-
-        <!-- Template Images -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Template Images</span>
-            <button id="btn-refresh-images" class="text-[10px] text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">↻ Refresh</button>
-          </div>
-          <div id="image-list" class="flex flex-wrap gap-1.5 text-[10px]">
-            <span class="text-slate-600 italic">No images yet</span>
-          </div>
-          <p class="text-[9px] text-slate-600 mt-2">📸 Capture screen → crop buttons in Preview → save as <code class="text-slate-400">btn_name.png</code> in the flow folder</p>
-        </div>
-
-        <div id="editor-steps" class="space-y-2"></div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Console -->
-  <div class="border-t border-slate-800 flex flex-col shrink-0" style="height:200px">
-    <div class="flex items-center justify-between px-5 py-1.5 bg-slate-900/70 border-b border-slate-800 shrink-0">
-      <div class="flex items-center gap-2">
-        <div class="flex gap-1">
-          <span class="w-2 h-2 rounded-full bg-red-500/70"></span>
-          <span class="w-2 h-2 rounded-full bg-amber-500/70"></span>
-          <span class="w-2 h-2 rounded-full bg-emerald-500/70"></span>
-        </div>
-        <span class="text-[10px] text-slate-600 font-mono ml-1">console</span>
-      </div>
-      <button id="btn-clear-logs" class="text-[10px] text-slate-600 hover:text-slate-400 transition-colors cursor-pointer">Clear</button>
-    </div>
-    <div id="console-output" class="flex-1 overflow-y-auto bg-slate-950 px-4 py-2 font-mono text-[11px] leading-relaxed">
-      <p class="text-slate-600 italic">Waiting for engine output...</p>
     </div>
   </div>
 
-  <script src="./main.js"></script>
+  <!-- Overlay scripts (classic, non-module) -->
+  <script src="./hp-guide.js"></script>
+  <script src="./onboarding.js"></script>
+
+  <!-- App modules -->
+  <script type="module" src="./js/app.js"></script>
 </body>
 </html>
