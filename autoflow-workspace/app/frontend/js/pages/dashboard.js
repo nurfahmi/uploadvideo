@@ -1,4 +1,4 @@
-// ── Dashboard Page ────────────────────────────────────
+// ── Dashboard Page (mockup v4.3) ──────────────────────
 
 import { $, esc, formatDate } from '../utils/helpers.js';
 import state, { on } from '../state.js';
@@ -9,18 +9,13 @@ const { invoke } = window.__TAURI__.core;
 export function init() {
   const panel = $('#page-dashboard');
   panel.addEventListener('click', (e) => {
-    const action = e.target.closest('[data-quick]');
-    if (!action) return;
-    const a = action.dataset.quick;
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const a = btn.dataset.action;
     if (a === 'upload') navigate('queue');
+    if (a === 'import') navigate('queue');
     if (a === 'devices') navigate('devices');
-    if (a === 'import') {
-      navigate('queue');
-      // Trigger CSV import after navigation renders
-      setTimeout(() => document.getElementById('btn-import-csv-new')?.click(), 100);
-    }
   });
-
   on('history', render);
   on('devices', render);
   on('queue', render);
@@ -28,123 +23,104 @@ export function init() {
 
 export async function render() {
   const panel = $('#page-dashboard');
-
-  // Load history if not loaded
   if (!state.history.length) {
-    try {
-      const data = await invoke('get_history');
-      state.history = Array.isArray(data) ? data : [];
-    } catch (e) { /* no history yet */ }
+    try { const data = await invoke('get_history'); state.history = Array.isArray(data) ? data : []; } catch (e) {}
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const todayHistory = state.history.filter(h => h.timestamp?.startsWith(today));
-  const successCount = todayHistory.filter(h => h.status === 'success').length;
-  const failedCount = todayHistory.filter(h => h.status === 'failed').length;
-  const totalToday = todayHistory.length;
-  const queueCount = state.queue.length;
+  const todayH = state.history.filter(h => h.timestamp?.startsWith(today));
+  const successCount = todayH.filter(h => h.status === 'success').length;
+  const failedCount = todayH.filter(h => h.status === 'failed').length;
+  const totalToday = todayH.length;
+  const devCount = state.devices.length;
+  const recentH = state.history.slice(-5).reverse();
 
-  const devices = state.devices;
-  const recentHistory = state.history.slice(-5).reverse();
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
   panel.innerHTML = `
-    <div class="p-5 space-y-5">
-      <!-- Stats -->
-      <div class="grid grid-cols-4 gap-3">
-        ${statCard('Upload Hari Ini', totalToday, 'text-indigo-400', statsIcon('upload'))}
-        ${statCard('Berhasil', successCount, 'text-emerald-400', statsIcon('check'))}
-        ${statCard('Gagal', failedCount, 'text-red-400', statsIcon('x'))}
-        ${statCard('Antrian', queueCount, 'text-amber-400', statsIcon('queue'))}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div>
+        <h1 style="font-size:15px;font-weight:700;color:#f0f6fc">Welcome back</h1>
+        <p style="font-size:10px;color:#484f58;margin-top:1px">${dateStr}</p>
       </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary" data-action="upload">Upload now</button>
+        <button class="btn" data-action="import">Import CSV</button>
+      </div>
+    </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <!-- Connected Devices -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Devices</h3>
-            <span class="text-[10px] text-slate-600">${devices.length} connected</span>
-          </div>
-          ${devices.length ? `
-            <div class="space-y-2">
-              ${devices.slice(0, 4).map(([id, model]) => `
-                <div class="flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                  <span class="text-xs text-slate-300">${esc(model)}</span>
-                  <span class="text-[10px] text-slate-600 font-mono">${esc(id.slice(-6))}</span>
-                </div>
-              `).join('')}
-              ${devices.length > 4 ? `<p class="text-[10px] text-slate-600">+${devices.length - 4} more</p>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+      <div class="stat">
+        <p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Uploaded today</p>
+        <p style="font-size:22px;font-weight:700;color:#58a6ff">${totalToday}</p>
+        <p style="font-size:9px;color:#484f58;margin-top:2px">Target: ${state.config.max_uploads_per_day || 50}</p>
+      </div>
+      <div class="stat">
+        <p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Successful</p>
+        <p style="font-size:22px;font-weight:700;color:#3fb950">${successCount}</p>
+        <p style="font-size:9px;color:#484f58;margin-top:2px">${totalToday ? (successCount/totalToday*100).toFixed(1) + '% rate' : 'N/A'}</p>
+      </div>
+      <div class="stat">
+        <p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Failed</p>
+        <p style="font-size:22px;font-weight:700;color:#f85149">${failedCount}</p>
+        <p style="font-size:9px;color:#484f58;margin-top:2px">${failedCount > 0 ? failedCount + ' retryable' : 'None'}</p>
+      </div>
+      <div class="stat">
+        <p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Connected</p>
+        <p style="font-size:22px;font-weight:700;color:#39d2c0">${devCount}</p>
+        <p style="font-size:9px;color:#484f58;margin-top:2px">${devCount > 0 ? 'All active' : 'None'}</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:5fr 3fr;gap:12px">
+      <div class="card" style="padding:12px">
+        <p style="font-size:10px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Recent activity</p>
+        ${recentH.length ? recentH.map(h => {
+          const sc = h.status === 'success' ? 'green' : h.status === 'failed' ? 'red' : 'amber';
+          const sl = h.status === 'success' ? 'Success' : h.status === 'failed' ? 'Failed' : 'Uploading';
+          const plat = h.platform === 'tiktok_upload' ? 'TikTok' : 'Shopee';
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:4px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='rgba(33,38,45,.6)'" onmouseout="this.style.background='transparent'">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:26px;height:26px;background:#21262d;border-radius:4px;display:flex;align-items:center;justify-content:center">
+                <svg width="12" height="12" fill="none" stroke="#484f58" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </div>
+              <div>
+                <p style="font-size:11px;font-weight:500;color:#c9d1d9;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((h.video_name || 'Unknown').split('/').pop().split('\\').pop())}</p>
+                <p style="font-size:9px;color:#484f58">${plat}</p>
+              </div>
             </div>
-          ` : `
-            <p class="text-xs text-slate-600 italic">Belum ada device terhubung</p>
-          `}
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-          <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">Quick Actions</h3>
-          <div class="space-y-2">
-            <button data-quick="upload" class="w-full flex items-center gap-2.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-400 hover:bg-indigo-600/20 transition-colors cursor-pointer">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-              Upload Video
-            </button>
-            <button data-quick="import" class="w-full flex items-center gap-2.5 px-3 py-2 bg-emerald-600/10 border border-emerald-500/20 rounded-lg text-xs text-emerald-400 hover:bg-emerald-600/20 transition-colors cursor-pointer">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              Import CSV
-            </button>
-            <button data-quick="devices" class="w-full flex items-center gap-2.5 px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-400 hover:bg-slate-800 transition-colors cursor-pointer">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              Scan Devices
-            </button>
-          </div>
-        </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge b-${sc}">${sl}</span>
+              <span style="font-size:9px;color:#30363d;width:50px;text-align:right">${formatDate(h.timestamp)}</span>
+            </div>
+          </div>`;
+        }).join('') : '<p style="font-size:11px;color:#484f58;padding:8px;text-align:center">No activity yet</p>'}
       </div>
 
-      <!-- Recent Activity -->
-      <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-        <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">Aktivitas Terakhir</h3>
-        ${recentHistory.length ? `
-          <div class="space-y-2">
-            ${recentHistory.map(h => {
-              const badge = h.status === 'success'
-                ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">Success</span>'
-                : '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-400">Failed</span>';
-              return `
-                <div class="flex items-center gap-3 text-xs">
-                  <span class="text-[10px] text-slate-600 font-mono w-20 shrink-0">${formatDate(h.timestamp)}</span>
-                  <span class="text-slate-300 flex-1 truncate">${esc(h.video_name || 'Unknown')}</span>
-                  <span class="text-[10px] text-slate-500">${h.platform === 'tiktok_upload' ? 'TikTok' : 'Shopee'}</span>
-                  ${badge}
-                </div>
-              `;
-            }).join('')}
-          </div>
-        ` : `
-          <p class="text-xs text-slate-600 italic">Belum ada aktivitas</p>
-        `}
+      <div class="card" style="padding:12px">
+        <p style="font-size:10px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Connected phones</p>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${state.devices.length ? state.devices.map(([id, model]) => {
+            const h = state.deviceHealth[id] || {};
+            const brand = h.brand ? h.brand.charAt(0).toUpperCase() + h.brand.slice(1).toLowerCase() : '';
+            const displayName = brand || esc(model);
+            const bat = h.battery != null ? h.battery + '%' : '–';
+            const androidVer = h.android_version ? 'Android ' + h.android_version : '';
+            return `
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-size:11px;font-weight:500;color:#c9d1d9">${displayName}</span>
+                <span class="badge b-green">Active</span>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <span style="font-size:9px;color:#484f58">${bat !== '–' ? '🔋 ' + bat : ''}</span>
+                ${androidVer ? `<span style="font-size:9px;color:#484f58">${androidVer}</span>` : ''}
+                ${h.screen_resolution ? `<span style="font-size:9px;color:#30363d">${h.screen_resolution}</span>` : ''}
+              </div>
+            </div>`;
+          }).join('') : '<p style="font-size:11px;color:#484f58;text-align:center;padding:8px">No devices connected</p>'}
+        </div>
       </div>
     </div>
   `;
-}
-
-function statCard(label, value, color, icon) {
-  return `
-    <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">${label}</span>
-        ${icon}
-      </div>
-      <span class="text-2xl font-bold ${color}">${value}</span>
-    </div>
-  `;
-}
-
-function statsIcon(type) {
-  const icons = {
-    upload: '<svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>',
-    check: '<svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-    x: '<svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-    queue: '<svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>',
-  };
-  return icons[type] || '';
 }

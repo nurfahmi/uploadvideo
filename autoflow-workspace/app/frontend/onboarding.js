@@ -74,7 +74,6 @@ const onboarding = {
     const current = steps[this.step] || 1;
     const total = 5;
 
-    // Header: step dots
     document.getElementById('onboarding-header').innerHTML = `
       <div class="flex items-center justify-center gap-2 mb-1">
         ${Array.from({ length: total }, (_, i) => {
@@ -84,10 +83,9 @@ const onboarding = {
           return `<div class="w-2 h-2 rounded-full transition-all ${active ? 'bg-indigo-500 w-6' : done ? 'bg-indigo-500/40' : 'bg-slate-700'}"></div>`;
         }).join('')}
       </div>
-      <p class="text-center text-[10px] text-slate-600 font-medium">Langkah ${current} dari ${total}</p>
+      <p class="text-center text-[10px] text-slate-600 font-medium">Step ${current} of ${total}</p>
     `;
 
-    // Content
     const renderMap = {
       1: () => this.renderWelcome(),
       2: () => this.renderConnectDevice(),
@@ -108,16 +106,16 @@ const onboarding = {
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white mb-2">Selamat datang di AutoFlow!</h2>
+        <h2 class="text-xl font-bold text-white mb-2">Welcome to AutoFlow!</h2>
         <p class="text-sm text-slate-400 leading-relaxed max-w-sm mx-auto">
-          Upload video ke TikTok & Shopee secara otomatis. Mari setup dalam beberapa langkah sederhana.
+          Automatically upload videos to TikTok & Shopee. Let's get set up in a few simple steps.
         </p>
       </div>
     `;
     document.getElementById('onboarding-footer').innerHTML = `
       <button onclick="onboarding.skip()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Skip setup</button>
       <button onclick="onboarding.next()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer">
-        Mulai Setup
+        Start Setup
       </button>
     `;
   },
@@ -146,8 +144,8 @@ const onboarding = {
             </svg>
           </div>
         </div>
-        <h2 class="text-lg font-bold text-white mb-1">Hubungkan HP Android</h2>
-        <p class="text-xs text-slate-400 mb-5">Colokkan HP via kabel USB ke komputer kamu</p>
+        <h2 class="text-lg font-bold text-white mb-1">Connect Android Phone</h2>
+        <p class="text-xs text-slate-400 mb-5">Plug in your phone via USB cable to your computer</p>
 
         ${hasDevice ? `
           <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 mb-4 inline-flex items-center gap-2">
@@ -166,9 +164,9 @@ const onboarding = {
       </div>
     `;
     document.getElementById('onboarding-footer').innerHTML = `
-      <button onclick="onboarding.back()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Kembali</button>
+      <button onclick="onboarding.back()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Back</button>
       <button onclick="onboarding.next()" ${hasDevice ? '' : 'disabled'} class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-        Lanjut
+        Next
       </button>
     `;
   },
@@ -187,10 +185,10 @@ const onboarding = {
         this.render();
       } else {
         if (result) result.innerHTML = `
-          <span class="text-amber-400">HP tidak ditemukan.</span>
-          <button onclick="onboarding.goTo('2b')" class="text-indigo-400 hover:text-indigo-300 underline ml-1 cursor-pointer">Lihat panduan USB Debugging</button>
+          <span class="text-amber-400">Phone not found.</span>
+          <button onclick="onboarding.goTo('2b')" class="text-indigo-400 hover:text-indigo-300 underline ml-1 cursor-pointer">View USB Debugging guide</button>
         `;
-        if (btn) btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Scan Ulang';
+        if (btn) btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Scan Again';
       }
     } catch (err) {
       if (result) result.innerHTML = `<span class="text-red-400">Error: ${this._esc(String(err))}</span>`;
@@ -201,16 +199,16 @@ const onboarding = {
   // ── Step 2b: USB Debugging Guide ──────────────────────
   renderUSBGuide() {
     const brands = [
-      { name: 'Samsung', path: 'Settings > About Phone > Software Information > Build Number', note: 'Tap 7 kali. Juga aktifkan "USB Configuration".' },
-      { name: 'Xiaomi', path: 'Settings > About Phone > MIUI Version', note: 'Tap 7 kali. Lalu aktifkan "Install via USB" juga.' },
-      { name: 'Oppo / Realme', path: 'Settings > About Phone > Build Number', note: 'Tap 7 kali. Path bisa berbeda di ColorOS.' },
-      { name: 'Vivo', path: 'Settings > About Phone > Software Version', note: 'Tap 7 kali. Funtouch OS variant.' },
+      { name: 'Samsung', path: 'Settings > About Phone > Software Information > Build Number', note: 'Tap 7 times. Also enable "USB Configuration".' },
+      { name: 'Xiaomi', path: 'Settings > About Phone > MIUI Version', note: 'Tap 7 times. Then also enable "Install via USB".' },
+      { name: 'Oppo / Realme', path: 'Settings > About Phone > Build Number', note: 'Tap 7 times. Path may differ on ColorOS.' },
+      { name: 'Vivo', path: 'Settings > About Phone > Software Version', note: 'Tap 7 times. Funtouch OS variant.' },
     ];
 
     document.getElementById('onboarding-content').innerHTML = `
       <div class="py-2">
-        <h2 class="text-lg font-bold text-white mb-1 text-center">Aktifkan USB Debugging</h2>
-        <p class="text-xs text-slate-400 mb-4 text-center">Ikuti langkah sesuai merk HP kamu</p>
+        <h2 class="text-lg font-bold text-white mb-1 text-center">Enable USB Debugging</h2>
+        <p class="text-xs text-slate-400 mb-4 text-center">Follow the steps for your phone brand</p>
 
         <div class="space-y-2 mb-4">
           ${brands.map(b => `
@@ -220,31 +218,31 @@ const onboarding = {
                 <svg class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
               </summary>
               <div class="px-3 pb-3 text-xs text-slate-400 space-y-1.5">
-                <p><span class="text-slate-300 font-medium">1.</span> Buka <code class="text-indigo-400">${b.path}</code></p>
+                <p><span class="text-slate-300 font-medium">1.</span> Open <code class="text-indigo-400">${b.path}</code></p>
                 <p><span class="text-slate-300 font-medium">2.</span> ${b.note}</p>
-                <p><span class="text-slate-300 font-medium">3.</span> Kembali ke Settings > <code class="text-indigo-400">Developer Options</code></p>
-                <p><span class="text-slate-300 font-medium">4.</span> Aktifkan <code class="text-indigo-400">USB Debugging</code></p>
-                <p><span class="text-slate-300 font-medium">5.</span> Hubungkan USB, pilih mode <code class="text-indigo-400">File Transfer (MTP)</code></p>
-                <p><span class="text-slate-300 font-medium">6.</span> Tap <code class="text-indigo-400">Allow / Izinkan</code> pada popup di HP</p>
+                <p><span class="text-slate-300 font-medium">3.</span> Go back to Settings > <code class="text-indigo-400">Developer Options</code></p>
+                <p><span class="text-slate-300 font-medium">4.</span> Enable <code class="text-indigo-400">USB Debugging</code></p>
+                <p><span class="text-slate-300 font-medium">5.</span> Connect USB, select <code class="text-indigo-400">File Transfer (MTP)</code> mode</p>
+                <p><span class="text-slate-300 font-medium">6.</span> Tap <code class="text-indigo-400">Allow</code> on the popup on your phone</p>
               </div>
             </details>
           `).join('')}
         </div>
 
         <div class="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 text-xs text-slate-500 space-y-1">
-          <p class="font-medium text-slate-400">Checklist troubleshooting:</p>
-          <p>- USB Debugging sudah di-enable?</p>
-          <p>- Sudah tap "Allow/Izinkan" di popup HP?</p>
-          <p>- Mode USB = File Transfer (bukan Charging only)?</p>
-          <p>- Kabel support data (bukan charging-only)?</p>
-          <p>- Coba cabut-colok ulang / restart HP</p>
+          <p class="font-medium text-slate-400">Troubleshooting checklist:</p>
+          <p>- Is USB Debugging enabled?</p>
+          <p>- Did you tap "Allow" on the phone popup?</p>
+          <p>- USB mode = File Transfer (not Charging only)?</p>
+          <p>- Does the cable support data transfer (not charging-only)?</p>
+          <p>- Try unplugging/replugging the cable or restarting the phone</p>
         </div>
       </div>
     `;
     document.getElementById('onboarding-footer').innerHTML = `
-      <button onclick="onboarding.goTo(2)" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Kembali</button>
+      <button onclick="onboarding.goTo(2)" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Back</button>
       <button onclick="onboarding._scanFromGuide()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer">
-        Coba Scan Lagi
+        Try Scan Again
       </button>
     `;
   },
@@ -258,10 +256,9 @@ const onboarding = {
         this.data.deviceModel = devices[0][1];
         this.goTo(3);
       } else {
-        // Stay on guide, show message
         const footer = document.getElementById('onboarding-footer');
         if (!document.getElementById('ob-guide-msg')) {
-          footer.insertAdjacentHTML('beforeend', '<span id="ob-guide-msg" class="text-xs text-amber-400 absolute left-1/2 -translate-x-1/2">HP masih belum terdeteksi</span>');
+          footer.insertAdjacentHTML('beforeend', '<span id="ob-guide-msg" class="text-xs text-amber-400 absolute left-1/2 -translate-x-1/2">Phone still not detected</span>');
           setTimeout(() => { const m = document.getElementById('ob-guide-msg'); if (m) m.remove(); }, 3000);
         }
       }
@@ -273,14 +270,14 @@ const onboarding = {
   // ── Step 3: Platform Selection ────────────────────────
   renderPlatform() {
     const platforms = [
-      { id: 'tiktok_upload', icon: '🎵', name: 'TikTok', desc: 'Upload video ke TikTok dengan caption & hashtag' },
-      { id: 'shopee_upload', icon: '🛒', name: 'Shopee Video', desc: 'Upload video produk ke Shopee dengan link produk' },
+      { id: 'tiktok_upload', icon: '🎵', name: 'TikTok', desc: 'Upload videos to TikTok with captions & hashtags' },
+      { id: 'shopee_upload', icon: '🛒', name: 'Shopee Video', desc: 'Upload product videos to Shopee with product links' },
     ];
 
     document.getElementById('onboarding-content').innerHTML = `
       <div class="text-center py-4">
-        <h2 class="text-lg font-bold text-white mb-1">Pilih Platform</h2>
-        <p class="text-xs text-slate-400 mb-5">Kamu bisa pilih satu atau dua-duanya</p>
+        <h2 class="text-lg font-bold text-white mb-1">Choose Platform</h2>
+        <p class="text-xs text-slate-400 mb-5">You can choose one or both</p>
         <div class="grid grid-cols-2 gap-3">
           ${platforms.map(p => {
             const selected = this.data.platforms.includes(p.id);
@@ -298,10 +295,10 @@ const onboarding = {
       </div>
     `;
     document.getElementById('onboarding-footer').innerHTML = `
-      <button onclick="onboarding.back()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Kembali</button>
+      <button onclick="onboarding.back()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Back</button>
       <button onclick="onboarding.next()" ${this.data.platforms.length ? '' : 'disabled'}
         class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
-        Lanjut
+        Next
       </button>
     `;
   },
@@ -317,19 +314,19 @@ const onboarding = {
   renderFirstUpload() {
     document.getElementById('onboarding-content').innerHTML = `
       <div class="py-2">
-        <h2 class="text-lg font-bold text-white mb-1 text-center">Upload Video Pertama</h2>
-        <p class="text-xs text-slate-400 mb-4 text-center">Coba upload satu video untuk memastikan semuanya jalan</p>
+        <h2 class="text-lg font-bold text-white mb-1 text-center">First Video Upload</h2>
+        <p class="text-xs text-slate-400 mb-4 text-center">Try uploading one video to make sure everything works</p>
         <div id="ob-upload-form"></div>
         <div id="ob-upload-console" class="hidden mt-3 bg-slate-950 border border-slate-800 rounded-lg p-3 max-h-32 overflow-y-auto font-mono text-[10px]"></div>
         <div id="ob-upload-success" class="hidden text-center py-4"></div>
       </div>
     `;
     document.getElementById('onboarding-footer').innerHTML = `
-      <button onclick="onboarding.back()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Kembali</button>
+      <button onclick="onboarding.back()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">Back</button>
       <div class="flex gap-2">
-        <button onclick="onboarding.next()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer py-2 px-3">Lewati</button>
+        <button onclick="onboarding.next()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer py-2 px-3">Skip</button>
         <button id="ob-upload-btn" onclick="onboarding._startUpload()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer">
-          Upload Sekarang
+          Upload Now
         </button>
       </div>
     `;
@@ -366,7 +363,7 @@ const onboarding = {
     if (!this._uploadFlow || !this.data.deviceId) {
       if (!this.data.deviceId) {
         document.getElementById('ob-upload-console').classList.remove('hidden');
-        document.getElementById('ob-upload-console').innerHTML = '<p class="text-amber-400">Tidak ada device terhubung. Lewati langkah ini atau kembali ke step 2.</p>';
+        document.getElementById('ob-upload-console').innerHTML = '<p class="text-amber-400">No device connected. Skip this step or go back to step 2.</p>';
       }
       return;
     }
@@ -378,22 +375,19 @@ const onboarding = {
       item[f.key] = el ? el.value : '';
     }
 
-    // Validate required
     const missing = fields.filter(f => f.required && !item[f.key]?.trim());
     if (missing.length) {
       document.getElementById('ob-upload-console').classList.remove('hidden');
-      document.getElementById('ob-upload-console').innerHTML = `<p class="text-amber-400">Isi field: ${missing.map(f => f.label).join(', ')}</p>`;
+      document.getElementById('ob-upload-console').innerHTML = `<p class="text-amber-400">Fill in required fields: ${missing.map(f => f.label).join(', ')}</p>`;
       return;
     }
 
-    // Disable button, show console
     const btn = document.getElementById('ob-upload-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
     const consoleEl = document.getElementById('ob-upload-console');
     consoleEl.classList.remove('hidden');
     consoleEl.innerHTML = '';
 
-    // Listen to engine logs
     const { listen } = window.__TAURI__.event;
     const { invoke } = window.__TAURI__.core;
 
@@ -435,14 +429,13 @@ const onboarding = {
         <svg class="w-12 h-12 text-emerald-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="text-sm font-semibold text-emerald-300">Upload berhasil!</p>
+        <p class="text-sm font-semibold text-emerald-300">Upload successful!</p>
       </div>
     `;
-    // Update footer
     document.getElementById('onboarding-footer').innerHTML = `
       <div></div>
       <button onclick="onboarding.next()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer">
-        Lanjut
+        Next
       </button>
     `;
     this._spawnConfetti();
@@ -451,7 +444,7 @@ const onboarding = {
   _onUploadError() {
     if (this._unlisten) { this._unlisten(); this._unlisten = null; }
     const btn = document.getElementById('ob-upload-btn');
-    if (btn) { btn.disabled = false; btn.textContent = 'Coba Lagi'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Try Again'; }
   },
 
   _spawnConfetti() {
@@ -469,7 +462,6 @@ const onboarding = {
       `;
       container.appendChild(dot);
     }
-    // Inject keyframe if not exists
     if (!document.getElementById('ob-confetti-style')) {
       const style = document.createElement('style');
       style.id = 'ob-confetti-style';
@@ -487,26 +479,25 @@ const onboarding = {
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-white mb-2">Setup Selesai!</h2>
-        <p class="text-sm text-slate-400 mb-5">Kamu siap mulai upload video secara otomatis</p>
+        <h2 class="text-xl font-bold text-white mb-2">Setup Complete!</h2>
+        <p class="text-sm text-slate-400 mb-5">You're ready to start uploading videos automatically</p>
         <div class="text-left bg-slate-800/30 border border-slate-700/30 rounded-lg p-4 space-y-2 text-xs text-slate-400">
           <p class="font-medium text-slate-300 mb-2">Quick tips:</p>
-          <p>📋 <span class="text-slate-300">Upload Queue</span> — tambah video manual atau import dari CSV</p>
-          <p>📱 <span class="text-slate-300">Devices</span> — kelola HP Android yang terhubung</p>
-          <p>⚙️ <span class="text-slate-300">Flow Editor</span> — edit langkah-langkah otomasi</p>
-          <p>▶️ Klik <span class="text-slate-300">Start</span> untuk mulai upload batch</p>
+          <p>📋 <span class="text-slate-300">Upload Queue</span> — add videos manually or import from CSV</p>
+          <p>📱 <span class="text-slate-300">Devices</span> — manage connected Android phones</p>
+          <p>⚙️ <span class="text-slate-300">Flow Editor</span> — edit automation steps</p>
+          <p>▶️ Click <span class="text-slate-300">Start</span> to begin batch uploading</p>
         </div>
       </div>
     `;
     document.getElementById('onboarding-footer').innerHTML = `
       <div></div>
       <button onclick="onboarding.complete()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-2 rounded-lg transition-all cursor-pointer">
-        Masuk ke Dashboard
+        Go to Dashboard
       </button>
     `;
   },
 
-  // ── Helpers ───────────────────────────────────────────
   _esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   },

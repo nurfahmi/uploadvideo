@@ -560,7 +560,12 @@ def execute_flow(device_id, flow_path, variables):
         # ─── Batch Mode: run flow for each item ───
         total = len(items)
         total_failed = 0
-        delay_between = variables.get("delay_between_items", 5)
+        delay_min = variables.get("delay_min", variables.get("delay_between_items", 5))
+        delay_max = variables.get("delay_max", delay_min)
+        distribution = variables.get("delay_distribution", "uniform")
+
+        log(f"Delay: {delay_min}-{delay_max}s ({distribution})")
+        log("")
 
         for idx, item in enumerate(items):
             item_num = idx + 1
@@ -569,6 +574,8 @@ def execute_flow(device_id, flow_path, variables):
 
             # Show item details
             for k, v in item.items():
+                if k.startswith("_") or k.startswith("delay"):
+                    continue
                 display = str(v)[:60] + ("..." if len(str(v)) > 60 else "")
                 log(f"║  {k}: {display}")
             log(f"╚══════════════════════════════════════════════╝")
@@ -587,9 +594,17 @@ def execute_flow(device_id, flow_path, variables):
 
             # Delay between items (skip after last)
             if idx < total - 1:
+                import random
+                if distribution == "gaussian":
+                    mean = (delay_min + delay_max) / 2
+                    std = (delay_max - delay_min) / 4
+                    delay = max(delay_min, min(delay_max, random.gauss(mean, std)))
+                else:
+                    delay = random.uniform(delay_min, delay_max)
+                delay = round(delay, 1)
                 log(f"")
-                log(f"--- Waiting {delay_between}s before next item ---")
-                time.sleep(delay_between)
+                log(f"--- Waiting {delay}s before next item ---")
+                time.sleep(delay)
                 log("")
 
         log("")

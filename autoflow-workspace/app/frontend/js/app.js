@@ -4,7 +4,7 @@ import state, { set, on, emit } from './state.js';
 import { registerPage, navigate, initRouter } from './router.js';
 import { initSidebar } from './components/sidebar.js';
 import { initConsole, appendLog, renderConsole } from './components/console-panel.js';
-import { initProgressCards } from './components/progress-cards.js';
+import { initHeader } from './components/header.js';
 
 // Pages
 import * as dashboard from './pages/dashboard.js';
@@ -13,6 +13,7 @@ import * as devices from './pages/devices.js';
 import * as editor from './pages/editor.js';
 import * as history from './pages/history.js';
 import * as settings from './pages/settings.js';
+import * as monitor from './pages/monitor.js';
 
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -31,11 +32,12 @@ async function initApp(config) {
   registerPage('editor', editor);
   registerPage('history', history);
   registerPage('settings', settings);
+  registerPage('monitor', monitor);
 
   // Init components
   initSidebar();
+  initHeader();
   initConsole();
-  initProgressCards();
 
   // Init router (calls init on all pages + navigates to default)
   initRouter();
@@ -87,18 +89,49 @@ async function startAutomation() {
   const validItems = state.queue.filter(item => req.every(f => (item[f.key]||'').trim()));
   if (!validItems.length) { appendLog('[SYSTEM] No valid items in queue'); return; }
 
+  // ── Safety: check max uploads per day ──────────
+  const maxPerDay = state.config.max_uploads_per_day || 50;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = state.history.filter(h => h.timestamp?.startsWith(today)).length;
+  const remaining = maxPerDay - todayCount;
+
+  if (remaining <= 0) {
+    appendLog(`[SYSTEM] Daily upload limit reached (${maxPerDay}/day). Change limit in Settings.`);
+    return;
+  }
+
+  // Trim items if would exceed daily limit
+  const itemsToRun = validItems.slice(0, remaining);
+  if (itemsToRun.length < validItems.length) {
+    appendLog(`[SYSTEM] Limiting to ${itemsToRun.length} items (daily limit: ${maxPerDay}, already done today: ${todayCount})`);
+  }
+
+  // ── Delay settings ─────────────────────────────
+  const delayMin = state.config.delay_min || 5;
+  const delayMax = state.config.delay_max || 15;
+  const distribution = state.config.distribution || 'uniform';
+
+  appendLog(`[SYSTEM] Delay: ${delayMin}-${delayMax}s (${distribution}) | Limit: ${todayCount + itemsToRun.length}/${maxPerDay} today`);
+
   state.logs = [];
   set('isRunning', true);
   state.finishedCount = 0;
   state.totalEngines = devIds.length;
   state.deviceProgress = {};
   renderConsole();
+  navigate('monitor');
 
   try {
     await invoke('start_automation', {
       deviceIds: devIds,
       flowName: state.platform,
-      vars: JSON.stringify({ items: validItems }),
+      vars: JSON.stringify({
+        items: itemsToRun,
+        delay_between_items: delayMin,
+        delay_min: delayMin,
+        delay_max: delayMax,
+        delay_distribution: distribution,
+      }),
     });
   } catch (err) {
     appendLog('[ERROR] ' + err);
@@ -177,7 +210,7 @@ async function recordHistory(status) {
       id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
       timestamp: new Date().toISOString(),
       platform: state.platform,
-      video_name: item.video_path || item.caption || 'Unknown',
+      video_name: (item.video_path || item.caption || 'Unknown').split('/').pop().split('\\').pop(),
       device_count: state.selectedDevices.size,
       status,
     }));

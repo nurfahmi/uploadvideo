@@ -258,25 +258,66 @@ fn check_device_health(device_id: String, app_handle: tauri::AppHandle) -> Resul
         .map_err(|e| format!("adb failed: {}", e))?;
     let connected = String::from_utf8_lossy(&state_output.stdout).trim().contains("device");
 
-    // Get battery level
-    let battery: Option<i64> = if connected {
-        let batt_output = Command::new(&paths.adb_bin)
+    if !connected {
+        return Ok(serde_json::json!({
+            "connected": false,
+            "battery": null,
+            "brand": null,
+            "model": null,
+            "android_version": null,
+            "screen_resolution": null
+        }));
+    }
+
+    // Helper to run adb shell getprop
+    let getprop = |prop: &str| -> Option<String> {
+        Command::new(&paths.adb_bin)
             .arg("-s").arg(&device_id)
-            .arg("shell").arg("dumpsys battery")
+            .arg("shell").arg(format!("getprop {}", prop))
             .output()
-            .ok();
-        batt_output.and_then(|o| {
+            .ok()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+            .filter(|s| !s.is_empty())
+    };
+
+    // Battery level
+    let battery: Option<i64> = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg("dumpsys battery")
+        .output()
+        .ok()
+        .and_then(|o| {
             let stdout = String::from_utf8_lossy(&o.stdout);
             stdout.lines()
                 .find(|l| l.trim().starts_with("level:"))
                 .and_then(|l| l.split(':').nth(1))
                 .and_then(|v| v.trim().parse().ok())
+        });
+
+    // Device info via getprop
+    let brand = getprop("ro.product.brand");
+    let model = getprop("ro.product.model");
+    let android_version = getprop("ro.build.version.release");
+
+    // Screen resolution
+    let screen_resolution: Option<String> = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg("wm size")
+        .output()
+        .ok()
+        .map(|o| {
+            let stdout = String::from_utf8_lossy(&o.stdout);
+            stdout.trim().replace("Physical size: ", "").to_string()
         })
-    } else { None };
+        .filter(|s| !s.is_empty());
 
     Ok(serde_json::json!({
         "connected": connected,
-        "battery": battery
+        "battery": battery,
+        "brand": brand,
+        "model": model,
+        "android_version": android_version,
+        "screen_resolution": screen_resolution
     }))
 }
 
