@@ -73,8 +73,15 @@ fn resolve_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, String> {
             let data_dir = flows_dir.parent()
                 .ok_or("Cannot resolve project root")?
                 .to_path_buf();
+            // Dev mode: prefer venv python if available
+            let venv_python = data_dir.join(".venv").join("bin").join("python3");
+            let python_bin = if venv_python.exists() {
+                venv_python
+            } else {
+                PathBuf::from("python3")
+            };
             return Ok(AppPaths {
-                python_bin: PathBuf::from("python3"),
+                python_bin,
                 adb_bin: PathBuf::from("adb"),
                 engine_script: data_dir.join("engine").join("engine.py"),
                 flows_dir,
@@ -248,6 +255,47 @@ fn append_history(records: Vec<serde_json::Value>, app_handle: tauri::AppHandle)
 }
 
 #[tauri::command]
+fn get_queue(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.data_dir.join("queue.json");
+    if !path.exists() {
+        return Ok(serde_json::json!([]));
+    }
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn save_queue(items: Vec<serde_json::Value>, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let paths = resolve_paths(&app_handle)?;
+    if !paths.data_dir.exists() {
+        fs::create_dir_all(&paths.data_dir).map_err(|e| e.to_string())?;
+    }
+    let path = paths.data_dir.join("queue.json");
+    let content = serde_json::to_string_pretty(&items).map_err(|e| e.to_string())?;
+    fs::write(&path, &content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn clear_history(app_handle: tauri::AppHandle) -> Result<(), String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.data_dir.join("history.json");
+    fs::write(&path, "[]").map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_history_record(record_id: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let paths = resolve_paths(&app_handle)?;
+    let path = paths.data_dir.join("history.json");
+    if !path.exists() { return Ok(()); }
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut history: Vec<serde_json::Value> = serde_json::from_str(&content).unwrap_or_default();
+    history.retain(|h| h.get("id").and_then(|v| v.as_str()) != Some(&record_id));
+    let content = serde_json::to_string_pretty(&history).map_err(|e| e.to_string())?;
+    fs::write(&path, &content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn check_device_health(device_id: String, app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
     let paths = resolve_paths(&app_handle)?;
     // Check connection
@@ -311,13 +359,58 @@ fn check_device_health(device_id: String, app_handle: tauri::AppHandle) -> Resul
         })
         .filter(|s| !s.is_empty());
 
+    // Network info: wifi SSID + signal + IP
+    let wifi_ssid: Option<String> = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg("dumpsys wifi | grep 'mWifiInfo'")
+        .output()
+        .ok()
+        .and_then(|o| {
+            let stdout = String::from_utf8_lossy(&o.stdout).to_string();
+            // Extract SSID from mWifiInfo line
+            stdout.find("SSID: ").map(|pos| {
+                let after = &stdout[pos + 6..];
+                after.split(',').next().unwrap_or("").trim().trim_matches('"').to_string()
+            })
+        })
+        .filter(|s| !s.is_empty() && s != "<unknown ssid>");
+
+    let wifi_ip: Option<String> = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg("ip route | grep wlan0 | grep src")
+        .output()
+        .ok()
+        .and_then(|o| {
+            let stdout = String::from_utf8_lossy(&o.stdout).to_string();
+            stdout.split_whitespace()
+                .skip_while(|w| *w != "src")
+                .nth(1)
+                .map(|s| s.to_string())
+        })
+        .filter(|s| !s.is_empty());
+
+    // Mobile data type (LTE/5G/3G)
+    let network_type: Option<String> = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg("getprop gsm.network.type")
+        .output()
+        .ok()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|s| !s.is_empty());
+
+    let sim_operator: Option<String> = getprop("gsm.sim.operator.alpha");
+
     Ok(serde_json::json!({
         "connected": connected,
         "battery": battery,
         "brand": brand,
         "model": model,
         "android_version": android_version,
-        "screen_resolution": screen_resolution
+        "screen_resolution": screen_resolution,
+        "wifi_ssid": wifi_ssid,
+        "wifi_ip": wifi_ip,
+        "network_type": network_type,
+        "sim_operator": sim_operator
     }))
 }
 
@@ -479,6 +572,7 @@ fn stop_automation(app_handle: tauri::AppHandle) -> Result<String, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_available_flows,
             get_flow_details,
@@ -492,7 +586,11 @@ pub fn run() {
             get_history,
             append_history,
             check_device_health,
-            stop_automation
+            stop_automation,
+            clear_history,
+            delete_history_record,
+            get_queue,
+            save_queue
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,4 +1,4 @@
-// ── Live Monitor Page (mockup v4.3) ───────────────────
+// ── Live Monitor Page ──────────────────────────────────
 
 import { $, esc } from '../utils/helpers.js';
 import state, { set, on, emit } from '../state.js';
@@ -11,15 +11,10 @@ export function init() {
     if (!btn) return;
     if (btn.dataset.action === 'stop-all') emit('stop-automation');
     if (btn.dataset.action === 'back-queue') navigate('queue');
-    if (btn.dataset.action === 'retry-failed') { /* TODO */ }
   });
 
   on('isRunning', render);
-
-  // Poll render while running
-  setInterval(() => {
-    if (state.isRunning && state.activeRoute === 'monitor') render();
-  }, 1500);
+  on('progress', () => { if (state.activeRoute === 'monitor') render(); });
 }
 
 export function render() {
@@ -30,9 +25,15 @@ export function render() {
   const isRunning = state.isRunning;
   const isDone = !isRunning && total > 0 && finished >= total;
 
+  const successCount = state.queue.filter(q => q._status === 'success').length;
+  const failedCount = state.queue.filter(q => q._status === 'failed').length;
+  const totalItems = state.queue.length;
+
   const devices = [...state.selectedDevices].map(devId => {
     const short = devId.length > 8 ? devId.slice(-6) : devId;
-    const model = state.devices.find(d => d[0] === devId)?.[1] || short;
+    const h = state.deviceHealth[devId] || {};
+    const brand = h.brand ? h.brand.charAt(0).toUpperCase() + h.brand.slice(1).toLowerCase() : '';
+    const model = brand || h.model || state.devices.find(d => d[0] === devId)?.[1] || short;
     const p = progress[short] || { step: 'Waiting...', percent: 0, status: 'waiting' };
     return { devId, short, model, ...p };
   });
@@ -40,19 +41,52 @@ export function render() {
   const colors = ['#58a6ff', '#bc8cff', '#39d2c0', '#d29922', '#f85149'];
 
   panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <h2 style="font-size:14px;font-weight:700;color:#f0f6fc">Live monitor</h2>
-        <span class="badge ${isDone ? 'b-green' : isRunning ? 'b-amber pulse' : 'b-gray'}">${isDone ? 'Completed' : isRunning ? 'Running' : 'Idle'}</span>
+    <!-- Header bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h2 style="font-size:15px;font-weight:700;color:#f0f6fc;margin:0">Live Monitor</h2>
+        <span class="badge ${isDone ? 'b-green' : isRunning ? 'b-amber pulse' : 'b-gray'}">
+          ${isDone ? 'Completed' : isRunning ? 'Running' : 'Idle'}
+        </span>
       </div>
-      ${isRunning ? `
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-danger" data-action="stop-all">
-            <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:-1px"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Stop all
+      <div style="display:flex;align-items:center;gap:6px">
+        ${isRunning ? `
+          <button class="mon-icon-btn" data-action="stop-all" title="Stop All">
+            <svg width="16" height="16" fill="#f85149" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
           </button>
-        </div>
-      ` : ''}
+        ` : ''}
+        <button class="mon-icon-btn" data-action="back-queue" title="Back to Queue">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>
+        </button>
+      </div>
     </div>
+
+    ${isDone ? `
+    <!-- Completion summary -->
+    <div style="background:linear-gradient(135deg,rgba(63,185,80,.08),rgba(88,166,255,.05));border:1px solid rgba(63,185,80,.2);border-radius:10px;padding:20px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(63,185,80,.15);display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" fill="none" stroke="#3fb950" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div>
+          <p style="font-size:14px;font-weight:700;color:#f0f6fc;margin:0">Upload Complete</p>
+          <p style="font-size:11px;color:#8b949e;margin:0">${totalItems} video${totalItems > 1 ? 's' : ''} processed</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:20px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#3fb950"></div>
+          <span style="font-size:13px;font-weight:600;color:#3fb950">${successCount} success</span>
+        </div>
+        ${failedCount > 0 ? `
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#f85149"></div>
+          <span style="font-size:13px;font-weight:600;color:#f85149">${failedCount} failed</span>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+    ` : ''}
 
     <!-- Device cards -->
     <div style="display:flex;flex-direction:column;gap:10px">
@@ -66,36 +100,47 @@ export function render() {
           <div class="monitor-card">
             <div class="progress-bg" style="width:${d.percent}%;background:${c}"></div>
             <div style="position:relative;z-index:1">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <!-- Device header -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:13px;font-weight:600;color:#f0f6fc">${esc(d.model)}</span>
-                  <span style="font-size:10px;color:#484f58;font-family:'IBM Plex Mono',monospace">${esc(d.short)}</span>
+                  <div style="width:28px;height:28px;border-radius:6px;background:${c}15;border:1px solid ${c}30;display:flex;align-items:center;justify-content:center">
+                    <svg width="14" height="14" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18" stroke-linecap="round" stroke-width="3"/></svg>
+                  </div>
+                  <div>
+                    <span style="font-size:12px;font-weight:600;color:#f0f6fc;display:block;line-height:1.2">${esc(d.model)}</span>
+                    <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace">${esc(d.short)}</span>
+                  </div>
                 </div>
                 <span class="badge ${badgeClass}">${badgeLabel}</span>
               </div>
-              <p style="font-size:11px;color:#c9d1d9;margin-bottom:2px">${esc(d.step)}</p>
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;margin-top:8px">
+
+              <!-- Current video + step info -->
+              ${d.videoName ? `
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:4px 8px;background:rgba(88,166,255,.06);border-radius:4px;border:1px solid rgba(88,166,255,.1)">
+                <svg width="12" height="12" fill="none" stroke="#58a6ff" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span style="font-size:10px;color:#58a6ff;font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.videoName)}</span>
+              </div>
+              ` : ''}
+              <p style="font-size:10px;color:#8b949e;margin:0 0 8px 0">
+                <span style="color:#c9d1d9;font-weight:600">${esc(d.step)}</span>${d.stepDesc ? ` <span style="color:#484f58">—</span> ${esc(d.stepDesc)}` : ''}
+              </p>
+
+              <!-- Progress bar -->
+              <div style="display:flex;align-items:center;gap:10px">
                 <div style="flex:1;height:4px;background:#21262d;border-radius:2px;overflow:hidden">
                   <div style="width:${d.percent}%;height:100%;background:${c};border-radius:2px;transition:width .3s"></div>
                 </div>
-                <span style="font-size:10px;color:#8b949e;font-weight:600;min-width:30px">${d.percent}%</span>
+                <span style="font-size:10px;color:${c};font-weight:700;min-width:32px;text-align:right;font-family:'IBM Plex Mono',monospace">${d.percent}%</span>
               </div>
             </div>
           </div>`;
-      }).join('') : '<p style="font-size:12px;color:#484f58;text-align:center;padding:30px">No active automation</p>'}
+      }).join('') : `
+        <div style="text-align:center;padding:40px 20px;color:#484f58">
+          <svg width="40" height="40" fill="none" stroke="#21262d" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:8px"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          <p style="font-size:12px;margin:0">No active automation</p>
+          <p style="font-size:10px;color:#30363d;margin-top:4px">Start an upload from the Queue page</p>
+        </div>
+      `}
     </div>
-
-    <!-- Completion summary -->
-    ${isDone ? `
-      <div class="card" style="padding:16px;margin-top:16px">
-        <p style="font-size:12px;font-weight:700;color:#f0f6fc;margin-bottom:10px">Upload complete</p>
-        <div style="display:flex;gap:16px;margin-bottom:12px">
-          <span style="font-size:13px;font-weight:600;color:#3fb950">${finished} finished</span>
-        </div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-accent" data-action="back-queue">Back to queue</button>
-        </div>
-      </div>
-    ` : ''}
   `;
 }

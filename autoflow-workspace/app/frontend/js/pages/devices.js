@@ -12,7 +12,7 @@ export function init() {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     if (btn.dataset.action === 'scan') refreshDevices();
-    if (btn.dataset.action === 'guide') { if (typeof hpGuide !== 'undefined') hpGuide.show(); }
+    if (btn.dataset.action === 'guide') { if (window.hpGuide) window.hpGuide.show(); else appendLog('[SYSTEM] Setup guide not available'); }
     if (btn.dataset.action === 'test') testDevice(btn.dataset.deviceId);
   });
   on('devices', render);
@@ -35,7 +35,7 @@ export async function refreshDevices() {
       render();
     } else {
       appendLog('[SYSTEM] No devices found');
-      if (typeof hpGuide !== 'undefined') hpGuide.show();
+      if (window.hpGuide) window.hpGuide.show();
     }
   } catch (err) {
     appendLog('[ERROR] ' + err);
@@ -82,8 +82,8 @@ export function render() {
         <p style="font-size:10px;color:#484f58;margin-top:2px">${devCount} connected${uploadingCount ? ', ' + uploadingCount + ' uploading' : ''}</p>
       </div>
       <div style="display:flex;gap:6px">
-        <button class="btn" data-action="guide">Setup guide</button>
-        <button class="btn btn-primary" data-action="scan">Scan devices</button>
+        <button class="btn" data-action="guide">Setup Guide</button>
+        <button class="btn btn-primary" data-action="scan">Scan Devices</button>
       </div>
     </div>
 
@@ -118,14 +118,19 @@ export function render() {
         const ds = deviceStats[id] || { total: 0, success: 0 };
         const successRate = ds.total > 0 ? Math.round(ds.success / ds.total * 100) : 0;
         const batColor = bat == null ? '#484f58' : bat < 20 ? '#f85149' : bat < 50 ? '#d29922' : '#3fb950';
-        const batIcon = bat == null ? '' : bat < 20 ? '🔴' : bat < 50 ? '🟡' : '🟢';
+        const wifiSsid = h.wifi_ssid || '';
+        const wifiIp = h.wifi_ip || '';
+        const netType = h.network_type || '';
+        const simOp = h.sim_operator || '';
+        const netLabel = wifiSsid ? wifiSsid : (simOp ? `${simOp} ${netType}` : netType);
+        const netIcon = wifiSsid ? 'wifi' : (netType ? 'cellular' : 'none');
 
         return `
-          <div class="card" style="padding:16px;transition:border-color .15s" onmouseover="this.style.borderColor='#30363d'" onmouseout="this.style.borderColor='#21262d'">
+          <div class="card" style="padding:16px;transition:background .15s" onmouseover="this.style.background='#232a33'" onmouseout="this.style.background='#1c2128'">
             <!-- Top: device info -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
               <div style="display:flex;align-items:center;gap:12px">
-                <div style="width:42px;height:42px;background:#21262d;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <div style="width:42px;height:42px;background:#30363d;border-radius:10px;display:flex;align-items:center;justify-content:center">
                   <svg width="22" height="22" fill="none" stroke="#8b949e" stroke-width="1.3" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg>
                 </div>
                 <div>
@@ -139,27 +144,40 @@ export function render() {
               </div>
               <div style="display:flex;gap:6px;align-items:center">
                 <span class="badge b-green">Connected</span>
-                <button data-action="test" data-device-id="${esc(id)}" title="Test connection" style="background:none;border:none;color:#484f58;cursor:pointer;padding:6px;line-height:0;border-radius:5px;transition:all .15s" onmouseover="this.style.color='#3fb950';this.style.background='#21262d'" onmouseout="this.style.color='#484f58';this.style.background='none'">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="pointer-events:none"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <button class="q-icon-btn" data-action="test" data-device-id="${esc(id)}" title="Test connection">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="pointer-events:none"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 013.51 15"/></svg>
                 </button>
               </div>
             </div>
 
             <!-- Stats grid -->
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#21262d;border-radius:6px;overflow:hidden">
-              <div style="background:#161b22;padding:10px 12px;text-align:center">
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#30363d;border-radius:10px;overflow:hidden">
+              <div style="background:#1c2128;padding:10px 12px;text-align:center">
                 <p style="font-size:8px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Battery</p>
                 <p style="font-size:16px;font-weight:700;color:${batColor}">${bat != null ? bat + '%' : '–'}</p>
               </div>
-              <div style="background:#161b22;padding:10px 12px;text-align:center">
+              <div style="background:#1c2128;padding:10px 12px;text-align:center">
+                <p style="font-size:8px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Network</p>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:2px">
+                  ${netIcon === 'wifi'
+                    ? '<svg width="12" height="12" fill="none" stroke="#3fb950" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0m-11.24 3a7 7 0 018.4 0M12 20h.01"/></svg>'
+                    : netIcon === 'cellular'
+                    ? '<svg width="12" height="12" fill="none" stroke="#d29922" stroke-width="2" viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4m5 4v-8m5 8V8m5 12V4"/></svg>'
+                    : '<svg width="12" height="12" fill="none" stroke="#484f58" stroke-width="2" viewBox="0 0 24 24"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55m-5.26-1.48A7 7 0 0118.17 15m-10.34.03A7 7 0 0112 13.07M12 20h.01"/></svg>'
+                  }
+                  <span style="font-size:10px;color:${netIcon === 'wifi' ? '#3fb950' : netIcon === 'cellular' ? '#d29922' : '#484f58'};max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(netLabel)}">${esc(netLabel) || '–'}</span>
+                </div>
+                ${wifiIp ? `<p style="font-size:8px;color:#30363d;margin-top:2px;font-family:'IBM Plex Mono',monospace">${wifiIp}</p>` : ''}
+              </div>
+              <div style="background:#1c2128;padding:10px 12px;text-align:center">
                 <p style="font-size:8px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Screen</p>
                 <p style="font-size:11px;font-weight:500;color:#c9d1d9;margin-top:2px">${screenRes || '–'}</p>
               </div>
-              <div style="background:#161b22;padding:10px 12px;text-align:center">
+              <div style="background:#1c2128;padding:10px 12px;text-align:center">
                 <p style="font-size:8px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Uploads</p>
                 <p style="font-size:16px;font-weight:700;color:#58a6ff">${ds.total}</p>
               </div>
-              <div style="background:#161b22;padding:10px 12px;text-align:center">
+              <div style="background:#1c2128;padding:10px 12px;text-align:center">
                 <p style="font-size:8px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Success</p>
                 <p style="font-size:16px;font-weight:700;color:#3fb950">${ds.total > 0 ? successRate + '%' : '–'}</p>
               </div>
@@ -167,14 +185,14 @@ export function render() {
           </div>`;
       }).join('') : `
         <div style="text-align:center;padding:60px 20px">
-          <div style="width:56px;height:56px;background:#161b22;border:1px solid #21262d;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+          <div style="width:56px;height:56px;background:#1c2128;border:none;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
             <svg width="28" height="28" fill="none" stroke="#30363d" stroke-width="1.3" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></svg>
           </div>
           <p style="font-size:13px;color:#8b949e;margin-bottom:4px">No devices detected</p>
           <p style="font-size:11px;color:#484f58;margin-bottom:16px">Connect your Android phone via USB cable and enable USB Debugging</p>
           <div style="display:flex;gap:8px;justify-content:center">
-            <button class="btn btn-primary" data-action="scan">Scan devices</button>
-            <button class="btn" data-action="guide">Setup guide</button>
+            <button class="btn" data-action="guide">Setup Guide</button>
+            <button class="btn btn-primary" data-action="scan">Scan Devices</button>
           </div>
         </div>
       `}

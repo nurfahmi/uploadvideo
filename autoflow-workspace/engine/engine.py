@@ -86,6 +86,37 @@ def resolve_step(step, variables):
     return resolved
 
 
+# ─── Screen Detection ────────────────────────────────────────
+
+def get_current_activity(device_id):
+    """Get the current foreground activity name."""
+    result = adb(device_id, "shell", "dumpsys", "activity", "activities")
+    for line in result.splitlines():
+        if "topResumedActivity" in line:
+            # Extract activity name from line like:
+            # topResumedActivity=ActivityRecord{... com.shopee.id/...PublishVideoActivity t155}
+            parts = line.strip().split()
+            for part in parts:
+                if "/" in part and "." in part:
+                    return part.split("}")[0].strip()
+    return ""
+
+
+def wait_for_activity(device_id, expected, timeout=30, interval=2):
+    """Wait until the expected activity is in the foreground."""
+    elapsed = 0
+    while elapsed < timeout:
+        current = get_current_activity(device_id)
+        if expected in current:
+            log(f"  -> Activity matched: {current}")
+            return True
+        log(f"  -> Waiting for '{expected}'... current: {current} ({elapsed}/{timeout}s)")
+        time.sleep(interval)
+        elapsed += interval
+    log(f"  -> Timeout waiting for activity '{expected}'")
+    return False
+
+
 # ─── Action Handlers ──────────────────────────────────────────
 
 def action_open_app(device_id, step, flow_path):
@@ -145,8 +176,31 @@ def action_tap(device_id, step, flow_path):
     """Tap at specific x,y coordinates."""
     x = step.get("x", 0)
     y = step.get("y", 0)
-    adb_shell(device_id, f"input tap {x} {y}")
-    log(f"  -> Tapped at ({x}, {y})")
+    use_sendevent = step.get("sendevent", False)
+
+    if use_sendevent:
+        # Use raw sendevent for views that don't respond to input tap
+        # (e.g. custom views requiring pressure/touch_major data)
+        dev = "/dev/input/event4"
+        cmds = (
+            f"sendevent {dev} 3 57 999;"   # ABS_MT_TRACKING_ID
+            f"sendevent {dev} 3 48 15;"    # ABS_MT_TOUCH_MAJOR
+            f"sendevent {dev} 3 49 15;"    # ABS_MT_WIDTH_MAJOR
+            f"sendevent {dev} 3 58 15;"    # ABS_MT_PRESSURE
+            f"sendevent {dev} 3 53 {x};"   # ABS_MT_POSITION_X
+            f"sendevent {dev} 3 54 {y};"   # ABS_MT_POSITION_Y
+            f"sendevent {dev} 1 330 1;"    # BTN_TOUCH DOWN
+            f"sendevent {dev} 0 0 0;"      # SYN_REPORT
+            f"sleep 0.05;"
+            f"sendevent {dev} 3 57 -1;"    # ABS_MT_TRACKING_ID (release)
+            f"sendevent {dev} 1 330 0;"    # BTN_TOUCH UP
+            f"sendevent {dev} 0 0 0"       # SYN_REPORT
+        )
+        adb_shell(device_id, cmds)
+        log(f"  -> Tapped at ({x}, {y}) via sendevent (with pressure)")
+    else:
+        adb_shell(device_id, f"input tap {x} {y}")
+        log(f"  -> Tapped at ({x}, {y})")
     return True
 
 
@@ -161,33 +215,43 @@ def action_long_press(device_id, step, flow_path):
 
 
 def action_type_text(device_id, step, flow_path):
-    """Type text into the currently focused field."""
+    """Type text into the currently focused field.
+    Splits text by # to handle hashtags properly:
+    - Regular text: sent via 'input text' with %s for spaces
+    - Hashtags (#word): sent via shell double-quote wrapping single-quote
+    """
     text = step.get("text", "")
     if not text:
         log("  -> No text to type")
         return True
 
-    # For multiline text or text with special chars, use ADB broadcast + clipboard
-    # First try the clipboard approach for reliability
-    use_clipboard = step.get("use_clipboard", False)
+    # Split into segments: regular text and #hashtags
+    # e.g. "Hello World #shopee #viral" → ["Hello World ", "#shopee ", "#viral"]
+    import re
+    segments = re.split(r'(#\S+)', text)
 
-    if use_clipboard or len(text) > 100 or "\n" in text:
-        # Use ADB broadcast to set clipboard, then paste
-        # Requires Clipper app or Android 10+ clipboard service
-        log(f"  -> Typing via clipboard method ({len(text)} chars)")
-        # Use base64 approach for complex text
-        import base64
-        encoded = base64.b64encode(text.encode("utf-8")).decode("utf-8")
-        adb_shell(device_id,
-            f"am broadcast -a clipper.set -e text '{text}'")
-        time.sleep(0.3)
-        adb_shell(device_id, "input keyevent 279")  # KEYCODE_PASTE
-    else:
-        # Simple text - use input text with escaping
-        escaped = escape_adb_text(text)
-        adb_shell(device_id, f'input text "{escaped}"')
+    for seg in segments:
+        seg = seg.strip()
+        if not seg:
+            continue
 
-    log(f"  -> Typed: {text[:50]}{'...' if len(text) > 50 else ''}")
+        if seg.startswith('#'):
+            # Add space before hashtag if not first segment
+            adb_shell(device_id, 'input text "%s"')
+            time.sleep(0.05)
+            # Hashtag: must use subprocess with proper shell quoting
+            hashtag = seg  # e.g. "#shopee"
+            cmd = [ADB_PATH, "-s", device_id, "shell", f"input text '{hashtag}'"]
+            log(f"  -> ADB: {' '.join(cmd)}")
+            subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        else:
+            # Regular text: use input text with space encoding
+            escaped = escape_adb_text(seg)
+            adb_shell(device_id, f'input text "{escaped}"')
+
+        time.sleep(0.1)
+
+    log(f"  -> Typed: {text[:60]}{'...' if len(text) > 60 else ''}")
     return True
 
 
@@ -352,13 +416,14 @@ def action_screenshot(device_id, step, flow_path):
     """Take a screenshot and save locally."""
     output = step.get("output", "screenshot.png")
     output_path = os.path.join(flow_path, output)
-    adb(device_id, "exec-out", "screencap", "-p", timeout=10)
-    # Use shell redirect approach
-    subprocess.run(
-        f'"{ADB_PATH}" -s {device_id} exec-out screencap -p > "{output_path}"',
-        shell=True, timeout=15
-    )
-    log(f"  -> Screenshot saved: {output_path}")
+    try:
+        subprocess.run(
+            f'"{ADB_PATH}" -s {device_id} exec-out screencap -p > "{output_path}"',
+            shell=True, timeout=15
+        )
+        log(f"  -> Screenshot saved: {output_path}")
+    except Exception as e:
+        log(f"  -> Screenshot failed: {e}")
     return True
 
 
@@ -433,6 +498,170 @@ def action_kill_app(device_id, step, flow_path):
     return True
 
 
+def action_shell_cmd(device_id, step, flow_path):
+    """Run an arbitrary ADB shell command."""
+    command = step.get("command", "")
+    if not command:
+        log("  -> ERROR: No command specified")
+        return False
+    result = adb_shell(device_id, command)
+    if result:
+        log(f"  -> Output: {result[:100]}")
+    log(f"  -> Shell: {command}")
+    return True
+
+
+def action_u2_click(device_id, step, flow_path):
+    """Click a UI element using uiautomator2 (accessibility framework).
+    Use this for elements that don't respond to regular input tap.
+    Selectors: text, textContains, resourceId, className, description.
+    """
+    try:
+        import uiautomator2 as u2
+    except ImportError:
+        log("  -> ERROR: uiautomator2 not installed. Run: pip install uiautomator2")
+        # Fallback to regular tap if coordinates provided
+        if "x" in step and "y" in step:
+            return action_tap(device_id, step, flow_path)
+        return False
+
+    try:
+        d = u2.connect(device_id)
+
+        # Build selector from step params (only UI selector keys)
+        selector_keys = ["text", "textContains", "textStartsWith",
+                         "resourceId", "className", "contentDescription"]
+        selector = {}
+        for key in selector_keys:
+            if step.get(key):
+                selector[key] = step[key]
+
+        if not selector:
+            log("  -> ERROR: No selector provided for u2_click")
+            return False
+
+        el = d(**selector)
+        timeout = step.get("timeout", 10)
+
+        if el.wait(timeout=timeout):
+            el.click()
+            log(f"  -> u2_click: clicked element {selector}")
+            return True
+        else:
+            log(f"  -> u2_click: element not found {selector}")
+            return False
+    except Exception as e:
+        log(f"  -> u2_click error: {e}")
+        if "x" in step and "y" in step:
+            log(f"  -> Fallback to tap ({step['x']}, {step['y']})")
+            return action_tap(device_id, step, flow_path)
+        return False
+
+
+def action_check_activity(device_id, step, flow_path):
+    """Check current foreground activity. Useful for flow validation."""
+    result = adb_shell(device_id,
+        "dumpsys activity activities | grep mResumedActivity")
+    log(f"  -> Current activity: {result.strip()}")
+    expected = step.get("expected", "")
+    if expected and expected not in result:
+        log(f"  -> WARNING: Expected '{expected}' but got different activity")
+        return step.get("optional", True)
+    return True
+
+
+def action_dismiss_popup(device_id, step, flow_path):
+    """Try to dismiss a popup by tapping X/close button. Always succeeds (optional by nature)."""
+    x = step.get("x", 0)
+    y = step.get("y", 0)
+    retries = step.get("retries", 1)
+    for i in range(retries):
+        adb_shell(device_id, f"input tap {x} {y}")
+        log(f"  -> Dismiss tap #{i+1} at ({x}, {y})")
+        delay = step.get("delay_between", 0.5)
+        if delay > 0 and i < retries - 1:
+            time.sleep(delay)
+    return True
+
+
+def action_skip_if_empty(device_id, step, flow_path):
+    """Check if a field is empty — actual skip logic handled in execute_steps."""
+    # This is a marker action; the real logic is in execute_steps
+    return True
+
+
+def action_scroll_to(device_id, step, flow_path):
+    """Scroll in a direction N times. Useful for finding elements below fold."""
+    direction = step.get("direction", "up")
+    times = step.get("times", 1)
+    duration = step.get("duration", 500)
+    w, h = 1080, 2400
+    for i in range(times):
+        if direction == "up":
+            x1, y1, x2, y2 = w // 2, h * 2 // 3, w // 2, h // 3
+        elif direction == "down":
+            x1, y1, x2, y2 = w // 2, h // 3, w // 2, h * 2 // 3
+        else:
+            x1 = step.get("x1", w // 2)
+            y1 = step.get("y1", h * 2 // 3)
+            x2 = step.get("x2", w // 2)
+            y2 = step.get("y2", h // 3)
+        adb_shell(device_id, f"input swipe {x1} {y1} {x2} {y2} {duration}")
+        log(f"  -> Scroll {direction} #{i+1}")
+        if i < times - 1:
+            time.sleep(0.3)
+    return True
+
+
+# ─── Error Recovery ──────────────────────────────────────────
+
+def check_and_recover_network_error(device_id):
+    """Check if Shopee is showing 'Jaringan Tidak Tersedia' error.
+    If found, tap 'Coba Lagi' button and wait for recovery.
+    Returns True if error was found and recovery attempted.
+    """
+    # Check UI for network error text
+    result = adb_shell(device_id, "uiautomator dump /dev/tty", timeout=10)
+    if "Jaringan Tidak Tersedia" in result or "Coba Lagi" in result:
+        log("  -> [RECOVERY] Network error detected: 'Jaringan Tidak Tersedia'")
+        log("  -> [RECOVERY] Tapping 'Coba Lagi' button...")
+
+        # Try u2 text click first
+        try:
+            import uiautomator2 as u2
+            d = u2.connect(device_id)
+            btn = d(text="Coba Lagi")
+            if btn.exists(timeout=3):
+                btn.click()
+                log("  -> [RECOVERY] Tapped 'Coba Lagi' via uiautomator2")
+                time.sleep(5)
+                return True
+        except Exception:
+            pass
+
+        # Fallback: tap by coordinates
+        # Get actual screen size for accurate tap
+        screen_w, screen_h = 1080, 2400
+        try:
+            wm = adb_shell(device_id, "wm size")
+            if "x" in wm:
+                parts = wm.split(":")[-1].strip().split("x")
+                screen_w = int(parts[0])
+                screen_h = int(parts[1])
+        except Exception:
+            pass
+
+        # "Coba Lagi" button is centered horizontally, at ~55% of screen height
+        tap_x = screen_w // 2
+        tap_y = int(screen_h * 0.55)
+        adb_shell(device_id, f"input tap {tap_x} {tap_y}")
+        log(f"  -> [RECOVERY] Tapped 'Coba Lagi' at ({tap_x}, {tap_y})")
+        time.sleep(5)
+        return True
+
+    return False
+
+
 # ─── Action Registry ──────────────────────────────────────────
 
 ACTION_MAP = {
@@ -456,6 +685,12 @@ ACTION_MAP = {
     "select_gallery_item": action_select_gallery_item,
     "launch_intent": action_launch_intent,
     "kill_app": action_kill_app,
+    "check_activity": action_check_activity,
+    "dismiss_popup": action_dismiss_popup,
+    "scroll_to": action_scroll_to,
+    "u2_click": action_u2_click,
+    "skip_if_empty": action_skip_if_empty,
+    "shell_cmd": action_shell_cmd,
 }
 
 
@@ -494,9 +729,42 @@ def connect_device(device_id):
 def execute_steps(device_id, steps, flow_path, variables):
     """Run all steps once with given variables. Returns number of failed steps."""
     failed_steps = 0
+    skip_to_phase = None
     for i, raw_step in enumerate(steps):
         step = resolve_step(raw_step, variables)
-        action = step.get("action", "unknown")
+        action = step.get("action", "")
+
+        # Skip phase markers (metadata-only steps)
+        if not action or action == "unknown":
+            phase = step.get("_phase", "")
+            title = step.get("_title", "")
+            # If we're skipping to a phase, check if we reached it
+            if skip_to_phase and phase == skip_to_phase:
+                skip_to_phase = None
+                log(f"\n{title or f'--- Phase {phase} ---'}")
+            elif skip_to_phase:
+                continue
+            elif phase or title:
+                log(f"\n{title or f'--- Phase {phase} ---'}")
+            continue
+
+        # If we're skipping steps, skip until target phase
+        if skip_to_phase:
+            continue
+
+        # Handle skip_if_empty: check field and skip to target phase
+        if action == "skip_if_empty":
+            field = step.get("field", "")
+            value = variables.get(field, "")
+            target = step.get("skip_to_phase", "")
+            if not value or not str(value).strip():
+                log(f"  -> Field '{field}' is empty, skipping to phase {target}")
+                skip_to_phase = target
+                continue
+            else:
+                log(f"  -> Field '{field}' has value, continuing")
+                continue
+
         description = step.get("description", action)
         optional = step.get("optional", False)
         step_num = i + 1
@@ -508,28 +776,82 @@ def execute_steps(device_id, steps, flow_path, variables):
             log(f"  -> Unknown action: {action}, skipping")
             continue
 
-        try:
-            success = handler(device_id, step, flow_path)
-            if not success and not optional:
-                failed_steps += 1
-                if step.get("stop_on_fail", False):
-                    log(f"  -> FATAL: Step failed, stopping flow")
+        # Retry logic: retry the action if it fails or wait_for doesn't match
+        # Default 3 retries for steps with wait_for, 1 for others
+        wait_for = step.get("wait_for", "")
+        default_retries = 1
+        max_retries = step.get("retry", default_retries)
+        wait_timeout = step.get("wait_timeout", 20)
+        retry_delay = step.get("retry_delay", 3)
+
+        for attempt in range(max_retries):
+            if attempt > 0:
+                # Before retry, check if Shopee is showing network error
+                recovered = check_and_recover_network_error(device_id)
+                if recovered:
+                    log(f"  -> Retry {attempt + 1}/{max_retries} (after network recovery)...")
+                else:
+                    log(f"  -> Retry {attempt + 1}/{max_retries} (waiting {retry_delay}s)...")
+                    time.sleep(retry_delay)
+
+            try:
+                success = handler(device_id, step, flow_path)
+            except Exception as e:
+                log(f"  -> Exception: {e}")
+                success = False
+
+            if not success:
+                if attempt < max_retries - 1:
+                    log(f"  -> Step failed, will retry...")
+                    continue
+                elif optional:
+                    log(f"  -> Optional step skipped after {max_retries} attempts")
                     break
-                log(f"  -> Step failed (non-fatal, continuing)")
-            elif not success and optional:
-                log(f"  -> Optional step skipped")
-            else:
-                log(f"  -> Step {step_num} complete")
-        except Exception as e:
-            log(f"  -> Exception: {e}")
-            if not optional:
-                failed_steps += 1
-                if step.get("stop_on_fail", False):
+                else:
+                    failed_steps += 1
+                    log(f"  -> FATAL: Step failed after {max_retries} attempts")
+                    step["_force_stop"] = True
                     break
 
-        delay = step.get("delay_after", 0.5)
-        if delay > 0:
-            time.sleep(delay)
+            # If wait_for is specified, verify we reached the expected screen
+            if wait_for:
+                delay = step.get("delay_after", 0.5)
+                if delay > 0:
+                    time.sleep(delay)
+                if wait_for_activity(device_id, wait_for, timeout=wait_timeout, interval=2):
+                    log(f"  -> Step {step_num} complete (screen verified)")
+                    break
+                else:
+                    log(f"  -> Expected screen '{wait_for}' not reached")
+                    # Check for Shopee network error before retrying
+                    check_and_recover_network_error(device_id)
+                    if attempt < max_retries - 1:
+                        continue  # retry
+                    else:
+                        log(f"  -> All {max_retries} retries exhausted for '{wait_for}'")
+                        if not optional:
+                            failed_steps += 1
+                            log(f"  -> FATAL: Screen verification failed, stopping this item")
+                            step["_force_stop"] = True
+                        break
+            else:
+                log(f"  -> Step {step_num} complete")
+                break
+
+        if (step.get("stop_on_fail", False) or step.get("_force_stop", False)) and failed_steps > 0:
+            log(f"  -> Stopping flow for this item due to failure")
+            break
+
+        # Only apply delay_after if wait_for didn't already wait
+        if not wait_for:
+            delay = step.get("delay_after", 0.5)
+            if delay > 0:
+                time.sleep(delay)
+            # After significant delays, check for network error screen
+            if delay >= 3 and failed_steps == 0:
+                if check_and_recover_network_error(device_id):
+                    log(f"  -> Network error detected after step, waiting for recovery...")
+                    time.sleep(5)
         log("")
 
     return failed_steps

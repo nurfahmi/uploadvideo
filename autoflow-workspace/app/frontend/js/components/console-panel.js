@@ -15,18 +15,34 @@ export function renderConsole() {
 
   const logs = state.logs;
   if (!logs.length) {
-    el.innerHTML = '<div class="console-line"><span style="color:#21262d;margin-right:6px">1</span><span style="color:#58a6ff">[SYSTEM] AUV ready</span></div>';
+    el.innerHTML = '<div class="console-line"><span class="c-prefix">$</span><span style="color:#58a6ff">AUV ready</span></div>';
     updateLineCount(0);
     return;
   }
 
+  const now = new Date();
   el.innerHTML = logs.map((line, i) => {
-    let c = '#3fb950';
-    if (line.includes('[ERROR]')) c = '#f85149';
-    else if (line.includes('[SYSTEM]')) c = '#58a6ff';
-    else if (line.includes('[MOCK]')) c = '#d29922';
-    else if (line.includes('ADB:')) c = '#30363d';
-    return `<div class="console-line"><span style="color:#21262d;margin-right:6px">${String(i+1).padStart(3,' ')}</span><span style="color:${c}">${escHtml(line)}</span></div>`;
+    const isError = line.includes('[ERROR]');
+    const isSystem = line.includes('[SYSTEM]');
+    const isMock = line.includes('[MOCK]');
+    const isAdb = line.includes('ADB:');
+
+    let prefix, color, tag;
+    if (isError)       { prefix = '!'; color = '#f85149'; tag = 'ERR'; }
+    else if (isSystem) { prefix = '$'; color = '#58a6ff'; tag = 'SYS'; }
+    else if (isMock)   { prefix = '~'; color = '#d29922'; tag = 'DBG'; }
+    else if (isAdb)    { prefix = '>';  color = '#484f58'; tag = 'ADB'; }
+    else               { prefix = '>'; color = '#3fb950'; tag = ''; }
+
+    // Clean up the log line — remove [SYSTEM], [ERROR] etc from display
+    let clean = escHtml(line)
+      .replace(/\[ERROR\]\s*/g, '')
+      .replace(/\[SYSTEM\]\s*/g, '')
+      .replace(/\[MOCK\]\s*/g, '');
+
+    const tagHtml = tag ? `<span style="color:${color};opacity:.5;font-size:9px;font-weight:700;margin-right:6px">${tag}</span>` : '';
+
+    return `<div class="console-line"><span class="c-prefix" style="color:${color}">${prefix}</span>${tagHtml}<span style="color:${color}">${clean}</span></div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
   updateLineCount(logs.length);

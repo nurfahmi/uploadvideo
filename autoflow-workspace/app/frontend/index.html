@@ -10,7 +10,7 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
             mono: ['IBM Plex Mono', 'monospace'],
           },
           colors: {
@@ -28,10 +28,10 @@
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
@@ -44,62 +44,81 @@
     .b-blue { background: rgba(88,166,255,.12); color: #58a6ff; }
     .b-cyan { background: rgba(57,210,192,.12); color: #39d2c0; }
     .b-purple { background: rgba(188,140,255,.12); color: #bc8cff; }
-    .btn { padding: 5px 14px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; font-family: inherit; transition: all .1s; }
-    .btn:hover { background: #30363d; border-color: #484f58; }
-    .btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
-    .btn-primary:hover { background: #2ea043; }
-    .btn-danger { background: rgba(248,81,73,.15); border-color: rgba(248,81,73,.4); color: #f85149; }
-    .btn-danger:hover { background: rgba(248,81,73,.25); }
-    .btn-accent { background: rgba(88,166,255,.15); border-color: rgba(88,166,255,.4); color: #58a6ff; }
-    .btn-accent:hover { background: rgba(88,166,255,.25); }
-    .btn-warn { background: rgba(210,153,34,.15); border-color: rgba(210,153,34,.4); color: #d29922; }
-    .btn-warn:hover { background: rgba(210,153,34,.25); }
-    .inp { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 4px 8px; font-size: 11px; color: #c9d1d9; font-family: inherit; outline: none; }
+    .btn { height: 32px; padding: 0 16px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; background: #30363d; color: #c9d1d9; font-family: inherit; transition: all .15s; }
+    .btn:hover { background: #3d444d; color: #f0f6fc; }
+    .btn-primary { background: #30363d; color: #f0f6fc; }
+    .btn-primary:hover { background: #3d444d; }
+    .btn-danger { background: rgba(248,81,73,.12); color: #f85149; }
+    .btn-danger:hover { background: rgba(248,81,73,.2); }
+    .btn-accent { background: rgba(88,166,255,.12); color: #58a6ff; }
+    .btn-accent:hover { background: rgba(88,166,255,.2); }
+    .btn-warn { background: rgba(210,153,34,.12); color: #d29922; }
+    .btn-warn:hover { background: rgba(210,153,34,.2); }
+    .inp { background: #161b22; border: 1px solid #30363d; border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: #c9d1d9; font-family: inherit; outline: none; transition: border-color .15s; }
     .inp:focus { border-color: #58a6ff; }
-    select { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 4px 8px; font-size: 11px; color: #c9d1d9; font-family: inherit; outline: none; }
+    textarea.inp { height: auto; padding: 6px 10px; }
+    select { background: #161b22; border: 1px solid #30363d; border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: #c9d1d9; font-family: inherit; outline: none; transition: border-color .15s; }
     select:focus { border-color: #58a6ff; }
-    .stat { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 12px; }
-    .card { background: #161b22; border: 1px solid #21262d; border-radius: 6px; }
+    .stat { background: #1c2128; border: none; border-radius: 10px; padding: 14px; }
+    .card { background: #1c2128; border: none; border-radius: 10px; }
     .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .tbl th { text-align: left; padding: 6px 10px; font-size: 10px; font-weight: 600; color: #484f58; text-transform: uppercase; letter-spacing: .5px; background: #161b22; border-bottom: 1px solid #21262d; position: sticky; top: 0; z-index: 5; }
-    .tbl td { padding: 5px 10px; border-bottom: 1px solid rgba(33,38,45,.6); }
-    .tbl tr:hover td { background: rgba(48,54,61,.3); }
+    .tbl th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600; color: #484f58; text-transform: uppercase; letter-spacing: .5px; background: #1c2128; border-bottom: 1px solid rgba(33,38,45,.5); position: sticky; top: 0; z-index: 5; }
+    .tbl td { padding: 7px 12px; border-bottom: 1px solid rgba(33,38,45,.3); }
+    .tbl tr:hover td { background: rgba(48,54,61,.15); }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: #8b949e; cursor: pointer; transition: all .1s; border-radius: 5px; }
     .nav-item:hover { color: #c9d1d9; background: rgba(48,54,61,.5); }
     .nav-item.active { color: #58a6ff; background: rgba(88,166,255,.08); }
+    .sb-item:hover { background: rgba(48,54,61,.4); }
+    .sb-item:hover span { color: #c9d1d9 !important; }
+    .sb-item.sb-active { background: rgba(88,166,255,.1); }
     .nav-tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; background: #21262d; border: 1px solid #30363d; color: #f0f6fc; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 100; }
     .nav-item:hover .nav-tooltip { opacity: 1; }
-    .step-row { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid rgba(33,38,45,.4); font-size: 12px; transition: background .1s; }
-    .step-row:hover { background: rgba(48,54,61,.25); }
+    .sb-item:hover .nav-tooltip { opacity: 1; }
+    .step-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid rgba(33,38,45,.3); font-size: 12px; transition: background .1s; }
+    .step-row:hover { background: rgba(48,54,61,.15); }
     .step-row .act { opacity: 0; transition: opacity .1s; }
     .step-row:hover .act { opacity: 1; }
-    .monitor-card { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 14px; position: relative; overflow: hidden; }
+    .q-icon-btn { width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#8b949e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative; }
+    .q-icon-btn:hover { background:#30363d;color:#f0f6fc; }
+    .q-icon-btn.primary { color:#58a6ff; } .q-icon-btn.primary:hover { background:rgba(88,166,255,.15); }
+    .q-icon-btn.danger { color:#f85149; } .q-icon-btn.danger:hover { background:rgba(248,81,73,.12); }
+    .q-icon-btn.success { color:#3fb950; } .q-icon-btn.success:hover { background:rgba(63,185,80,.12); }
+    .q-icon-btn.accent { color:#58a6ff; } .q-icon-btn.accent:hover { background:rgba(88,166,255,.12); }
+    .mon-icon-btn { width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#8b949e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s; }
+    .mon-icon-btn:hover { background:#30363d;color:#f0f6fc; }
+    .mon-icon-btn[data-action="stop-all"] { color:#f85149; }
+    .mon-icon-btn[data-action="stop-all"]:hover { background:rgba(248,81,73,.15); }
+    .monitor-card { background: #1c2128; border: none; border-radius: 10px; padding: 16px; position: relative; overflow: hidden; }
     .monitor-card .progress-bg { position: absolute; left: 0; top: 0; height: 100%; opacity: .04; transition: width .3s; }
-    .console-line { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.7; white-space: pre; }
-    .view-tog { display: flex; background: #21262d; border-radius: 4px; padding: 1px; border: 1px solid #30363d; }
-    .view-tog button { padding: 3px 10px; border-radius: 3px; font-size: 10px; font-weight: 600; color: #8b949e; border: none; cursor: pointer; background: transparent; font-family: inherit; }
-    .view-tog button.on { background: #30363d; color: #f0f6fc; }
+    .console-line { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.8; white-space: pre; padding: 0 2px; border-radius: 3px; }
+    .console-line:hover { background: rgba(88,166,255,.04); }
+    .q-video-link:hover { text-decoration: underline !important; color: #58a6ff !important; }
+    .c-prefix { color: #3fb950; margin-right: 6px; font-weight: 600; }
+    .c-time { color: #30363d; margin-right: 8px; font-size: 10px; }
+    .view-tog { display: flex; background: #30363d; border-radius: 8px; padding: 2px; border: none; }
+    .view-tog button { padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 600; color: #8b949e; border: none; cursor: pointer; background: transparent; font-family: inherit; transition: all .15s; }
+    .view-tog button.on { background: #1c2128; color: #f0f6fc; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
     .pulse { animation: pulse 2s ease-in-out infinite; }
   </style>
 </head>
 <body>
-<div style="display:flex;height:100vh">
+<div style="display:flex;height:100vh;background:#161b22">
 
   <!-- Sidebar -->
-  <aside id="sidebar" style="width:200px;background:#0d1117;display:flex;flex-shrink:0;transition:width .15s">
+  <aside id="sidebar" style="width:200px;background:#0d1117;display:flex;flex-shrink:0;transition:width .15s;border-radius:0 12px 12px 0;overflow:hidden">
     <div id="sidebar-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <!-- Rendered by sidebar.js -->
     </div>
-    <!-- Drag handle -->
-    <div id="sidebar-drag" style="width:2px;cursor:ew-resize;background:#21262d;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='#58a6ff';this.style.width='3px'" onmouseout="this.style.background='#21262d';this.style.width='2px'"></div>
+    <!-- Drag handle (invisible, just functional) -->
+    <div id="sidebar-drag" style="width:4px;cursor:ew-resize;background:transparent;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='rgba(88,166,255,.3)'" onmouseout="this.style.background='transparent'"></div>
   </aside>
 
   <!-- Main Area -->
-  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:#161b22">
 
     <!-- Header Bar -->
-    <header id="app-header" style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #21262d;background:#0d1117;flex-shrink:0">
+    <header id="app-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#161b22;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
         <span id="header-page-title" style="font-size:12px;font-weight:600;color:#f0f6fc"></span>
       </div>
@@ -110,9 +129,9 @@
     </header>
 
     <!-- Page Content -->
-    <main id="page-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0">
+    <main id="page-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;background:#161b22">
       <div id="page-dashboard" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
-      <div id="page-queue" class="page-panel" style="display:none;flex:1;display:none;flex-direction:column;min-height:0"></div>
+      <div id="page-queue" class="page-panel" style="display:none;flex:1;flex-direction:column;min-height:0"></div>
       <div id="page-devices" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
       <div id="page-editor" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
       <div id="page-history" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
@@ -122,41 +141,50 @@
 
     <!-- Console Panel (resizable) -->
     <div id="console-panel" style="flex-shrink:0;display:flex;flex-direction:column">
-      <!-- Drag handle (doubles as border) -->
-      <div id="console-drag" style="height:2px;cursor:ns-resize;background:#21262d;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='#58a6ff';this.style.height='3px'" onmouseout="this.style.background='#21262d';this.style.height='2px'"></div>
+      <!-- Drag handle -->
+      <div id="console-drag" style="height:3px;cursor:ns-resize;background:transparent;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='rgba(88,166,255,.3)'" onmouseout="this.style.background='transparent'"></div>
       <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 12px;background:#1a1e24;border-bottom:1px solid #21262d;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:32px;background:#0a0e14;flex-shrink:0">
         <div style="display:flex;align-items:center;gap:8px">
-          <svg width="14" height="14" fill="none" stroke="#58a6ff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/></svg>
-          <span style="font-size:11px;color:#c9d1d9;font-weight:600">Console</span>
-          <span id="console-line-count" style="font-size:10px;color:#484f58;font-family:'IBM Plex Mono',monospace"></span>
+          <div style="display:flex;gap:5px;align-items:center">
+            <div style="width:10px;height:10px;border-radius:50%;background:#f85149;opacity:.7"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:#d29922;opacity:.7"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:#3fb950;opacity:.7"></div>
+          </div>
+          <span style="font-size:11px;color:#484f58;font-family:'IBM Plex Mono',monospace;font-weight:500">console</span>
+          <span id="console-line-count" style="font-size:9px;color:#30363d;font-family:'IBM Plex Mono',monospace"></span>
         </div>
-        <div style="display:flex;gap:4px">
-          <!-- Expand/Collapse icon -->
-          <button id="btn-toggle-console" title="Expand / Collapse" style="background:none;border:none;cursor:pointer;color:#8b949e;padding:4px;line-height:0;border-radius:4px;transition:all .1s" onmouseover="this.style.color='#f0f6fc';this.style.background='#21262d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">
-            <svg id="console-expand-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+        <div style="display:flex;gap:2px">
+          <button id="btn-toggle-console" title="Expand / Collapse" style="background:none;border:none;cursor:pointer;color:#30363d;padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='#8b949e'" onmouseout="this.style.color='#30363d'">
+            <svg id="console-expand-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
           </button>
-          <!-- Hide console -->
-          <button id="btn-hide-console" title="Hide console" style="background:none;border:none;cursor:pointer;color:#8b949e;padding:4px;line-height:0;border-radius:4px;transition:all .1s" onmouseover="this.style.color='#f0f6fc';this.style.background='#21262d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          <button id="btn-hide-console" title="Hide console" style="background:none;border:none;cursor:pointer;color:#30363d;padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='#8b949e'" onmouseout="this.style.color='#30363d'">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
           </button>
-          <!-- Clear icon -->
-          <button id="btn-clear-logs" title="Clear console" style="background:none;border:none;cursor:pointer;color:#8b949e;padding:4px;line-height:0;border-radius:4px;transition:all .1s" onmouseover="this.style.color='#f0f6fc';this.style.background='#21262d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <button id="btn-clear-logs" title="Clear" style="background:none;border:none;cursor:pointer;color:#30363d;padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='#8b949e'" onmouseout="this.style.color='#30363d'">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </div>
       <!-- Output -->
-      <div id="console-output" style="padding:6px 12px;height:150px;overflow:auto;transition:height .15s;background:#0a0d11">
-        <div class="console-line"><span style="color:#21262d;margin-right:6px">1</span><span style="color:#58a6ff">[SYSTEM] AUV ready</span></div>
+      <div id="console-output" style="padding:10px 14px;height:150px;overflow:auto;transition:height .15s;background:#0a0e14">
+        <div class="console-line"><span class="c-prefix">$</span><span style="color:#58a6ff"> AUV ready</span></div>
       </div>
     </div>
   </div>
 </div>
 
+  <!-- Video Preview Modal -->
+  <div id="video-preview-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;cursor:pointer" onclick="this.style.display='none';this.querySelector('video')?.pause()">
+    <div style="position:relative;max-width:640px;width:90%;max-height:80vh" onclick="event.stopPropagation()">
+      <video id="video-preview-player" controls style="width:100%;max-height:80vh;border-radius:12px;background:#000;box-shadow:0 16px 48px rgba(0,0,0,.6)"></video>
+      <p id="video-preview-name" style="text-align:center;font-size:11px;color:#8b949e;margin-top:8px;font-family:'IBM Plex Mono',monospace"></p>
+    </div>
+  </div>
+
   <!-- Assign Modal -->
   <div id="assign-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center">
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:20px;width:320px">
+    <div style="background:#1c2128;border:none;border-radius:12px;padding:20px;width:320px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <p style="font-size:13px;font-weight:700;color:#f0f6fc">Assign to selected <span id="modal-count" style="color:#58a6ff"></span></p>
         <button id="modal-close" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:16px;line-height:1">&times;</button>
@@ -167,7 +195,7 @@
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">Flow</label>
-        <select id="modal-flow" style="width:100%;padding:6px 8px"><option>Shopee Upload</option><option>TikTok Upload</option></select>
+        <select id="modal-flow" style="width:100%;padding:6px 8px"><option value="shopee_upload">Shopee Video</option><option value="tiktok_upload">TikTok Upload</option></select>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn" id="modal-cancel">Cancel</button>

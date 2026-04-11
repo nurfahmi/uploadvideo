@@ -68,11 +68,7 @@ async function loadFlow() {
     state.expandedStep = -1;
     state.flowDirty = false;
 
-    if (flow.batch && flow.batch_fields) {
-      const empty = {};
-      flow.batch_fields.forEach(f => empty[f.key] = '');
-      set('queue', [{ ...empty }]);
-    }
+    // Don't auto-create empty row — user can click "+ Add" or import CSV
   } catch (err) {
     appendLog('[ERROR] ' + err);
   }
@@ -86,7 +82,7 @@ async function startAutomation() {
 
   const fields = state.flow?.batch_fields || [];
   const req = fields.filter(f => f.required);
-  const validItems = state.queue.filter(item => req.every(f => (item[f.key]||'').trim()));
+  const validItems = state.queue.filter(item => item._status !== 'success' && req.every(f => (item[f.key]||'').trim()));
   if (!validItems.length) { appendLog('[SYSTEM] No valid items in queue'); return; }
 
   // ── Safety: check max uploads per day ──────────
@@ -160,34 +156,80 @@ function setupEngineListener() {
 
   listen('engine-log', (e) => {
     appendLog(e.payload);
+    const line = e.payload;
 
-    // Parse progress from log lines
-    const match = e.payload.match(/^\[(\w+)\]\s*(.*)/);
+    // Parse progress from log lines: [DEVICE_SHORT] [ENGINE] message
+    const match = line.match(/^\[(\w+)\]\s*(.*)/);
     if (match) {
       const [, shortId, msg] = match;
       if (shortId !== 'SYSTEM' && shortId !== 'ENGINE') {
-        // Update device progress
+        // Track current item
         const itemMatch = msg.match(/ITEM (\d+)\/(\d+)/);
         if (itemMatch) {
           const [, current, total] = itemMatch;
+          const idx = parseInt(current) - 1;
+          // Mark previous item as done
+          if (idx > 0 && state.queue[idx - 1]) {
+            state.queue[idx - 1]._status = 'success';
+          }
+          // Mark current item as uploading
+          if (state.queue[idx]) {
+            state.queue[idx]._status = 'uploading';
+          }
           state.deviceProgress[shortId] = {
             step: `Item ${current}/${total}`,
             percent: Math.round((parseInt(current) / parseInt(total)) * 100),
             status: 'running',
           };
         }
+
+        // Track current step
+        const stepMatch = msg.match(/\[Step (\d+)\/(\d+)\]\s*(.*)/);
+        if (stepMatch) {
+          const [, stepNum, stepTotal, desc] = stepMatch;
+          const videoName = state.queue.find(q => q._status === 'uploading')?.video_path?.split('/').pop()?.split('\\').pop() || '';
+          state.deviceProgress[shortId] = {
+            ...state.deviceProgress[shortId],
+            step: `Step ${stepNum}/${stepTotal}`,
+            stepDesc: desc,
+            videoName,
+            percent: Math.round((parseInt(stepNum) / parseInt(stepTotal)) * 100),
+            status: 'running',
+          };
+        }
+
+        // Track item completion
+        if (msg.includes('Completed successfully')) {
+          const doneMatch = msg.match(/ITEM (\d+)/);
+          if (doneMatch) {
+            const idx = parseInt(doneMatch[1]) - 1;
+            if (state.queue[idx]) state.queue[idx]._status = 'success';
+          }
+        }
+        if (msg.includes('failed steps')) {
+          const failMatch = msg.match(/ITEM (\d+)/);
+          if (failMatch) {
+            const idx = parseInt(failMatch[1]) - 1;
+            if (state.queue[idx]) state.queue[idx]._status = 'failed';
+          }
+        }
+
+        // Emit state change so monitor re-renders
+        emit('progress');
       }
     }
 
     // Track completion
-    if (e.payload.includes('finished successfully') || e.payload.includes('Batch complete')) {
+    if (line.includes('finished successfully') || line.includes('Batch complete')) {
+      // Mark remaining uploading items as success
+      state.queue.forEach(q => { if (q._status === 'uploading') q._status = 'success'; });
       state.finishedCount++;
       if (state.finishedCount >= state.totalEngines) {
         set('isRunning', false);
-        // Record to history
         recordHistory('success');
       }
-    } else if (e.payload.includes('exited with code') || e.payload.includes('Spawn failed')) {
+    } else if (line.includes('exited with code') || line.includes('Spawn failed')) {
+      state.queue.forEach(q => { if (q._status === 'uploading') q._status = 'failed'; });
       state.finishedCount++;
       if (state.finishedCount >= state.totalEngines) {
         set('isRunning', false);

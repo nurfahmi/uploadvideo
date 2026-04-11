@@ -57,6 +57,7 @@ const ACTION_GROUPS = [
   { label: 'App Control', actions: ['open_app', 'kill_app', 'launch_intent'] },
   { label: 'Transfer Files', actions: ['push_file', 'media_scan'] },
   { label: 'Wait & Capture', actions: ['wait', 'screenshot'] },
+  { label: 'Flow Control', actions: ['skip_if_empty', 'shell_cmd'] },
 ];
 
 // User-friendly labels + emoji icons per action
@@ -81,6 +82,8 @@ const ACTION_LABEL = {
   media_scan:          { icon: '🔄', label: 'Refresh Gallery' },
   wait:                { icon: '⏸️', label: 'Wait' },
   screenshot:          { icon: '📸', label: 'Screenshot' },
+  skip_if_empty:       { icon: '⏭️', label: 'Skip If Empty' },
+  shell_cmd:           { icon: '💻', label: 'Shell Command' },
 };
 
 let images = [];
@@ -306,7 +309,7 @@ export function render() {
     return;
   }
 
-  const flowName = flow.name || (state.platform === 'shopee_upload' ? 'Shopee Upload' : 'TikTok Upload');
+  const flowName = flow.name || (state.platform === 'shopee_upload' ? 'Shopee Video' : 'TikTok Upload');
   const installedFlows = FLOW_TEMPLATES.filter(t => t.status === 'installed');
 
   panel.innerHTML = `
@@ -320,8 +323,8 @@ export function render() {
             ${state.platform === t.id ? `<span style="font-size:9px;color:#484f58">${t.steps}</span>` : ''}
           </button>
         `).join('')}
-        <button id="btn-open-store" style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:none;border:none;cursor:pointer;font-family:inherit;color:#484f58;font-size:11px;transition:color .1s" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'" title="Get more templates">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <button id="btn-open-store" class="q-icon-btn" title="Get more templates">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/></svg>
         </button>
         <div style="width:1px;height:16px;background:#21262d;margin:0 4px"></div>
         <span style="font-size:10px;color:#484f58">${flow.steps.length} steps${state.flowDirty ? ' · <span style="color:#d29922">unsaved</span>' : ''}</span>
@@ -341,26 +344,38 @@ export function render() {
             return `<option value="${esc(id)}">${esc(label)} (${short})</option>`;
           }).join('')}
         </select>
-        <button id="btn-capture" class="btn btn-accent" style="padding:3px 10px;font-size:10px;font-weight:600">Capture</button>
+        <button id="btn-capture" class="q-icon-btn accent" title="Capture screen" style="border:1px solid #30363d">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </button>
         <div style="width:1px;height:16px;background:#30363d"></div>
-        <button id="btn-add-step" class="btn" style="padding:3px 10px;font-size:10px;font-weight:600">+ Add</button>
-        <button id="btn-save-flow" class="btn btn-primary" style="padding:3px 10px;font-size:10px;font-weight:600">Save</button>
+        <button id="btn-add-step" class="q-icon-btn" title="Add step" style="border:1px solid #30363d">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
+        </button>
+        <button id="btn-save-flow" class="q-icon-btn primary" title="Save flow" style="border:1px solid #30363d">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        </button>
       </div>
     </div>
 
-    <!-- Template images -->
-    <div class="card" style="padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-      <span style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Templates</span>
-      <span id="ed-image-list" style="display:flex;gap:4px;flex-wrap:wrap">
-        <span style="font-size:10px;color:#484f58;font-style:italic">Loading...</span>
-      </span>
-    </div>
+    <!-- Template images (hidden) -->
+    <span id="ed-image-list" style="display:none"></span>
 
     ${showTemplateStore ? renderTemplateStore() : ''}
 
     <!-- List view -->
     <div id="ed-list-view" style="display:${editorView === 'list' ? 'block' : 'none'}">
       ${flow.steps.map((step, i) => {
+        // Phase markers (no action) → render as section header
+        if (!step.action) {
+          const title = (step._title || step._phase || '').replace(/^=+\s*|\s*=+$/g, '').trim();
+          if (!title) return '';
+          return `
+          <div style="padding:6px 12px;margin-top:8px;display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:1px;background:#21262d"></div>
+            <span style="font-size:9px;color:#58a6ff;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">${esc(title)}</span>
+            <div style="flex:1;height:1px;background:#21262d"></div>
+          </div>`;
+        }
         const c = ACTION_COLORS[step.action] || 'gray';
         const isEditing = editingStep === i;
         return `
@@ -391,9 +406,15 @@ export function render() {
       <div class="card" style="position:relative;overflow:hidden;height:calc(100vh - 220px);min-height:400px">
         <!-- Zoom controls -->
         <div style="position:absolute;top:8px;left:8px;display:flex;gap:3px;z-index:10">
-          <button class="btn" style="font-size:9px;padding:2px 8px" id="fc-zoom-in">Zoom +</button>
-          <button class="btn" style="font-size:9px;padding:2px 8px" id="fc-zoom-out">Zoom -</button>
-          <button class="btn" style="font-size:9px;padding:2px 8px" id="fc-zoom-fit">Fit</button>
+          <button class="q-icon-btn" id="fc-zoom-in" title="Zoom in" style="width:24px;height:24px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
+          </button>
+          <button class="q-icon-btn" id="fc-zoom-out" title="Zoom out" style="width:24px;height:24px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+          </button>
+          <button class="q-icon-btn" id="fc-zoom-fit" title="Fit to view" style="width:24px;height:24px">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </button>
           <span id="fc-zoom-label" style="font-size:9px;color:#484f58;padding:3px 6px"></span>
         </div>
         <!-- SVG container (scrollable) -->
@@ -538,6 +559,22 @@ function renderFlowchart(flow) {
   steps.forEach((step, i) => {
     const pos = nodePositions[i];
     const x = pos.x, y = pos.y;
+
+    // Phase markers → render as label divider
+    if (!step.action) {
+      const title = (step._title || step._phase || '').replace(/^=+\s*|\s*=+$/g, '').trim();
+      if (title) {
+        html += `
+          <g>
+            <line x1="${x}" y1="${y + nodeH / 2}" x2="${x + nodeW}" y2="${y + nodeH / 2}" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+            <rect x="${x + nodeW / 2 - title.length * 3.5 - 8}" y="${y + nodeH / 2 - 9}" width="${title.length * 7 + 16}" height="18" rx="9" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+            <text x="${x + nodeW / 2}" y="${y + nodeH / 2 + 3.5}" text-anchor="middle" fill="#58a6ff" font-size="8" font-weight="600" font-family="IBM Plex Sans" letter-spacing=".5">${esc(title)}</text>
+          </g>
+        `;
+      }
+      return;
+    }
+
     const c = colorMap[ACTION_COLORS[step.action] || 'gray'];
     const desc = (step.description || '').slice(0, 26) + ((step.description || '').length > 26 ? '...' : '');
 

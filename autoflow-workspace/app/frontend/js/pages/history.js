@@ -54,8 +54,12 @@ export async function render() {
           <option value="success" ${filter.status==='success'?'selected':''}>Success</option>
           <option value="failed" ${filter.status==='failed'?'selected':''}>Failed</option>
         </select>
-        <button class="btn" id="btn-export">Export CSV</button>
-        ${all.length ? '<button class="btn btn-danger" id="btn-clear-history">Clear</button>' : ''}
+        <button class="q-icon-btn" id="btn-export" title="Export CSV" style="border:1px solid #30363d">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </button>
+        ${all.length ? `<button class="q-icon-btn danger" id="btn-clear-history" title="Clear history" style="border:1px solid #30363d">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>` : ''}
       </div>
     </div>
 
@@ -91,10 +95,11 @@ export async function render() {
           <th>Platform</th>
           <th>Devices</th>
           <th>Status</th>
+          <th style="width:36px"></th>
         </tr></thead>
         <tbody>
           ${filtered.length === 0 ? `
-            <tr><td colspan="6" style="padding:40px;text-align:center">
+            <tr><td colspan="7" style="padding:40px;text-align:center">
               <svg width="32" height="32" fill="none" stroke="#21262d" stroke-width="1" viewBox="0 0 24 24" style="margin:0 auto 8px;display:block"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <p style="color:#484f58;font-size:12px">No upload history yet</p>
               <p style="color:#30363d;font-size:10px;margin-top:2px">Records will appear here after running automation</p>
@@ -108,6 +113,7 @@ export async function render() {
             const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
             const fileName = (h.video_name || '–').split('/').pop().split('\\').pop();
             const devCount = h.device_count || 1;
+            const recordId = h.id || '';
 
             return `<tr>
               <td style="color:#30363d;font-size:10px;font-family:'IBM Plex Mono',monospace">${filtered.length - idx}</td>
@@ -140,6 +146,11 @@ export async function render() {
                   }
                 </div>
               </td>
+              <td>
+                <button class="q-icon-btn danger btn-delete-record" data-record-id="${esc(recordId)}" title="Delete record" style="width:24px;height:24px">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -154,6 +165,14 @@ export async function render() {
   panel.querySelector('#filter-period')?.addEventListener('change', (e) => { filter.period = e.target.value; render(); });
   panel.querySelector('#btn-export')?.addEventListener('click', exportCSV);
   panel.querySelector('#btn-clear-history')?.addEventListener('click', clearHistory);
+
+  // Per-row delete buttons
+  panel.querySelectorAll('.btn-delete-record').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteRecord(btn.dataset.recordId);
+    });
+  });
 }
 
 function applyFilters(history) {
@@ -171,11 +190,29 @@ function applyFilters(history) {
   return result;
 }
 
+async function deleteRecord(recordId) {
+  if (!recordId) return;
+  if (!confirm('Delete this record?')) return;
+  try {
+    await invoke('delete_history_record', { recordId });
+    state.history = state.history.filter(h => h.id !== recordId);
+    render();
+  } catch (e) {
+    console.error('Delete record failed:', e);
+  }
+}
+
 async function clearHistory() {
-  state.history = [];
-  try { await invoke('append_history', { records: [] }); } catch (e) {}
-  loaded = false;
-  render();
+  if (!state.history.length) return;
+  if (!confirm(`Clear all ${state.history.length} history records? This cannot be undone.`)) return;
+  try {
+    await invoke('clear_history');
+    state.history = [];
+    loaded = false;
+    render();
+  } catch (e) {
+    console.error('Clear history failed:', e);
+  }
 }
 
 function exportCSV() {
@@ -201,6 +238,8 @@ function exportCSV() {
   const a = document.createElement('a');
   a.href = url;
   a.download = `autoflow-history-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
