@@ -5,6 +5,8 @@ import { registerPage, navigate, initRouter } from './router.js';
 import { initSidebar } from './components/sidebar.js';
 import { initConsole, appendLog, renderConsole } from './components/console-panel.js';
 import { initHeader } from './components/header.js';
+import { initTheme } from './theme.js';
+import { initI18n } from './i18n.js';
 
 // Pages
 import * as dashboard from './pages/dashboard.js';
@@ -271,6 +273,8 @@ async function recordHistory(status) {
 // ── Bootstrap ─────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
+  initI18n();
   let config = {};
   try { config = await invoke('get_config'); } catch (e) { console.warn('get_config:', e); }
 

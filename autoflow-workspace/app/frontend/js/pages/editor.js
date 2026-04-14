@@ -293,7 +293,7 @@ async function loadImages() {
     if (el) {
       el.innerHTML = images.length
         ? images.map(n => `<span class="badge ${n.startsWith('screenshot_') ? 'b-cyan' : 'b-green'}">${n}</span>`).join(' ')
-        : '<span style="font-size:10px;color:#484f58;font-style:italic">No images yet</span>';
+        : '<span style="font-size:10px;color:var(--c-fg-3);font-style:italic">No images yet</span>';
     }
   } catch (err) {}
 }
@@ -305,7 +305,7 @@ export function render() {
   const flow = state.flow;
 
   if (!flow) {
-    panel.innerHTML = '<div style="padding:40px;text-align:center;color:#484f58">No flow loaded</div>';
+    panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--c-fg-3)">No flow loaded</div>';
     return;
   }
 
@@ -317,24 +317,24 @@ export function render() {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:2px;overflow-x:auto;flex-shrink:1;min-width:0;scrollbar-width:none">
         ${installedFlows.map(t => `
-          <button data-select-flow="${t.id}" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:5px 5px 0 0;border:1px solid ${state.platform === t.id ? '#30363d' : 'transparent'};border-bottom:${state.platform === t.id ? '2px solid #58a6ff' : '1px solid transparent'};background:${state.platform === t.id ? '#161b22' : 'transparent'};cursor:pointer;font-family:inherit;transition:all .1s;white-space:nowrap;flex-shrink:0" onmouseover="if('${state.platform}'!=='${t.id}')this.style.background='#21262d'" onmouseout="if('${state.platform}'!=='${t.id}')this.style.background='transparent'">
+          <button data-select-flow="${t.id}" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:5px 5px 0 0;border:1px solid ${state.platform === t.id ? 'var(--c-bg-3)' : 'transparent'};border-bottom:${state.platform === t.id ? '2px solid var(--c-accent)' : '1px solid transparent'};background:${state.platform === t.id ? 'var(--c-bg-1)' : 'transparent'};cursor:pointer;font-family:inherit;transition:all .1s;white-space:nowrap;flex-shrink:0" onmouseover="if('${state.platform}'!=='${t.id}')this.style.background='var(--c-bg-2)'" onmouseout="if('${state.platform}'!=='${t.id}')this.style.background='transparent'">
             <span style="color:${t.color}">${brandIcon(t.brand, 14)}</span>
-            <span style="font-size:11px;font-weight:${state.platform === t.id ? '600' : '400'};color:${state.platform === t.id ? '#f0f6fc' : '#8b949e'}">${t.name}</span>
-            ${state.platform === t.id ? `<span style="font-size:9px;color:#484f58">${t.steps}</span>` : ''}
+            <span style="font-size:11px;font-weight:${state.platform === t.id ? '600' : '400'};color:${state.platform === t.id ? 'var(--c-fg-0)' : 'var(--c-fg-2)'}">${t.name}</span>
+            ${state.platform === t.id ? `<span style="font-size:9px;color:var(--c-fg-3)">${t.steps}</span>` : ''}
           </button>
         `).join('')}
         <button id="btn-open-store" class="q-icon-btn" title="Get more templates">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/></svg>
         </button>
-        <div style="width:1px;height:16px;background:#21262d;margin:0 4px"></div>
-        <span style="font-size:10px;color:#484f58">${flow.steps.length} steps${state.flowDirty ? ' · <span style="color:#d29922">unsaved</span>' : ''}</span>
+        <div style="width:1px;height:16px;background:var(--c-bg-2);margin:0 4px"></div>
+        <span style="font-size:10px;color:var(--c-fg-3)">${flow.steps.length} steps${state.flowDirty ? ' · <span style="color:var(--c-amber)">unsaved</span>' : ''}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div class="view-tog">
           <button class="${editorView === 'list' ? 'on' : ''}" data-view="list">List</button>
           <button class="${editorView === 'flow' ? 'on' : ''}" data-view="flow">Flowchart</button>
         </div>
-        <div style="width:1px;height:16px;background:#30363d"></div>
+        <div style="width:1px;height:16px;background:var(--c-bg-3)"></div>
         <select id="ed-device-select" style="width:140px;font-size:10px">
           ${!state.devices.length ? '<option value="">No device</option>' : state.devices.map(([id, model]) => {
             const h = state.deviceHealth[id] || {};
@@ -344,14 +344,14 @@ export function render() {
             return `<option value="${esc(id)}">${esc(label)} (${short})</option>`;
           }).join('')}
         </select>
-        <button id="btn-capture" class="q-icon-btn accent" title="Capture screen" style="border:1px solid #30363d">
+        <button id="btn-capture" class="q-icon-btn accent" title="Capture screen" style="border:1px solid var(--c-bg-3)">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </button>
-        <div style="width:1px;height:16px;background:#30363d"></div>
-        <button id="btn-add-step" class="q-icon-btn" title="Add step" style="border:1px solid #30363d">
+        <div style="width:1px;height:16px;background:var(--c-bg-3)"></div>
+        <button id="btn-add-step" class="q-icon-btn" title="Add step" style="border:1px solid var(--c-bg-3)">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"/></svg>
         </button>
-        <button id="btn-save-flow" class="q-icon-btn primary" title="Save flow" style="border:1px solid #30363d">
+        <button id="btn-save-flow" class="q-icon-btn primary" title="Save flow" style="border:1px solid var(--c-bg-3)">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         </button>
       </div>
@@ -371,27 +371,27 @@ export function render() {
           if (!title) return '';
           return `
           <div style="padding:6px 12px;margin-top:8px;display:flex;align-items:center;gap:8px">
-            <div style="flex:1;height:1px;background:#21262d"></div>
-            <span style="font-size:9px;color:#58a6ff;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">${esc(title)}</span>
-            <div style="flex:1;height:1px;background:#21262d"></div>
+            <div style="flex:1;height:1px;background:var(--c-bg-2)"></div>
+            <span style="font-size:9px;color:var(--c-accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">${esc(title)}</span>
+            <div style="flex:1;height:1px;background:var(--c-bg-2)"></div>
           </div>`;
         }
         const c = ACTION_COLORS[step.action] || 'gray';
         const isEditing = editingStep === i;
         return `
-          <div data-step-row="${i}" class="step-row" style="${isEditing ? 'background:rgba(88,166,255,.06);border-left:2px solid #58a6ff;padding-left:10px' : ''}">
-            <span style="font-size:10px;color:#30363d;font-family:'IBM Plex Mono',monospace;width:18px;text-align:right">${i + 1}</span>
+          <div data-step-row="${i}" class="step-row" style="${isEditing ? 'background:var(--c-accent-a04);border-left:2px solid var(--c-accent);padding-left:10px' : ''}">
+            <span style="font-size:10px;color:var(--c-bg-3);font-family:'IBM Plex Mono',monospace;width:18px;text-align:right">${i + 1}</span>
             <span style="font-size:13px;width:20px;text-align:center">${(ACTION_LABEL[step.action] || {}).icon || '⚡'}</span>
             <span class="badge b-${c}" style="min-width:72px;text-align:center">${(ACTION_LABEL[step.action] || {}).label || step.action}</span>
-            <span style="color:#c9d1d9;flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(step.description || '')}</span>
+            <span style="color:var(--c-fg-1);flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(step.description || '')}</span>
             <div class="act" style="display:flex;gap:2px">
-              <button data-step-up="${i}" style="background:none;border:none;color:#30363d;cursor:pointer;padding:1px" ${i === 0 ? 'disabled' : ''}>
+              <button data-step-up="${i}" style="background:none;border:none;color:var(--c-bg-3);cursor:pointer;padding:1px" ${i === 0 ? 'disabled' : ''}>
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg>
               </button>
-              <button data-step-down="${i}" style="background:none;border:none;color:#30363d;cursor:pointer;padding:1px" ${i === flow.steps.length - 1 ? 'disabled' : ''}>
+              <button data-step-down="${i}" style="background:none;border:none;color:var(--c-bg-3);cursor:pointer;padding:1px" ${i === flow.steps.length - 1 ? 'disabled' : ''}>
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <button data-step-delete="${i}" style="background:none;border:none;color:#30363d;cursor:pointer;padding:1px">
+              <button data-step-delete="${i}" style="background:none;border:none;color:var(--c-bg-3);cursor:pointer;padding:1px">
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
@@ -415,7 +415,7 @@ export function render() {
           <button class="q-icon-btn" id="fc-zoom-fit" title="Fit to view" style="width:24px;height:24px">
             <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
           </button>
-          <span id="fc-zoom-label" style="font-size:9px;color:#484f58;padding:3px 6px"></span>
+          <span id="fc-zoom-label" style="font-size:9px;color:var(--c-fg-3);padding:3px 6px"></span>
         </div>
         <!-- SVG container (scrollable) -->
         <div id="fc-container" style="width:100%;height:100%;overflow:auto;cursor:grab">
@@ -451,9 +451,9 @@ function renderEditPanel(step, i) {
   };
 
   return `
-    <div style="padding:10px 12px 10px 32px;background:rgba(88,166,255,.03);border-bottom:1px solid rgba(33,38,45,.6)">
+    <div style="padding:10px 12px 10px 32px;background:var(--c-accent-a04);border-bottom:1px solid var(--c-border-60)">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <span style="font-size:9px;color:#484f58;font-weight:600;width:60px">ACTION</span>
+        <span style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:60px">ACTION</span>
         <select data-ei="${i}" data-ep="action" style="flex:1;font-size:10px;padding:3px 6px">
           ${ACTION_GROUPS.map(g => `<optgroup label="${g.label}">${g.actions.map(a => { const al = ACTION_LABEL[a] || {}; return `<option value="${a}" ${a === step.action ? 'selected' : ''}>${al.icon || '⚡'} ${al.label || a}</option>`; }).join('')}</optgroup>`).join('')}
         </select>
@@ -462,12 +462,12 @@ function renderEditPanel(step, i) {
         const v = step[f];
         const ph = PLACEHOLDERS[f] || '';
         const isBool = typeof v === 'boolean' || ['optional', 'stop_on_fail', 'use_clipboard'].includes(f);
-        if (isBool) return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:#484f58;font-weight:600;width:60px">${f.toUpperCase()}</span><input type="checkbox" data-ei="${i}" data-ep="${f}" ${v ? 'checked' : ''} style="accent-color:#58a6ff"></div>`;
-        if (f === 'lines') return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:4px"><span style="font-size:9px;color:#484f58;font-weight:600;width:60px;padding-top:4px">${f.toUpperCase()}</span><textarea data-ei="${i}" data-ep="${f}" rows="3" placeholder="${ph}" class="inp" style="flex:1;resize:vertical;font-size:10px">${esc(Array.isArray(v) ? v.join('\n') : String(v ?? ''))}</textarea></div>`;
-        return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:#484f58;font-weight:600;width:60px">${f.toUpperCase()}</span><input type="text" value="${esc(String(v ?? ''))}" placeholder="${ph}" data-ei="${i}" data-ep="${f}" class="inp" style="flex:1;font-size:10px"></div>`;
+        if (isBool) return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:60px">${f.toUpperCase()}</span><input type="checkbox" data-ei="${i}" data-ep="${f}" ${v ? 'checked' : ''} style="accent-color:var(--c-accent)"></div>`;
+        if (f === 'lines') return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:4px"><span style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:60px;padding-top:4px">${f.toUpperCase()}</span><textarea data-ei="${i}" data-ep="${f}" rows="3" placeholder="${ph}" class="inp" style="flex:1;resize:vertical;font-size:10px">${esc(Array.isArray(v) ? v.join('\n') : String(v ?? ''))}</textarea></div>`;
+        return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px"><span style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:60px">${f.toUpperCase()}</span><input type="text" value="${esc(String(v ?? ''))}" placeholder="${ph}" data-ei="${i}" data-ep="${f}" class="inp" style="flex:1;font-size:10px"></div>`;
       }).join('')}
       <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
-        <span style="font-size:9px;color:#484f58;font-weight:600;width:60px">DELAY</span>
+        <span style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:60px">DELAY</span>
         <input type="text" value="${esc(String(step.delay_after ?? 0.5))}" data-ei="${i}" data-ep="delay_after" placeholder="seconds (default 0.5)" class="inp" style="flex:1;font-size:10px">
       </div>
     </div>
@@ -511,21 +511,28 @@ function renderFlowchart(flow) {
   const totalW = Math.max(500, maxX);
   const totalH = Math.max(400, maxY);
 
+  // SVG needs actual hex values for color+alpha suffixes (e.g. #6ab0ff50)
+  const cs = getComputedStyle(document.documentElement);
+  const v = (name) => cs.getPropertyValue(name).trim();
   const colorMap = {
-    blue: '#58a6ff', red: '#f85149', green: '#3fb950', amber: '#d29922',
-    purple: '#bc8cff', cyan: '#39d2c0', gray: '#8b949e',
+    blue: v('--c-accent'), red: v('--c-red'), green: v('--c-green'), amber: v('--c-amber'),
+    purple: v('--c-purple'), cyan: v('--c-cyan'), gray: v('--c-fg-2'),
   };
+
+  const bg0 = v('--c-bg-0'), bg1 = v('--c-bg-1'), bg2 = v('--c-bg-2'), bg3 = v('--c-bg-3');
+  const fg0 = v('--c-fg-0'), fg2 = v('--c-fg-2'), fg3 = v('--c-fg-3');
+  const accent = v('--c-accent');
 
   let html = `
     <defs>
       <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-        <path d="M0 0L10 5L0 10z" fill="#30363d"/>
+        <path d="M0 0L10 5L0 10z" fill="${bg3}"/>
       </marker>
       <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
         <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
       </filter>
       <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#161b22" stroke-width="0.5"/>
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="${bg1}" stroke-width="0.5"/>
       </pattern>
     </defs>
     <rect width="${totalW}" height="${totalH}" fill="url(#grid)"/>
@@ -540,7 +547,7 @@ function renderFlowchart(flow) {
       const tx = to.x + nodeW / 2, ty = to.y;
       // Bezier curve connector
       const midY = (fy + ty) / 2;
-      html += `<path d="M${fx},${fy} C${fx},${midY} ${tx},${midY} ${tx},${ty}" fill="none" stroke="#30363d" stroke-width="1.5" marker-end="url(#arrowhead)"/>`;
+      html += `<path d="M${fx},${fy} C${fx},${midY} ${tx},${midY} ${tx},${ty}" fill="none" stroke="${bg3}" stroke-width="1.5" marker-end="url(#arrowhead)"/>`;
     }
   });
 
@@ -549,9 +556,9 @@ function renderFlowchart(flow) {
     const first = nodePositions[0];
     const cx = first.x + nodeW / 2;
     html += `
-      <circle cx="${cx}" cy="${first.y - 16}" r="10" fill="#21262d" stroke="#30363d" stroke-width="1"/>
-      <text x="${cx}" y="${first.y - 13}" text-anchor="middle" fill="#484f58" font-size="7" font-weight="700" font-family="IBM Plex Sans">START</text>
-      <line x1="${cx}" y1="${first.y - 6}" x2="${cx}" y2="${first.y}" stroke="#30363d" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <circle cx="${cx}" cy="${first.y - 16}" r="10" fill="${bg2}" stroke="${bg3}" stroke-width="1"/>
+      <text x="${cx}" y="${first.y - 13}" text-anchor="middle" fill="${fg3}" font-size="7" font-weight="700" font-family="IBM Plex Sans">START</text>
+      <line x1="${cx}" y1="${first.y - 6}" x2="${cx}" y2="${first.y}" stroke="${bg3}" stroke-width="1.5" marker-end="url(#arrowhead)"/>
     `;
   }
 
@@ -566,9 +573,9 @@ function renderFlowchart(flow) {
       if (title) {
         html += `
           <g>
-            <line x1="${x}" y1="${y + nodeH / 2}" x2="${x + nodeW}" y2="${y + nodeH / 2}" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
-            <rect x="${x + nodeW / 2 - title.length * 3.5 - 8}" y="${y + nodeH / 2 - 9}" width="${title.length * 7 + 16}" height="18" rx="9" fill="#161b22" stroke="#30363d" stroke-width="1"/>
-            <text x="${x + nodeW / 2}" y="${y + nodeH / 2 + 3.5}" text-anchor="middle" fill="#58a6ff" font-size="8" font-weight="600" font-family="IBM Plex Sans" letter-spacing=".5">${esc(title)}</text>
+            <line x1="${x}" y1="${y + nodeH / 2}" x2="${x + nodeW}" y2="${y + nodeH / 2}" stroke="${bg3}" stroke-width="1" stroke-dasharray="4,3"/>
+            <rect x="${x + nodeW / 2 - title.length * 3.5 - 8}" y="${y + nodeH / 2 - 9}" width="${title.length * 7 + 16}" height="18" rx="9" fill="${bg1}" stroke="${bg3}" stroke-width="1"/>
+            <text x="${x + nodeW / 2}" y="${y + nodeH / 2 + 3.5}" text-anchor="middle" fill="${accent}" font-size="8" font-weight="600" font-family="IBM Plex Sans" letter-spacing=".5">${esc(title)}</text>
           </g>
         `;
       }
@@ -580,13 +587,13 @@ function renderFlowchart(flow) {
 
     html += `
       <g class="fc-node" data-fc-node="${i}" style="cursor:grab">
-        <rect class="fc-node-bg" x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="#161b22" stroke="${c}50" stroke-width="1.5" filter="url(#shadow)"/>
+        <rect class="fc-node-bg" x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="${bg1}" stroke="${c}50" stroke-width="1.5" filter="url(#shadow)"/>
         <circle cx="${x + 16}" cy="${y + nodeH / 2}" r="10" fill="${c}20" stroke="${c}40" stroke-width="1"/>
         <text x="${x + 16}" y="${y + nodeH / 2 + 3.5}" text-anchor="middle" fill="${c}" font-size="9" font-weight="700" font-family="IBM Plex Mono">${i + 1}</text>
         <text x="${x + 32}" y="${y + 18}" font-size="12">${(ACTION_LABEL[step.action] || {}).icon || '⚡'}</text>
         <rect x="${x + 48}" y="${y + 7}" width="${Math.min(((ACTION_LABEL[step.action] || {}).label || step.action).length * 6.2 + 12, 110)}" height="15" rx="3" fill="${c}15"/>
         <text x="${x + 54}" y="${y + 17.5}" fill="${c}" font-size="9.5" font-weight="600" font-family="IBM Plex Sans">${(ACTION_LABEL[step.action] || {}).label || step.action}</text>
-        <text x="${x + 34}" y="${y + 37}" fill="#8b949e" font-size="9" font-family="IBM Plex Sans">${esc(desc)}</text>
+        <text x="${x + 34}" y="${y + 37}" fill="${fg2}" font-size="9" font-family="IBM Plex Sans">${esc(desc)}</text>
       </g>
     `;
   });
@@ -597,14 +604,14 @@ function renderFlowchart(flow) {
     const cx = last.x + nodeW / 2;
     const ey = last.y + nodeH + 20;
     html += `
-      <line x1="${cx}" y1="${last.y + nodeH}" x2="${cx}" y2="${ey}" stroke="#30363d" stroke-width="1.5"/>
-      <rect x="${cx - 14}" y="${ey}" width="28" height="16" rx="4" fill="#21262d" stroke="#30363d" stroke-width="1"/>
-      <text x="${cx}" y="${ey + 11}" text-anchor="middle" fill="#484f58" font-size="7" font-weight="700" font-family="IBM Plex Sans">END</text>
+      <line x1="${cx}" y1="${last.y + nodeH}" x2="${cx}" y2="${ey}" stroke="${bg3}" stroke-width="1.5"/>
+      <rect x="${cx - 14}" y="${ey}" width="28" height="16" rx="4" fill="${bg2}" stroke="${bg3}" stroke-width="1"/>
+      <text x="${cx}" y="${ey + 11}" text-anchor="middle" fill="${fg3}" font-size="7" font-weight="700" font-family="IBM Plex Sans">END</text>
     `;
   }
 
   // Hint text
-  html += `<text x="${totalW / 2}" y="${totalH - 10}" text-anchor="middle" fill="#21262d" font-size="10" font-family="IBM Plex Sans">Drag nodes to reposition - Double-click to edit</text>`;
+  html += `<text x="${totalW / 2}" y="${totalH - 10}" text-anchor="middle" fill="${bg2}" font-size="10" font-family="IBM Plex Sans">Drag nodes to reposition - Double-click to edit</text>`;
 
   const svgW = totalW * fcZoom;
   const svgH = totalH * fcZoom;
@@ -738,17 +745,17 @@ function openStepPopup(idx) {
 
   const overlay = document.createElement('div');
   overlay.id = 'fc-popup-overlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--c-shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center';
 
   overlay.innerHTML = `
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;width:380px;max-height:80vh;overflow-y:auto">
+    <div style="background:var(--c-bg-1);border:1px solid var(--c-bg-3);border-radius:8px;padding:16px;width:380px;max-height:80vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <p style="font-size:13px;font-weight:700;color:#f0f6fc">Edit Step ${idx + 1}</p>
-        <button id="fc-popup-close" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:16px;line-height:1">&times;</button>
+        <p style="font-size:13px;font-weight:700;color:var(--c-fg-0)">Edit Step ${idx + 1}</p>
+        <button id="fc-popup-close" style="background:none;border:none;color:var(--c-fg-3);cursor:pointer;font-size:16px;line-height:1">&times;</button>
       </div>
 
       <div style="margin-bottom:10px">
-        <label style="font-size:9px;color:#484f58;font-weight:600;display:block;margin-bottom:3px">ACTION</label>
+        <label style="font-size:9px;color:var(--c-fg-3);font-weight:600;display:block;margin-bottom:3px">ACTION</label>
         <select id="fc-popup-action" style="width:100%;padding:5px 8px">
           ${ACTION_GROUPS.map(g => `<optgroup label="${g.label}">${g.actions.map(a => { const al = ACTION_LABEL[a] || {}; return `<option value="${a}" ${a === step.action ? 'selected' : ''}>${al.icon || '⚡'} ${al.label || a}</option>`; }).join('')}</optgroup>`).join('')}
         </select>
@@ -759,13 +766,13 @@ function openStepPopup(idx) {
           const v = step[f];
           const ph = PLACEHOLDERS[f] || '';
           const isBool = typeof v === 'boolean' || ['optional', 'stop_on_fail', 'use_clipboard'].includes(f);
-          if (isBool) return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><label style="font-size:9px;color:#484f58;font-weight:600;width:70px">${f.toUpperCase()}</label><input type="checkbox" data-pf="${f}" ${v ? 'checked' : ''} style="accent-color:#58a6ff"></div>`;
-          if (f === 'lines') return `<div style="margin-bottom:6px"><label style="font-size:9px;color:#484f58;font-weight:600;display:block;margin-bottom:2px">${f.toUpperCase()}</label><textarea data-pf="${f}" rows="3" placeholder="${ph}" class="inp" style="width:100%;resize:vertical;font-size:10px">${esc(Array.isArray(v) ? v.join('\n') : String(v ?? ''))}</textarea></div>`;
-          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><label style="font-size:9px;color:#484f58;font-weight:600;width:70px">${f.toUpperCase()}</label><input type="text" value="${esc(String(v ?? ''))}" placeholder="${ph}" data-pf="${f}" class="inp" style="flex:1;font-size:10px"></div>`;
+          if (isBool) return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><label style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:70px">${f.toUpperCase()}</label><input type="checkbox" data-pf="${f}" ${v ? 'checked' : ''} style="accent-color:var(--c-accent)"></div>`;
+          if (f === 'lines') return `<div style="margin-bottom:6px"><label style="font-size:9px;color:var(--c-fg-3);font-weight:600;display:block;margin-bottom:2px">${f.toUpperCase()}</label><textarea data-pf="${f}" rows="3" placeholder="${ph}" class="inp" style="width:100%;resize:vertical;font-size:10px">${esc(Array.isArray(v) ? v.join('\n') : String(v ?? ''))}</textarea></div>`;
+          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><label style="font-size:9px;color:var(--c-fg-3);font-weight:600;width:70px">${f.toUpperCase()}</label><input type="text" value="${esc(String(v ?? ''))}" placeholder="${ph}" data-pf="${f}" class="inp" style="flex:1;font-size:10px"></div>`;
         }).join('')}
       </div>
 
-      <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid #21262d">
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--c-bg-2)">
         <button class="btn btn-danger" id="fc-popup-delete" style="margin-right:auto;font-size:10px">Delete step</button>
         <button class="btn" id="fc-popup-cancel" >Cancel</button>
         <button class="btn btn-primary" id="fc-popup-save" >Save</button>
@@ -827,15 +834,15 @@ function renderTemplateStore() {
   const available = FLOW_TEMPLATES.filter(t => t.status !== 'installed');
 
   return `
-    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center" id="template-store-overlay">
-      <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;width:560px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--c-shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center" id="template-store-overlay">
+      <div style="background:var(--c-bg-0);border:1px solid var(--c-bg-3);border-radius:10px;width:560px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
         <!-- Header -->
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #21262d">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--c-bg-2)">
           <div>
-            <p style="font-size:14px;font-weight:700;color:#f0f6fc">Template Store</p>
-            <p style="font-size:10px;color:#484f58;margin-top:2px">Add-on flow templates for more platforms</p>
+            <p style="font-size:14px;font-weight:700;color:var(--c-fg-0)">Template Store</p>
+            <p style="font-size:10px;color:var(--c-fg-3);margin-top:2px">Add-on flow templates for more platforms</p>
           </div>
-          <button id="btn-close-store" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:18px;line-height:1">&times;</button>
+          <button id="btn-close-store" style="background:none;border:none;color:var(--c-fg-3);cursor:pointer;font-size:18px;line-height:1">&times;</button>
         </div>
 
         <!-- Template grid -->
@@ -845,15 +852,15 @@ function renderTemplateStore() {
               const isInstalled = t.status === 'installed';
               const isComingSoon = t.status === 'coming_soon';
               return `
-                <div style="background:#161b22;border:1px solid ${isInstalled ? '#2ea04350' : '#21262d'};border-radius:8px;padding:14px;transition:border-color .1s${!isInstalled ? ';cursor:pointer' : ''}" ${!isInstalled ? `onmouseover="this.style.borderColor='#30363d'" onmouseout="this.style.borderColor='#21262d'"` : ''}>
+                <div style="background:var(--c-bg-1);border:1px solid ${isInstalled ? '#2ea04350' : 'var(--c-bg-2)'};border-radius:8px;padding:14px;transition:border-color .1s${!isInstalled ? ';cursor:pointer' : ''}" ${!isInstalled ? `onmouseover="this.style.borderColor='var(--c-bg-3)'" onmouseout="this.style.borderColor='var(--c-bg-2)'"` : ''}>
                   <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
                     <div style="width:36px;height:36px;border-radius:8px;background:${t.color}15;border:1px solid ${t.color}30;display:flex;align-items:center;justify-content:center;color:${t.color}">${brandIcon(t.brand, 20)}</div>
                     <div style="flex:1">
-                      <p style="font-size:12px;font-weight:600;color:#f0f6fc">${t.name}</p>
-                      ${t.steps > 0 ? `<p style="font-size:9px;color:#484f58">${t.steps} steps</p>` : ''}
+                      <p style="font-size:12px;font-weight:600;color:var(--c-fg-0)">${t.name}</p>
+                      ${t.steps > 0 ? `<p style="font-size:9px;color:var(--c-fg-3)">${t.steps} steps</p>` : ''}
                     </div>
                   </div>
-                  <p style="font-size:10px;color:#8b949e;margin-bottom:10px;line-height:1.4">${t.desc}</p>
+                  <p style="font-size:10px;color:var(--c-fg-2);margin-bottom:10px;line-height:1.4">${t.desc}</p>
                   ${isInstalled
                     ? '<span class="badge b-green">Installed</span>'
                     : isComingSoon
@@ -865,8 +872,8 @@ function renderTemplateStore() {
             }).join('')}
           </div>
 
-          <div style="margin-top:16px;padding:12px;background:#161b22;border:1px solid #21262d;border-radius:8px">
-            <p style="font-size:10px;color:#484f58;text-align:center;line-height:1.5">
+          <div style="margin-top:16px;padding:12px;background:var(--c-bg-1);border:1px solid var(--c-bg-2);border-radius:8px">
+            <p style="font-size:10px;color:var(--c-fg-3);text-align:center;line-height:1.5">
               More templates coming soon. Templates are add-on modules that can be installed to support additional platforms.
               <br>Each template includes pre-configured automation steps optimized for the target platform.
             </p>

@@ -38,13 +38,15 @@ export function render() {
     return { devId, short, model, ...p };
   });
 
-  const colors = ['#58a6ff', '#bc8cff', '#39d2c0', '#d29922', '#f85149'];
+  // Need actual hex for color+alpha suffixes in inline SVG (e.g. ${c}15)
+  const cs = getComputedStyle(document.documentElement);
+  const colors = [cs.getPropertyValue('--c-accent').trim(), cs.getPropertyValue('--c-purple').trim(), cs.getPropertyValue('--c-cyan').trim(), cs.getPropertyValue('--c-amber').trim(), cs.getPropertyValue('--c-red').trim()];
 
   panel.innerHTML = `
     <!-- Header bar -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:12px">
-        <h2 style="font-size:15px;font-weight:700;color:#f0f6fc;margin:0">Live Monitor</h2>
+        <h2 style="font-size:15px;font-weight:700;color:var(--c-fg-0);margin:0">Live Monitor</h2>
         <span class="badge ${isDone ? 'b-green' : isRunning ? 'b-amber pulse' : 'b-gray'}">
           ${isDone ? 'Completed' : isRunning ? 'Running' : 'Idle'}
         </span>
@@ -52,7 +54,7 @@ export function render() {
       <div style="display:flex;align-items:center;gap:6px">
         ${isRunning ? `
           <button class="mon-icon-btn" data-action="stop-all" title="Stop All">
-            <svg width="16" height="16" fill="#f85149" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
+            <svg width="16" height="16" fill="var(--c-red)" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
           </button>
         ` : ''}
         <button class="mon-icon-btn" data-action="back-queue" title="Back to Queue">
@@ -63,25 +65,25 @@ export function render() {
 
     ${isDone ? `
     <!-- Completion summary -->
-    <div style="background:linear-gradient(135deg,rgba(63,185,80,.08),rgba(88,166,255,.05));border:1px solid rgba(63,185,80,.2);border-radius:10px;padding:20px;margin-bottom:16px">
+    <div style="background:linear-gradient(135deg,var(--c-green-a08),var(--c-accent-a04));border:1px solid var(--c-green-a15);border-radius:10px;padding:20px;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div style="width:36px;height:36px;border-radius:50%;background:rgba(63,185,80,.15);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" fill="none" stroke="#3fb950" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--c-green-a15);display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" fill="none" stroke="var(--c-green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
         <div>
-          <p style="font-size:14px;font-weight:700;color:#f0f6fc;margin:0">Upload Complete</p>
-          <p style="font-size:11px;color:#8b949e;margin:0">${totalItems} video${totalItems > 1 ? 's' : ''} processed</p>
+          <p style="font-size:14px;font-weight:700;color:var(--c-fg-0);margin:0">Upload Complete</p>
+          <p style="font-size:11px;color:var(--c-fg-2);margin:0">${totalItems} video${totalItems > 1 ? 's' : ''} processed</p>
         </div>
       </div>
       <div style="display:flex;gap:20px">
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#3fb950"></div>
-          <span style="font-size:13px;font-weight:600;color:#3fb950">${successCount} success</span>
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--c-green)"></div>
+          <span style="font-size:13px;font-weight:600;color:var(--c-green)">${successCount} success</span>
         </div>
         ${failedCount > 0 ? `
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#f85149"></div>
-          <span style="font-size:13px;font-weight:600;color:#f85149">${failedCount} failed</span>
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--c-red)"></div>
+          <span style="font-size:13px;font-weight:600;color:var(--c-red)">${failedCount} failed</span>
         </div>
         ` : ''}
       </div>
@@ -107,8 +109,8 @@ export function render() {
                     <svg width="14" height="14" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18" stroke-linecap="round" stroke-width="3"/></svg>
                   </div>
                   <div>
-                    <span style="font-size:12px;font-weight:600;color:#f0f6fc;display:block;line-height:1.2">${esc(d.model)}</span>
-                    <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace">${esc(d.short)}</span>
+                    <span style="font-size:12px;font-weight:600;color:var(--c-fg-0);display:block;line-height:1.2">${esc(d.model)}</span>
+                    <span style="font-size:9px;color:var(--c-fg-3);font-family:'IBM Plex Mono',monospace">${esc(d.short)}</span>
                   </div>
                 </div>
                 <span class="badge ${badgeClass}">${badgeLabel}</span>
@@ -116,18 +118,18 @@ export function render() {
 
               <!-- Current video + step info -->
               ${d.videoName ? `
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:4px 8px;background:rgba(88,166,255,.06);border-radius:4px;border:1px solid rgba(88,166,255,.1)">
-                <svg width="12" height="12" fill="none" stroke="#58a6ff" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span style="font-size:10px;color:#58a6ff;font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.videoName)}</span>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:4px 8px;background:var(--c-accent-a04);border-radius:4px;border:1px solid var(--c-accent-a10)">
+                <svg width="12" height="12" fill="none" stroke="var(--c-accent)" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span style="font-size:10px;color:var(--c-accent);font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.videoName)}</span>
               </div>
               ` : ''}
-              <p style="font-size:10px;color:#8b949e;margin:0 0 8px 0">
-                <span style="color:#c9d1d9;font-weight:600">${esc(d.step)}</span>${d.stepDesc ? ` <span style="color:#484f58">—</span> ${esc(d.stepDesc)}` : ''}
+              <p style="font-size:10px;color:var(--c-fg-2);margin:0 0 8px 0">
+                <span style="color:var(--c-fg-1);font-weight:600">${esc(d.step)}</span>${d.stepDesc ? ` <span style="color:var(--c-fg-3)">—</span> ${esc(d.stepDesc)}` : ''}
               </p>
 
               <!-- Progress bar -->
               <div style="display:flex;align-items:center;gap:10px">
-                <div style="flex:1;height:4px;background:#21262d;border-radius:2px;overflow:hidden">
+                <div style="flex:1;height:4px;background:var(--c-bg-2);border-radius:2px;overflow:hidden">
                   <div style="width:${d.percent}%;height:100%;background:${c};border-radius:2px;transition:width .3s"></div>
                 </div>
                 <span style="font-size:10px;color:${c};font-weight:700;min-width:32px;text-align:right;font-family:'IBM Plex Mono',monospace">${d.percent}%</span>
@@ -135,10 +137,10 @@ export function render() {
             </div>
           </div>`;
       }).join('') : `
-        <div style="text-align:center;padding:40px 20px;color:#484f58">
-          <svg width="40" height="40" fill="none" stroke="#21262d" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:8px"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        <div style="text-align:center;padding:40px 20px;color:var(--c-fg-3)">
+          <svg width="40" height="40" fill="none" stroke="var(--c-bg-2)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:8px"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
           <p style="font-size:12px;margin:0">No active automation</p>
-          <p style="font-size:10px;color:#30363d;margin-top:4px">Start an upload from the Queue page</p>
+          <p style="font-size:10px;color:var(--c-bg-3);margin-top:4px">Start an upload from the Queue page</p>
         </div>
       `}
     </div>

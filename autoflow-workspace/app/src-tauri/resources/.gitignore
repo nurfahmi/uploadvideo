@@ -1,0 +1,5 @@
+# Don't commit downloaded binaries - these are populated by bundle scripts
+python/*
+!python/.gitkeep
+adb/*
+!adb/.gitkeep

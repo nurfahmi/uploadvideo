@@ -5,3 +5,25 @@ __pycache__/
 *.pyc
 dist/
 .env
+.idea/
+
+# Large test/debug files
+*.mp4
+_debug_*.png
+_cap_*.png
+_caption_*.png
+screenshot_*.png
+_study_*.png
+_test_*.png
+
+# Runtime data
+autoflow-workspace/config.json
+autoflow-workspace/history.json
+autoflow-workspace/queue.json
+
+# Bundled binaries (downloaded by build scripts)
+autoflow-workspace/app/src-tauri/resources/python/*
+!autoflow-workspace/app/src-tauri/resources/python/.gitkeep
+autoflow-workspace/app/src-tauri/resources/adb/*
+!autoflow-workspace/app/src-tauri/resources/adb/.gitkeep
+autoflow-workspace/app/src-tauri/_build_temp/

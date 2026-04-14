@@ -21,18 +21,19 @@ struct AppPaths {
 
 fn resolve_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, String> {
     // Try bundled paths first (production mode)
+    // Tauri 2 places resources in the resource_dir root
     if let Ok(resource_dir) = app_handle.path().resource_dir() {
         let python_bin = if cfg!(target_os = "windows") {
-            resource_dir.join("python").join("python.exe")
+            resource_dir.join("resources").join("python").join("python.exe")
         } else {
-            resource_dir.join("python").join("bin").join("python3")
+            resource_dir.join("resources").join("python").join("bin").join("python3")
         };
         let adb_bin = if cfg!(target_os = "windows") {
-            resource_dir.join("adb").join("adb.exe")
+            resource_dir.join("resources").join("adb").join("adb.exe")
         } else {
-            resource_dir.join("adb").join("adb")
+            resource_dir.join("resources").join("adb").join("adb")
         };
-        let engine_script = resource_dir.join("engine").join("engine.py");
+        let engine_script = resource_dir.join("resources").join("engine").join("engine.py");
 
         if python_bin.exists() && engine_script.exists() {
             // Production: flows + config in app_data_dir (writable)
@@ -40,10 +41,10 @@ fn resolve_paths(app_handle: &tauri::AppHandle) -> Result<AppPaths, String> {
                 .map_err(|e| format!("Cannot resolve app data dir: {}", e))?;
             let flows_dir = data_dir.join("flows");
 
-            // First launch: create flows dir + copy templates
+            // First launch: create flows dir + copy templates from bundle
             if !flows_dir.exists() {
                 fs::create_dir_all(&flows_dir).map_err(|e| e.to_string())?;
-                let bundled_flows = resource_dir.join("flows");
+                let bundled_flows = resource_dir.join("resources").join("flows");
                 if bundled_flows.exists() {
                     copy_dir_recursive(&bundled_flows, &flows_dir)?;
                 }

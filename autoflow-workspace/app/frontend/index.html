@@ -13,16 +13,6 @@
             sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
             mono: ['IBM Plex Mono', 'monospace'],
           },
-          colors: {
-            bg: { 0: '#0d1117', 1: '#161b22', 2: '#21262d', 3: '#30363d' },
-            fg: { 0: '#f0f6fc', 1: '#c9d1d9', 2: '#8b949e', 3: '#484f58' },
-            accent: '#58a6ff',
-            green: '#3fb950',
-            red: '#f85149',
-            amber: '#d29922',
-            purple: '#bc8cff',
-            cyan: '#39d2c0',
-          }
         }
       }
     }
@@ -30,97 +20,150 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root, [data-theme="dark"] {
+      --c-bg-0: #1e2530; --c-bg-1: #252d3a; --c-bg-2: #2e3847; --c-bg-3: #3d4a5c;
+      --c-bg-card: #283040; --c-bg-console: #1a2030;
+      --c-fg-0: #f0f4f8; --c-fg-1: #cdd5df; --c-fg-2: #97a3b6; --c-fg-3: #5b6b82;
+      --c-accent: #6ab0ff; --c-green: #4cc764; --c-red: #f8706a;
+      --c-amber: #e0a832; --c-purple: #c9a0ff; --c-cyan: #45dece;
+      /* Semi-transparent */
+      --c-accent-a04: rgba(106,176,255,.04); --c-accent-a08: rgba(106,176,255,.08);
+      --c-accent-a10: rgba(106,176,255,.10); --c-accent-a12: rgba(106,176,255,.12);
+      --c-accent-a15: rgba(106,176,255,.15); --c-accent-a20: rgba(106,176,255,.20);
+      --c-accent-a30: rgba(106,176,255,.30);
+      --c-green-a06: rgba(76,199,100,.06); --c-green-a08: rgba(76,199,100,.08);
+      --c-green-a12: rgba(76,199,100,.12); --c-green-a15: rgba(76,199,100,.15);
+      --c-red-a12: rgba(248,112,106,.12); --c-red-a15: rgba(248,112,106,.15);
+      --c-red-a20: rgba(248,112,106,.20);
+      --c-amber-a12: rgba(224,168,50,.12); --c-amber-a20: rgba(224,168,50,.20);
+      --c-purple-a12: rgba(201,160,255,.12); --c-cyan-a12: rgba(69,222,206,.12);
+      --c-gray-a04: rgba(151,163,182,.04); --c-gray-a12: rgba(151,163,182,.12);
+      --c-hover-15: rgba(48,54,61,.15); --c-hover-20: rgba(48,54,61,.20);
+      --c-hover-25: rgba(48,54,61,.25); --c-hover-40: rgba(48,54,61,.40);
+      --c-hover-50: rgba(48,54,61,.50);
+      --c-border-30: rgba(33,38,45,.30); --c-border-50: rgba(33,38,45,.50);
+      --c-border-60: rgba(33,38,45,.60);
+      --c-overlay: rgba(0,0,0,.6); --c-overlay-heavy: rgba(0,0,0,.8);
+      --c-shadow: rgba(0,0,0,.5); --c-shadow-lg: rgba(0,0,0,.6);
+      --c-btn-hover: #3d444d;
+    }
+    [data-theme="light"] {
+      --c-bg-0: #eef1f5; --c-bg-1: #f8f9fb; --c-bg-2: #e2e6ec; --c-bg-3: #c8d0da;
+      --c-bg-card: #ffffff; --c-bg-console: #f0f2f5;
+      --c-fg-0: #1a1d23; --c-fg-1: #374151; --c-fg-2: #64748b; --c-fg-3: #94a3b8;
+      --c-accent: #2563eb; --c-green: #16a34a; --c-red: #dc2626;
+      --c-amber: #ca8a04; --c-purple: #7c3aed; --c-cyan: #0891b2;
+      --c-accent-a04: rgba(37,99,235,.04); --c-accent-a08: rgba(37,99,235,.08);
+      --c-accent-a10: rgba(37,99,235,.10); --c-accent-a12: rgba(37,99,235,.10);
+      --c-accent-a15: rgba(37,99,235,.12); --c-accent-a20: rgba(37,99,235,.15);
+      --c-accent-a30: rgba(37,99,235,.20);
+      --c-green-a06: rgba(22,163,74,.06); --c-green-a08: rgba(22,163,74,.08);
+      --c-green-a12: rgba(22,163,74,.10); --c-green-a15: rgba(22,163,74,.12);
+      --c-red-a12: rgba(220,38,38,.10); --c-red-a15: rgba(220,38,38,.12);
+      --c-red-a20: rgba(220,38,38,.15);
+      --c-amber-a12: rgba(202,138,4,.10); --c-amber-a20: rgba(202,138,4,.15);
+      --c-purple-a12: rgba(124,58,237,.10); --c-cyan-a12: rgba(8,145,178,.10);
+      --c-gray-a04: rgba(100,116,139,.04); --c-gray-a12: rgba(100,116,139,.10);
+      --c-hover-15: rgba(0,0,0,.03); --c-hover-20: rgba(0,0,0,.04);
+      --c-hover-25: rgba(0,0,0,.05); --c-hover-40: rgba(0,0,0,.06);
+      --c-hover-50: rgba(0,0,0,.08);
+      --c-border-30: rgba(0,0,0,.06); --c-border-50: rgba(0,0,0,.08);
+      --c-border-60: rgba(0,0,0,.10);
+      --c-overlay: rgba(0,0,0,.3); --c-overlay-heavy: rgba(0,0,0,.5);
+      --c-shadow: rgba(0,0,0,.08); --c-shadow-lg: rgba(0,0,0,.12);
+      --c-btn-hover: #d4dae2;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--c-bg-0); color: var(--c-fg-1); overflow: hidden; height: 100vh; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+    ::-webkit-scrollbar-thumb { background: var(--c-bg-3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--c-fg-3); }
     .badge { padding: 1px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
-    .b-green { background: rgba(63,185,80,.12); color: #3fb950; }
-    .b-red { background: rgba(248,81,73,.12); color: #f85149; }
-    .b-amber { background: rgba(210,153,34,.12); color: #d29922; }
-    .b-gray { background: rgba(139,148,158,.12); color: #8b949e; }
-    .b-blue { background: rgba(88,166,255,.12); color: #58a6ff; }
-    .b-cyan { background: rgba(57,210,192,.12); color: #39d2c0; }
-    .b-purple { background: rgba(188,140,255,.12); color: #bc8cff; }
-    .btn { height: 32px; padding: 0 16px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; background: #30363d; color: #c9d1d9; font-family: inherit; transition: all .15s; }
-    .btn:hover { background: #3d444d; color: #f0f6fc; }
-    .btn-primary { background: #30363d; color: #f0f6fc; }
-    .btn-primary:hover { background: #3d444d; }
-    .btn-danger { background: rgba(248,81,73,.12); color: #f85149; }
-    .btn-danger:hover { background: rgba(248,81,73,.2); }
-    .btn-accent { background: rgba(88,166,255,.12); color: #58a6ff; }
-    .btn-accent:hover { background: rgba(88,166,255,.2); }
-    .btn-warn { background: rgba(210,153,34,.12); color: #d29922; }
-    .btn-warn:hover { background: rgba(210,153,34,.2); }
-    .inp { background: #161b22; border: 1px solid #30363d; border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: #c9d1d9; font-family: inherit; outline: none; transition: border-color .15s; }
-    .inp:focus { border-color: #58a6ff; }
+    .b-green { background: var(--c-green-a12); color: var(--c-green); }
+    .b-red { background: var(--c-red-a12); color: var(--c-red); }
+    .b-amber { background: var(--c-amber-a12); color: var(--c-amber); }
+    .b-gray { background: var(--c-gray-a12); color: var(--c-fg-2); }
+    .b-blue { background: var(--c-accent-a12); color: var(--c-accent); }
+    .b-cyan { background: var(--c-cyan-a12); color: var(--c-cyan); }
+    .b-purple { background: var(--c-purple-a12); color: var(--c-purple); }
+    .btn { height: 32px; padding: 0 16px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; background: var(--c-bg-3); color: var(--c-fg-1); font-family: inherit; transition: all .15s; }
+    .btn:hover { background: var(--c-btn-hover); color: var(--c-fg-0); }
+    .btn-primary { background: var(--c-bg-3); color: var(--c-fg-0); }
+    .btn-primary:hover { background: var(--c-btn-hover); }
+    .btn-danger { background: var(--c-red-a12); color: var(--c-red); }
+    .btn-danger:hover { background: var(--c-red-a20); }
+    .btn-accent { background: var(--c-accent-a12); color: var(--c-accent); }
+    .btn-accent:hover { background: var(--c-accent-a20); }
+    .btn-warn { background: var(--c-amber-a12); color: var(--c-amber); }
+    .btn-warn:hover { background: var(--c-amber-a20); }
+    .inp { background: var(--c-bg-1); border: 1px solid var(--c-bg-3); border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: var(--c-fg-1); font-family: inherit; outline: none; transition: border-color .15s; }
+    .inp:focus { border-color: var(--c-accent); }
     textarea.inp { height: auto; padding: 6px 10px; }
-    select { background: #161b22; border: 1px solid #30363d; border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: #c9d1d9; font-family: inherit; outline: none; transition: border-color .15s; }
-    select:focus { border-color: #58a6ff; }
-    .stat { background: #1c2128; border: none; border-radius: 10px; padding: 14px; }
-    .card { background: #1c2128; border: none; border-radius: 10px; }
+    select { background: var(--c-bg-1); border: 1px solid var(--c-bg-3); border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: var(--c-fg-1); font-family: inherit; outline: none; transition: border-color .15s; }
+    select:focus { border-color: var(--c-accent); }
+    .stat { background: var(--c-bg-card); border: none; border-radius: 10px; padding: 14px; }
+    .card { background: var(--c-bg-card); border: none; border-radius: 10px; }
     .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .tbl th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600; color: #484f58; text-transform: uppercase; letter-spacing: .5px; background: #1c2128; border-bottom: 1px solid rgba(33,38,45,.5); position: sticky; top: 0; z-index: 5; }
-    .tbl td { padding: 7px 12px; border-bottom: 1px solid rgba(33,38,45,.3); }
-    .tbl tr:hover td { background: rgba(48,54,61,.15); }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: #8b949e; cursor: pointer; transition: all .1s; border-radius: 5px; }
-    .nav-item:hover { color: #c9d1d9; background: rgba(48,54,61,.5); }
-    .nav-item.active { color: #58a6ff; background: rgba(88,166,255,.08); }
-    .sb-item:hover { background: rgba(48,54,61,.4); }
-    .sb-item:hover span { color: #c9d1d9 !important; }
-    .sb-item.sb-active { background: rgba(88,166,255,.1); }
-    .nav-tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; background: #21262d; border: 1px solid #30363d; color: #f0f6fc; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 100; }
+    .tbl th { text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600; color: var(--c-fg-3); text-transform: uppercase; letter-spacing: .5px; background: var(--c-bg-card); border-bottom: 1px solid var(--c-border-50); position: sticky; top: 0; z-index: 5; }
+    .tbl td { padding: 7px 12px; border-bottom: 1px solid var(--c-border-30); }
+    .tbl tr:hover td { background: var(--c-hover-15); }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: var(--c-fg-2); cursor: pointer; transition: all .1s; border-radius: 5px; }
+    .nav-item:hover { color: var(--c-fg-1); background: var(--c-hover-50); }
+    .nav-item.active { color: var(--c-accent); background: var(--c-accent-a08); }
+    .sb-item:hover { background: var(--c-hover-40); }
+    .sb-item:hover span { color: var(--c-fg-1) !important; }
+    .sb-item.sb-active { background: var(--c-accent-a10); }
+    .nav-tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; background: var(--c-bg-2); border: 1px solid var(--c-bg-3); color: var(--c-fg-0); font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 100; }
     .nav-item:hover .nav-tooltip { opacity: 1; }
     .sb-item:hover .nav-tooltip { opacity: 1; }
-    .step-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid rgba(33,38,45,.3); font-size: 12px; transition: background .1s; }
-    .step-row:hover { background: rgba(48,54,61,.15); }
+    .step-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--c-border-30); font-size: 12px; transition: background .1s; }
+    .step-row:hover { background: var(--c-hover-15); }
     .step-row .act { opacity: 0; transition: opacity .1s; }
     .step-row:hover .act { opacity: 1; }
-    .q-icon-btn { width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#8b949e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative; }
-    .q-icon-btn:hover { background:#30363d;color:#f0f6fc; }
-    .q-icon-btn.primary { color:#58a6ff; } .q-icon-btn.primary:hover { background:rgba(88,166,255,.15); }
-    .q-icon-btn.danger { color:#f85149; } .q-icon-btn.danger:hover { background:rgba(248,81,73,.12); }
-    .q-icon-btn.success { color:#3fb950; } .q-icon-btn.success:hover { background:rgba(63,185,80,.12); }
-    .q-icon-btn.accent { color:#58a6ff; } .q-icon-btn.accent:hover { background:rgba(88,166,255,.12); }
-    .mon-icon-btn { width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:#8b949e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s; }
-    .mon-icon-btn:hover { background:#30363d;color:#f0f6fc; }
-    .mon-icon-btn[data-action="stop-all"] { color:#f85149; }
-    .mon-icon-btn[data-action="stop-all"]:hover { background:rgba(248,81,73,.15); }
-    .monitor-card { background: #1c2128; border: none; border-radius: 10px; padding: 16px; position: relative; overflow: hidden; }
+    .q-icon-btn { width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:var(--c-fg-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative; }
+    .q-icon-btn:hover { background:var(--c-bg-3);color:var(--c-fg-0); }
+    .q-icon-btn.primary { color:var(--c-accent); } .q-icon-btn.primary:hover { background:var(--c-accent-a15); }
+    .q-icon-btn.danger { color:var(--c-red); } .q-icon-btn.danger:hover { background:var(--c-red-a12); }
+    .q-icon-btn.success { color:var(--c-green); } .q-icon-btn.success:hover { background:var(--c-green-a12); }
+    .q-icon-btn.accent { color:var(--c-accent); } .q-icon-btn.accent:hover { background:var(--c-accent-a12); }
+    .mon-icon-btn { width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:var(--c-fg-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s; }
+    .mon-icon-btn:hover { background:var(--c-bg-3);color:var(--c-fg-0); }
+    .mon-icon-btn[data-action="stop-all"] { color:var(--c-red); }
+    .mon-icon-btn[data-action="stop-all"]:hover { background:var(--c-red-a15); }
+    .monitor-card { background: var(--c-bg-card); border: none; border-radius: 10px; padding: 16px; position: relative; overflow: hidden; }
     .monitor-card .progress-bg { position: absolute; left: 0; top: 0; height: 100%; opacity: .04; transition: width .3s; }
     .console-line { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.8; white-space: pre; padding: 0 2px; border-radius: 3px; }
-    .console-line:hover { background: rgba(88,166,255,.04); }
-    .q-video-link:hover { text-decoration: underline !important; color: #58a6ff !important; }
-    .c-prefix { color: #3fb950; margin-right: 6px; font-weight: 600; }
-    .c-time { color: #30363d; margin-right: 8px; font-size: 10px; }
-    .view-tog { display: flex; background: #30363d; border-radius: 8px; padding: 2px; border: none; }
-    .view-tog button { padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 600; color: #8b949e; border: none; cursor: pointer; background: transparent; font-family: inherit; transition: all .15s; }
-    .view-tog button.on { background: #1c2128; color: #f0f6fc; }
+    .console-line:hover { background: var(--c-accent-a04); }
+    .q-video-link:hover { text-decoration: underline !important; color: var(--c-accent) !important; }
+    .c-prefix { color: var(--c-green); margin-right: 6px; font-weight: 600; }
+    .c-time { color: var(--c-bg-3); margin-right: 8px; font-size: 10px; }
+    .view-tog { display: flex; background: var(--c-bg-3); border-radius: 8px; padding: 2px; border: none; }
+    .view-tog button { padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 600; color: var(--c-fg-2); border: none; cursor: pointer; background: transparent; font-family: inherit; transition: all .15s; }
+    .view-tog button.on { background: var(--c-bg-card); color: var(--c-fg-0); }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
     .pulse { animation: pulse 2s ease-in-out infinite; }
   </style>
 </head>
 <body>
-<div style="display:flex;height:100vh;background:#161b22">
+<div style="display:flex;height:100vh;background:var(--c-bg-1)">
 
   <!-- Sidebar -->
-  <aside id="sidebar" style="width:200px;background:#0d1117;display:flex;flex-shrink:0;transition:width .15s;border-radius:0 12px 12px 0;overflow:hidden">
+  <aside id="sidebar" style="width:200px;background:var(--c-bg-0);display:flex;flex-shrink:0;transition:width .15s;border-radius:0 12px 12px 0;overflow:hidden">
     <div id="sidebar-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <!-- Rendered by sidebar.js -->
     </div>
     <!-- Drag handle (invisible, just functional) -->
-    <div id="sidebar-drag" style="width:4px;cursor:ew-resize;background:transparent;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='rgba(88,166,255,.3)'" onmouseout="this.style.background='transparent'"></div>
+    <div id="sidebar-drag" style="width:4px;cursor:ew-resize;background:transparent;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='var(--c-accent-a30)'" onmouseout="this.style.background='transparent'"></div>
   </aside>
 
   <!-- Main Area -->
-  <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:#161b22">
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:var(--c-bg-1)">
 
     <!-- Header Bar -->
-    <header id="app-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#161b22;flex-shrink:0">
+    <header id="app-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--c-bg-1);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
-        <span id="header-page-title" style="font-size:12px;font-weight:600;color:#f0f6fc"></span>
+        <span id="header-page-title" style="font-size:12px;font-weight:600;color:var(--c-fg-0)"></span>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <div id="header-device-status" style="display:flex;align-items:center;gap:5px"></div>
@@ -129,7 +172,7 @@
     </header>
 
     <!-- Page Content -->
-    <main id="page-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;background:#161b22">
+    <main id="page-content" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;background:var(--c-bg-1)">
       <div id="page-dashboard" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
       <div id="page-queue" class="page-panel" style="display:none;flex:1;flex-direction:column;min-height:0"></div>
       <div id="page-devices" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
@@ -142,59 +185,59 @@
     <!-- Console Panel (resizable) -->
     <div id="console-panel" style="flex-shrink:0;display:flex;flex-direction:column">
       <!-- Drag handle -->
-      <div id="console-drag" style="height:3px;cursor:ns-resize;background:transparent;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='rgba(88,166,255,.3)'" onmouseout="this.style.background='transparent'"></div>
+      <div id="console-drag" style="height:3px;cursor:ns-resize;background:transparent;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='var(--c-accent-a30)'" onmouseout="this.style.background='transparent'"></div>
       <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:32px;background:#0a0e14;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:32px;background:var(--c-bg-console);flex-shrink:0">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="display:flex;gap:5px;align-items:center">
-            <div style="width:10px;height:10px;border-radius:50%;background:#f85149;opacity:.7"></div>
-            <div style="width:10px;height:10px;border-radius:50%;background:#d29922;opacity:.7"></div>
-            <div style="width:10px;height:10px;border-radius:50%;background:#3fb950;opacity:.7"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--c-red);opacity:.7"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--c-amber);opacity:.7"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--c-green);opacity:.7"></div>
           </div>
-          <span style="font-size:11px;color:#484f58;font-family:'IBM Plex Mono',monospace;font-weight:500">console</span>
-          <span id="console-line-count" style="font-size:9px;color:#30363d;font-family:'IBM Plex Mono',monospace"></span>
+          <span style="font-size:11px;color:var(--c-fg-3);font-family:'IBM Plex Mono',monospace;font-weight:500">console</span>
+          <span id="console-line-count" style="font-size:9px;color:var(--c-bg-3);font-family:'IBM Plex Mono',monospace"></span>
         </div>
         <div style="display:flex;gap:2px">
-          <button id="btn-toggle-console" title="Expand / Collapse" style="background:none;border:none;cursor:pointer;color:#30363d;padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='#8b949e'" onmouseout="this.style.color='#30363d'">
+          <button id="btn-toggle-console" title="Expand / Collapse" style="background:none;border:none;cursor:pointer;color:var(--c-bg-3);padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--c-fg-2)'" onmouseout="this.style.color='var(--c-bg-3)'">
             <svg id="console-expand-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
           </button>
-          <button id="btn-hide-console" title="Hide console" style="background:none;border:none;cursor:pointer;color:#30363d;padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='#8b949e'" onmouseout="this.style.color='#30363d'">
+          <button id="btn-hide-console" title="Hide console" style="background:none;border:none;cursor:pointer;color:var(--c-bg-3);padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--c-fg-2)'" onmouseout="this.style.color='var(--c-bg-3)'">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
           </button>
-          <button id="btn-clear-logs" title="Clear" style="background:none;border:none;cursor:pointer;color:#30363d;padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='#8b949e'" onmouseout="this.style.color='#30363d'">
+          <button id="btn-clear-logs" title="Clear" style="background:none;border:none;cursor:pointer;color:var(--c-bg-3);padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--c-fg-2)'" onmouseout="this.style.color='var(--c-bg-3)'">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </div>
       <!-- Output -->
-      <div id="console-output" style="padding:10px 14px;height:150px;overflow:auto;transition:height .15s;background:#0a0e14">
-        <div class="console-line"><span class="c-prefix">$</span><span style="color:#58a6ff"> AUV ready</span></div>
+      <div id="console-output" style="padding:10px 14px;height:150px;overflow:auto;transition:height .15s;background:var(--c-bg-console)">
+        <div class="console-line"><span class="c-prefix">$</span><span style="color:var(--c-accent)"> AUV ready</span></div>
       </div>
     </div>
   </div>
 </div>
 
   <!-- Video Preview Modal -->
-  <div id="video-preview-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;cursor:pointer" onclick="this.style.display='none';this.querySelector('video')?.pause()">
+  <div id="video-preview-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--c-overlay-heavy);z-index:200;align-items:center;justify-content:center;cursor:pointer" onclick="this.style.display='none';this.querySelector('video')?.pause()">
     <div style="position:relative;max-width:640px;width:90%;max-height:80vh" onclick="event.stopPropagation()">
-      <video id="video-preview-player" controls style="width:100%;max-height:80vh;border-radius:12px;background:#000;box-shadow:0 16px 48px rgba(0,0,0,.6)"></video>
-      <p id="video-preview-name" style="text-align:center;font-size:11px;color:#8b949e;margin-top:8px;font-family:'IBM Plex Mono',monospace"></p>
+      <video id="video-preview-player" controls style="width:100%;max-height:80vh;border-radius:12px;background:#000;box-shadow:0 16px 48px var(--c-shadow-lg)"></video>
+      <p id="video-preview-name" style="text-align:center;font-size:11px;color:var(--c-fg-2);margin-top:8px;font-family:'IBM Plex Mono',monospace"></p>
     </div>
   </div>
 
   <!-- Assign Modal -->
-  <div id="assign-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center">
-    <div style="background:#1c2128;border:none;border-radius:12px;padding:20px;width:320px;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+  <div id="assign-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--c-overlay);z-index:100;align-items:center;justify-content:center">
+    <div style="background:var(--c-bg-card);border:none;border-radius:12px;padding:20px;width:320px;box-shadow:0 12px 40px var(--c-shadow)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <p style="font-size:13px;font-weight:700;color:#f0f6fc">Assign to selected <span id="modal-count" style="color:#58a6ff"></span></p>
-        <button id="modal-close" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:16px;line-height:1">&times;</button>
+        <p style="font-size:13px;font-weight:700;color:var(--c-fg-0)">Assign to selected <span id="modal-count" style="color:var(--c-accent)"></span></p>
+        <button id="modal-close" style="background:none;border:none;color:var(--c-fg-3);cursor:pointer;font-size:16px;line-height:1">&times;</button>
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">Phone</label>
+        <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">Phone</label>
         <select id="modal-phone" style="width:100%;padding:6px 8px"><option>Auto-distribute</option></select>
       </div>
       <div style="margin-bottom:16px">
-        <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">Flow</label>
+        <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">Flow</label>
         <select id="modal-flow" style="width:100%;padding:6px 8px"><option value="shopee_upload">Shopee Video</option><option value="tiktok_upload">TikTok Upload</option></select>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">

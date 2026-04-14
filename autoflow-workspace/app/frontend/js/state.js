@@ -5,6 +5,8 @@ const state = {
   activeRoute: 'dashboard',
   sidebarCollapsed: false,
   consoleVisible: true,
+  theme: 'dark',
+  lang: 'en',
 
   // Platform & Flow
   platform: 'tiktok_upload',

@@ -15,7 +15,7 @@ export function renderConsole() {
 
   const logs = state.logs;
   if (!logs.length) {
-    el.innerHTML = '<div class="console-line"><span class="c-prefix">$</span><span style="color:#58a6ff">AUV ready</span></div>';
+    el.innerHTML = '<div class="console-line"><span class="c-prefix">$</span><span style="color:var(--c-accent)">AUV ready</span></div>';
     updateLineCount(0);
     return;
   }
@@ -28,11 +28,11 @@ export function renderConsole() {
     const isAdb = line.includes('ADB:');
 
     let prefix, color, tag;
-    if (isError)       { prefix = '!'; color = '#f85149'; tag = 'ERR'; }
-    else if (isSystem) { prefix = '$'; color = '#58a6ff'; tag = 'SYS'; }
-    else if (isMock)   { prefix = '~'; color = '#d29922'; tag = 'DBG'; }
-    else if (isAdb)    { prefix = '>';  color = '#484f58'; tag = 'ADB'; }
-    else               { prefix = '>'; color = '#3fb950'; tag = ''; }
+    if (isError)       { prefix = '!'; color = 'var(--c-red)'; tag = 'ERR'; }
+    else if (isSystem) { prefix = '$'; color = 'var(--c-accent)'; tag = 'SYS'; }
+    else if (isMock)   { prefix = '~'; color = 'var(--c-amber)'; tag = 'DBG'; }
+    else if (isAdb)    { prefix = '>';  color = 'var(--c-fg-3)'; tag = 'ADB'; }
+    else               { prefix = '>'; color = 'var(--c-green)'; tag = ''; }
 
     // Clean up the log line — remove [SYSTEM], [ERROR] etc from display
     let clean = escHtml(line)

@@ -27,7 +27,7 @@ function previewVideo(path) {
 
 const FLOW_ICONS = {
   shopee: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#EE4D2D"><path d="M12 2C9.24 2 7 4.24 7 7h2c0-1.66 1.34-3 3-3s3 1.34 3 3h2c0-2.76-2.24-5-5-5zm-7 7c-.55 0-1 .45-1 1v1l1.53 8.55C5.7 20.38 6.4 21 7.23 21h9.54c.83 0 1.53-.62 1.7-1.45L20 11v-1c0-.55-.45-1-1-1H5zm7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>',
-  tiktok: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#f0f6fc"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.75a8.18 8.18 0 004.76 1.52V6.84a4.84 4.84 0 01-1-.15z"/></svg>',
+  tiktok: '<svg width="16" height="16" viewBox="0 0 24 24" fill="var(--c-fg-0)"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.75a8.18 8.18 0 004.76 1.52V6.84a4.84 4.84 0 01-1-.15z"/></svg>',
 };
 
 let expandedRow = -1; // which row is expanded for editing
@@ -289,13 +289,13 @@ export async function render() {
   panel.innerHTML = `
     <!-- Toolbar -->
     <div style="padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0">
-      <span style="font-size:11px;font-weight:600;color:#f0f6fc">${queue.length} videos</span>
-      <span style="font-size:10px;color:#30363d">|</span>
-      <span style="font-size:10px;color:#3fb950;font-weight:500">${validCount} ready</span>
-      ${counts.success ? `<span style="font-size:10px;color:#3fb950">${counts.success} done</span>` : ''}
-      ${counts.failed ? `<span style="font-size:10px;color:#f85149">${counts.failed} failed</span>` : ''}
-      ${counts.uploading ? `<span style="font-size:10px;color:#d29922">${counts.uploading} uploading</span>` : ''}
-      <span id="q-sel-info" style="font-size:10px;color:#58a6ff;display:none">(<span>0</span> selected)</span>
+      <span style="font-size:11px;font-weight:600;color:var(--c-fg-0)">${queue.length} videos</span>
+      <span style="font-size:10px;color:var(--c-bg-3)">|</span>
+      <span style="font-size:10px;color:var(--c-green);font-weight:500">${validCount} ready</span>
+      ${counts.success ? `<span style="font-size:10px;color:var(--c-green)">${counts.success} done</span>` : ''}
+      ${counts.failed ? `<span style="font-size:10px;color:var(--c-red)">${counts.failed} failed</span>` : ''}
+      ${counts.uploading ? `<span style="font-size:10px;color:var(--c-amber)">${counts.uploading} uploading</span>` : ''}
+      <span id="q-sel-info" style="font-size:10px;color:var(--c-accent);display:none">(<span>0</span> selected)</span>
       <div style="flex:1"></div>
       <button class="btn" id="q-assign-btn" data-action="assign-selected">Assign</button>
       ${counts.failed ? `<button class="btn btn-danger" data-action="retry-failed">Retry</button>` : ''}
@@ -310,16 +310,16 @@ export async function render() {
     <!-- Table -->
     <div style="flex:1;overflow:auto;padding:8px 8px 0">
       ${!queue.length ? `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#484f58">
-          <svg width="40" height="40" fill="none" stroke="#21262d" stroke-width="1" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--c-fg-3)">
+          <svg width="40" height="40" fill="none" stroke="var(--c-bg-2)" stroke-width="1" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
           <p style="font-size:12px">Queue is empty</p>
-          <p style="font-size:10px;color:#30363d">Click "+ Add" to add videos or "Import CSV" to bulk import</p>
+          <p style="font-size:10px;color:var(--c-bg-3)">Click "+ Add" to add videos or "Import CSV" to bulk import</p>
         </div>
       ` : `
         <div class="card" style="overflow:visible">
         <table class="tbl">
           <thead><tr>
-            <th style="width:28px;padding:6px 10px"><input type="checkbox" id="q-selall-tbl" style="accent-color:#58a6ff"></th>
+            <th style="width:28px;padding:6px 10px"><input type="checkbox" id="q-selall-tbl" style="accent-color:var(--c-accent)"></th>
             <th style="width:28px">#</th>
             <th>Video</th>
             <th>Caption</th>
@@ -345,43 +345,43 @@ export async function render() {
 
               return `
               <!-- Summary row -->
-              <tr data-qrow="${i}" style="cursor:pointer;${dimStyle}${isOpen ? 'background:rgba(88,166,255,.04);border-left:2px solid #58a6ff' : ''}" onmouseover="if(!${isOpen})this.style.background='rgba(48,54,61,.2)'" onmouseout="if(!${isOpen})this.style.background='${isOpen ? 'rgba(88,166,255,.04)' : 'transparent'}'">
-                <td style="padding:4px 10px" onclick="event.stopPropagation()"><input type="checkbox" class="q-cb" data-i="${i}" style="accent-color:#58a6ff" ${isDone ? 'disabled' : ''}></td>
-                <td style="color:#30363d;font-size:10px;font-family:'IBM Plex Mono',monospace">${i + 1}</td>
+              <tr data-qrow="${i}" style="cursor:pointer;${dimStyle}${isOpen ? 'background:var(--c-accent-a04);border-left:2px solid var(--c-accent)' : ''}" onmouseover="if(!${isOpen})this.style.background='var(--c-hover-20)'" onmouseout="if(!${isOpen})this.style.background='${isOpen ? 'var(--c-accent-a04)' : 'transparent'}'">
+                <td style="padding:4px 10px" onclick="event.stopPropagation()"><input type="checkbox" class="q-cb" data-i="${i}" style="accent-color:var(--c-accent)" ${isDone ? 'disabled' : ''}></td>
+                <td style="color:var(--c-bg-3);font-size:10px;font-family:'IBM Plex Mono',monospace">${i + 1}</td>
                 <td>
                   <div style="display:flex;align-items:center;gap:6px">
                     ${isDone
                       ? `<div style="width:28px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                          <svg width="14" height="14" fill="none" stroke="#3fb950" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                          <svg width="14" height="14" fill="none" stroke="var(--c-green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
                         </div>`
-                      : `<div style="width:28px;height:20px;background:#21262d;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                          <svg width="10" height="10" fill="none" stroke="#484f58" stroke-width="2" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                      : `<div style="width:28px;height:20px;background:var(--c-bg-2);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                          <svg width="10" height="10" fill="none" stroke="var(--c-fg-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                         </div>`
                     }
-                    <span class="q-video-link" data-video-path="${esc(item.video_path || '')}" style="font-size:10px;color:${isDone ? '#3fb950' : '#c9d1d9'};font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:${item.video_path ? 'pointer' : 'default'}${isDone ? ';text-decoration:line-through' : ''}" title="${esc(item.video_path || '')}">${esc(fileName || 'No video')}</span>
+                    <span class="q-video-link" data-video-path="${esc(item.video_path || '')}" style="font-size:10px;color:${isDone ? 'var(--c-green)' : 'var(--c-fg-1)'};font-family:'IBM Plex Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:${item.video_path ? 'pointer' : 'default'}${isDone ? ';text-decoration:line-through' : ''}" title="${esc(item.video_path || '')}">${esc(fileName || 'No video')}</span>
                   </div>
                 </td>
-                <td style="color:#8b949e;font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(captionPreview) || '<span style="color:#30363d">No caption</span>'}</td>
+                <td style="color:var(--c-fg-2);font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(captionPreview) || '<span style="color:var(--c-bg-3)">No caption</span>'}</td>
                 <td style="text-align:center"><span title="${flowId === 'shopee_upload' ? 'Shopee Video' : flowId === 'tiktok_upload' ? 'TikTok Upload' : flowId}" style="cursor:default;display:inline-flex">${FLOW_ICONS[flowBrand] || flowId}</span></td>
-                <td style="font-size:10px;color:#8b949e">${phoneLabel}</td>
+                <td style="font-size:10px;color:var(--c-fg-2)">${phoneLabel}</td>
                 <td>
                   ${status === 'uploading'
-                    ? '<div style="display:flex;align-items:center;gap:3px"><div style="width:40px;height:3px;background:#21262d;border-radius:2px;overflow:hidden"><div style="width:65%;height:100%;background:#d29922;border-radius:2px"></div></div><span style="font-size:8px;color:#d29922">65%</span></div>'
+                    ? '<div style="display:flex;align-items:center;gap:3px"><div style="width:40px;height:3px;background:var(--c-bg-2);border-radius:2px;overflow:hidden"><div style="width:65%;height:100%;background:var(--c-amber);border-radius:2px"></div></div><span style="font-size:8px;color:var(--c-amber)">65%</span></div>'
                     : '<span class="badge b-' + b.c + '">' + b.l + '</span>'
                   }
                 </td>
                 <td>
                   <div style="position:relative">
-                    <button class="q-kebab" data-row="${i}" style="background:none;border:none;color:#8b949e;cursor:pointer;padding:4px 6px;border-radius:3px;line-height:0;transition:all .1s" onmouseover="this.style.color='#f0f6fc';this.style.background='#21262d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">
+                    <button class="q-kebab" data-row="${i}" style="background:none;border:none;color:var(--c-fg-2);cursor:pointer;padding:4px 6px;border-radius:3px;line-height:0;transition:all .1s" onmouseover="this.style.color='var(--c-fg-0)';this.style.background='var(--c-bg-2)'" onmouseout="this.style.color='var(--c-fg-2)';this.style.background='none'">
                       <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="pointer-events:none"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
                     </button>
-                    <div class="q-menu" data-menu="${i}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;width:140px;background:#1c2128;border:none;border-radius:10px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5)">
-                      <button data-action="duplicate" data-row="${i}" style="width:100%;text-align:left;padding:7px 12px;font-size:11px;color:#c9d1d9;border:none;background:transparent;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='#21262d'" onmouseout="this.style.background='transparent'">
+                    <div class="q-menu" data-menu="${i}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;width:140px;background:var(--c-bg-card);border:none;border-radius:10px;z-index:50;overflow:hidden;box-shadow:0 8px 24px var(--c-shadow)">
+                      <button data-action="duplicate" data-row="${i}" style="width:100%;text-align:left;padding:7px 12px;font-size:11px;color:var(--c-fg-1);border:none;background:transparent;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--c-bg-2)'" onmouseout="this.style.background='transparent'">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         Duplicate
                       </button>
-                      <div style="border-top:1px solid #21262d"></div>
-                      <button data-action="delete" data-row="${i}" style="width:100%;text-align:left;padding:7px 12px;font-size:11px;color:#f85149;border:none;background:transparent;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='#21262d'" onmouseout="this.style.background='transparent'">
+                      <div style="border-top:1px solid var(--c-bg-2)"></div>
+                      <button data-action="delete" data-row="${i}" style="width:100%;text-align:left;padding:7px 12px;font-size:11px;color:var(--c-red);border:none;background:transparent;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--c-bg-2)'" onmouseout="this.style.background='transparent'">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         Delete
                       </button>
@@ -392,10 +392,10 @@ export async function render() {
               <!-- Expanded edit form -->
               ${isOpen ? `
               <tr>
-                <td colspan="8" style="padding:0;border-bottom:1px solid #21262d">
-                  <div style="padding:12px 16px 12px 48px;background:rgba(88,166,255,.02);display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <td colspan="8" style="padding:0;border-bottom:1px solid var(--c-bg-2)">
+                  <div style="padding:12px 16px 12px 48px;background:var(--c-accent-a04);display:grid;grid-template-columns:1fr 1fr;gap:8px">
                     <div>
-                      <label style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">Flow</label>
+                      <label style="font-size:9px;color:var(--c-fg-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">Flow</label>
                       <select data-row="${i}" data-field="_flow" class="inp" style="width:100%;font-size:10px">
                         <option value="shopee_upload" ${(item._flow || state.platform) === 'shopee_upload' ? 'selected' : ''}>Shopee Video</option>
                         <option value="tiktok_upload" ${(item._flow || state.platform) === 'tiktok_upload' ? 'selected' : ''}>TikTok Upload</option>
@@ -405,18 +405,18 @@ export async function render() {
                       const isFile = f.key === 'video_path' || f.key.endsWith('_path') || f.key.endsWith('_file');
                       const isLong = f.key === 'caption' || f.key === 'description';
                       const span = (isFile || isLong) ? 'grid-column:1/3' : '';
-                      const extraStyle = f.key.includes('hashtag') ? 'color:#58a6ff' : (isFile ? "font-family:'IBM Plex Mono',monospace" : '');
-                      const reqMark = f.required ? '<span style="color:#f85149"> *</span>' : '';
+                      const extraStyle = f.key.includes('hashtag') ? 'color:var(--c-accent)' : (isFile ? "font-family:'IBM Plex Mono',monospace" : '');
+                      const reqMark = f.required ? '<span style="color:var(--c-red)"> *</span>' : '';
 
                       if (isLong) {
                         return `<div style="${span}">
-                          <label style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">${esc(f.label || f.key)}${reqMark}</label>
+                          <label style="font-size:9px;color:var(--c-fg-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">${esc(f.label || f.key)}${reqMark}</label>
                           <textarea data-row="${i}" data-field="${f.key}" placeholder="${esc(f.placeholder || '')}" class="inp" style="width:100%;font-size:10px;resize:vertical;min-height:50px;${extraStyle}">${esc(item[f.key] || '')}</textarea>
                         </div>`;
                       }
 
                       return `<div style="${span}">
-                        <label style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">${esc(f.label || f.key)}${reqMark}</label>
+                        <label style="font-size:9px;color:var(--c-fg-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">${esc(f.label || f.key)}${reqMark}</label>
                         <div style="display:flex;gap:4px">
                           <input type="text" value="${esc(item[f.key] || '')}" placeholder="${esc(f.placeholder || '')}" data-row="${i}" data-field="${f.key}" class="inp" style="width:100%;font-size:10px;${extraStyle}">
                           ${isFile ? `<button class="btn q-filepick" data-row="${i}" data-field="${f.key}" style="padding:2px 8px;font-size:9px;white-space:nowrap;flex-shrink:0" title="Browse file">📂</button>` : ''}
