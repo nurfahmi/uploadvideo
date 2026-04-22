@@ -1,0 +1,36 @@
+# UI dump: home
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   -                               ViewPager             [0,0][720,1432]
+com.shopee.id:id/homepage_main_recycler             -                               RecyclerView          [0,0][720,1432]
+com.shopee.id:id/search_prefill_click               -                               LinearLayout          [16,96][456,176]
+com.shopee.id:id/action_btn1                        -                               ImageView             [472,112][520,160]
+com.shopee.id:id/cart_btn                           -                               ImageView             [536,96][628,176]
+com.shopee.id:id/chat_btn                           -                               ImageView             [628,96][720,176]
+-                                                   -                               LinearLayout          [32,224][80,272]
+-                                                   -                               LinearLayout          [109,215][259,280] desc='wallet_bar_cell_wallet'
+-                                                   -                               LinearLayout          [284,215][434,280] desc='wallet_bar_cell_coin'
+-                                                   -                               LinearLayout          [459,215][609,280] desc='wallet_bar_cell_p2p'
+-                                                   -                               LinearLayout          [638,224][686,272]
+com.shopee.id:id/home_square_grid                   -                               RecyclerView          [16,320][704,524]
+-                                                   -                               LinearLayout          [16,320][153,504] desc='home_square_icon_spesial_belanja_pertama'
+-                                                   -                               LinearLayout          [153,320][290,504] desc='home_square_icon_gratis_chatgpt'
+-                                                   -                               LinearLayout          [290,320][427,504] desc='home_square_icon_pulsa,_tagihan,_dan_tiket'
+-                                                   -                               LinearLayout          [427,320][564,504] desc='home_square_icon_shopeefood'
+-                                                   -                               LinearLayout          [564,320][701,504] desc='home_square_icon_shopee_games'
+-                                                   -                               LinearLayout          [701,320][704,504] desc='home_square_icon_lihat_semua'
+-                                                   -                               RecyclerView          [0,540][720,755]
+-                                                   -                               ViewGroup             [656,1362][704,1410]
+floating_banner_image                               -                               ViewGroup             [520,1140][700,1320]
+-                                                   -                               ViewGroup             [652,1140][700,1188]
+-                                                   -                               FrameLayout           [0,1432][144,1532]
+-                                                   -                               FrameLayout           [144,1432][288,1532]
+-                                                   -                               FrameLayout           [288,1432][432,1532]
+-                                                   -                               FrameLayout           [432,1432][576,1532]
+-                                                   -                               FrameLayout           [576,1432][720,1532]

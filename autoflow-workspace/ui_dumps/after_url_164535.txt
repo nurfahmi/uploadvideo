@@ -1,0 +1,67 @@
+# UI dump: after_url
+# package:  com.shopee.id
+# activity: com.shopee.app.react.ReactActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   https://shopee.co.id/Mainan-Mo  EditText              [92,199][628,236]
+-                                                   -                               ViewGroup             [0,276][360,364]
+-                                                   -                               ViewGroup             [360,276][720,364]
+-                                                   -                               ViewPager             [0,364][720,1022]
+-                                                   -                               ScrollView            [0,364][720,1022]
+-                                                   -                               ViewGroup             [0,389][180,423]
+-                                                   -                               ViewGroup             [180,389][360,423]
+-                                                   -                               ViewGroup             [360,389][540,423]
+-                                                   -                               ViewGroup             [540,389][720,423]
+-                                                   -                               ViewGroup             [672,480][696,504]
+com.google.android.inputmethod.latin:id/key_pos_header_access_points_menu  -                               FrameLayout           [4,1022][88,1110] desc='Membuka menu fitur'
+-                                                   -                               FrameLayout           [100,1022][204,1110] desc='Aplikasi ini tidak mendukung gambar di sini'
+-                                                   -                               FrameLayout           [204,1022][308,1110] desc='Aplikasi ini tidak mendukung gambar di sini'
+-                                                   -                               FrameLayout           [308,1022][412,1110] desc='Setelan'
+-                                                   -                               FrameLayout           [412,1022][516,1110] desc='Terjemahan'
+-                                                   -                               FrameLayout           [516,1022][620,1110] desc='Setelan tema'
+com.google.android.inputmethod.latin:id/key_pos_header_power_key  -                               VoiceDictationButton  [632,1022][716,1110] desc='Gunakan dikte'
+com.google.android.inputmethod.latin:id/D01         -                               FrameLayout           [4,1126][75,1227] desc='q'
+com.google.android.inputmethod.latin:id/D02         -                               FrameLayout           [75,1126][146,1227] desc='w'
+com.google.android.inputmethod.latin:id/D03         -                               FrameLayout           [146,1126][217,1227] desc='e'
+com.google.android.inputmethod.latin:id/D04         -                               FrameLayout           [217,1126][288,1227] desc='r'
+com.google.android.inputmethod.latin:id/D05         -                               FrameLayout           [288,1126][359,1227] desc='t'
+com.google.android.inputmethod.latin:id/D06         -                               FrameLayout           [359,1126][430,1227] desc='y'
+com.google.android.inputmethod.latin:id/D07         -                               FrameLayout           [430,1126][501,1227] desc='u'
+com.google.android.inputmethod.latin:id/D08         -                               FrameLayout           [501,1126][572,1227] desc='i'
+com.google.android.inputmethod.latin:id/D09         -                               FrameLayout           [572,1126][644,1227] desc='o'
+com.google.android.inputmethod.latin:id/D10         -                               FrameLayout           [644,1126][716,1227] desc='p'
+com.google.android.inputmethod.latin:id/C01         -                               FrameLayout           [4,1227][110,1328] desc='a'
+com.google.android.inputmethod.latin:id/C02         -                               FrameLayout           [110,1227][181,1328] desc='s'
+com.google.android.inputmethod.latin:id/C03         -                               FrameLayout           [181,1227][252,1328] desc='d'
+com.google.android.inputmethod.latin:id/C04         -                               FrameLayout           [252,1227][323,1328] desc='f'
+com.google.android.inputmethod.latin:id/C05         -                               FrameLayout           [323,1227][394,1328] desc='g'
+com.google.android.inputmethod.latin:id/C06         -                               FrameLayout           [394,1227][465,1328] desc='h'
+com.google.android.inputmethod.latin:id/C07         -                               FrameLayout           [465,1227][536,1328] desc='j'
+com.google.android.inputmethod.latin:id/C08         -                               FrameLayout           [536,1227][608,1328] desc='k'
+com.google.android.inputmethod.latin:id/C09         -                               FrameLayout           [608,1227][716,1328] desc='l'
+com.google.android.inputmethod.latin:id/key_pos_shift  -                               FrameLayout           [4,1328][110,1429] desc='Shift'
+com.google.android.inputmethod.latin:id/B01         -                               FrameLayout           [110,1328][181,1429] desc='z'
+com.google.android.inputmethod.latin:id/B02         -                               FrameLayout           [181,1328][252,1429] desc='x'
+com.google.android.inputmethod.latin:id/B03         -                               FrameLayout           [252,1328][323,1429] desc='c'
+com.google.android.inputmethod.latin:id/B04         -                               FrameLayout           [323,1328][394,1429] desc='v'
+com.google.android.inputmethod.latin:id/B05         -                               FrameLayout           [394,1328][465,1429] desc='b'
+com.google.android.inputmethod.latin:id/B06         -                               FrameLayout           [465,1328][536,1429] desc='n'
+com.google.android.inputmethod.latin:id/B07         -                               FrameLayout           [536,1328][608,1429] desc='m'
+com.google.android.inputmethod.latin:id/key_pos_del  -                               FrameLayout           [608,1328][716,1429] desc='Hapus'
+com.google.android.inputmethod.latin:id/key_pos_switch_to_symbol  -                               FrameLayout           [4,1429][110,1532] desc='Keyboard simbol'
+com.google.android.inputmethod.latin:id/A02         -                               FrameLayout           [110,1429][181,1532] desc=','
+com.google.android.inputmethod.latin:id/key_pos_switch_to_next_language  -                               FrameLayout           [181,1429][252,1532] desc='Tombol emoji'
+com.google.android.inputmethod.latin:id/key_pos_space  -                               FrameLayout           [252,1429][537,1532] desc='Spasi'
+com.google.android.inputmethod.latin:id/A08         -                               FrameLayout           [537,1429][608,1532] desc='.'
+com.google.android.inputmethod.latin:id/key_pos_ime_action  -                               FrameLayout           [608,1429][716,1532] desc='Telusuri'
+com.android.systemui:id/scrim_behind                -                               View                  [16,0][704,234]
+com.android.systemui:id/scrim_notifications         -                               View                  [16,0][704,234]
+com.android.systemui:id/scrim_in_front              -                               View                  [16,0][704,234]
+com.android.systemui:id/expandableNotificationRow   -                               FrameLayout           [16,96][704,234]
+android:id/alternate_expand_target                  -                               FrameLayout           [16,96][108,234]
+android:id/expand_button                            -                               Button                [620,96][704,234] desc='Luaskan'
+com.android.systemui:id/slide_host_container        -                               HorizontalScrollView  [16,0][704,234]

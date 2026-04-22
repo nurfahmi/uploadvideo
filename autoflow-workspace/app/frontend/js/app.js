@@ -16,6 +16,7 @@ import * as editor from './pages/editor.js';
 import * as history from './pages/history.js';
 import * as settings from './pages/settings.js';
 import * as monitor from './pages/monitor.js';
+import * as recorder from './pages/recorder.js';
 
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -35,6 +36,7 @@ async function initApp(config) {
   registerPage('history', history);
   registerPage('settings', settings);
   registerPage('monitor', monitor);
+  registerPage('recorder', recorder);
 
   // Init components
   initSidebar();
@@ -151,6 +153,10 @@ async function stopAutomation() {
 
 // ── Engine Log Listener ───────────────────────────────
 
+// Test-mode progress tracking (used by runner.js handleTestCompletion)
+let testFailStep = null;
+let testFailReason = null;
+
 function setupEngineListener() {
   listen('engine-stopped', () => {
     set('isRunning', false);
@@ -159,6 +165,18 @@ function setupEngineListener() {
   listen('engine-log', (e) => {
     appendLog(e.payload);
     const line = e.payload;
+
+    // ── Test-mode: capture last-seen step & first fatal message ───
+    if (state.testMode) {
+      const stepMatch = line.match(/\[Step (\d+)\/(\d+)\]\s*(.*)/);
+      if (stepMatch) {
+        testFailStep = `${stepMatch[1]}/${stepMatch[2]}`;
+      }
+      const fatalMatch = line.match(/FATAL:\s*(.+)/);
+      if (fatalMatch && !testFailReason) testFailReason = fatalMatch[1].trim();
+      const errMatch = line.match(/->\s*ERROR:\s*(.+)/);
+      if (errMatch && !testFailReason) testFailReason = errMatch[1].trim();
+    }
 
     // Parse progress from log lines: [DEVICE_SHORT] [ENGINE] message
     const match = line.match(/^\[(\w+)\]\s*(.*)/);
@@ -222,20 +240,34 @@ function setupEngineListener() {
     }
 
     // Track completion
+    let terminalStatus = null;
     if (line.includes('finished successfully') || line.includes('Batch complete')) {
-      // Mark remaining uploading items as success
       state.queue.forEach(q => { if (q._status === 'uploading') q._status = 'success'; });
       state.finishedCount++;
-      if (state.finishedCount >= state.totalEngines) {
-        set('isRunning', false);
-        recordHistory('success');
-      }
+      terminalStatus = 'success';
     } else if (line.includes('exited with code') || line.includes('Spawn failed')) {
       state.queue.forEach(q => { if (q._status === 'uploading') q._status = 'failed'; });
       state.finishedCount++;
-      if (state.finishedCount >= state.totalEngines) {
-        set('isRunning', false);
-        recordHistory('failed');
+      terminalStatus = 'failed';
+    }
+
+    if (terminalStatus && state.finishedCount >= state.totalEngines) {
+      set('isRunning', false);
+      if (state.testMode) {
+        // Determine test pass/fail from queue status (more reliable than log parsing)
+        const item = state.queue[0];
+        const passed = item && item._status === 'success' && terminalStatus === 'success';
+        import('./runner.js').then(m => {
+          m.handleTestCompletion({
+            success: passed,
+            failStep: passed ? null : testFailStep,
+            failReason: passed ? null : testFailReason,
+          });
+          testFailStep = null;
+          testFailReason = null;
+        });
+      } else {
+        recordHistory(terminalStatus);
       }
     }
   });

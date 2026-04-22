@@ -73,6 +73,29 @@
       --c-shadow: rgba(0,0,0,.08); --c-shadow-lg: rgba(0,0,0,.12);
       --c-btn-hover: #d4dae2;
     }
+    /* Design tokens — scale stops (use these, not raw numbers) */
+    :root {
+      /* Typography (5 stops) */
+      --fs-xs: 10px;   /* micro labels, timestamps */
+      --fs-sm: 11px;   /* body secondary, helpers */
+      --fs-md: 13px;   /* body primary, buttons */
+      --fs-lg: 15px;   /* section titles */
+      --fs-xl: 20px;   /* page titles */
+      --fs-xxl: 28px;  /* hero */
+      /* Spacing (6 stops, Apple 4pt grid) */
+      --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;
+      --sp-4: 16px; --sp-6: 24px; --sp-8: 32px;
+      /* Radius (3 stops) */
+      --r-sm: 6px;  --r-md: 10px; --r-lg: 14px;
+      /* Control heights */
+      --h-sm: 28px; --h-md: 36px; --h-lg: 42px;
+      /* Elevations */
+      --elev-1: 0 1px 2px rgba(0,0,0,.06);
+      --elev-2: 0 4px 12px rgba(0,0,0,.10);
+      --elev-3: 0 10px 32px rgba(0,0,0,.15);
+      /* Motion */
+      --t-fast: .12s ease; --t-med: .2s ease;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--c-bg-0); color: var(--c-fg-1); overflow: hidden; height: 100vh; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -87,16 +110,69 @@
     .b-blue { background: var(--c-accent-a12); color: var(--c-accent); }
     .b-cyan { background: var(--c-cyan-a12); color: var(--c-cyan); }
     .b-purple { background: var(--c-purple-a12); color: var(--c-purple); }
-    .btn { height: 32px; padding: 0 16px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; background: var(--c-bg-3); color: var(--c-fg-1); font-family: inherit; transition: all .15s; }
+    /* Button system: base + intent variants + size modifiers */
+    .btn {
+      height: var(--h-md); padding: 0 var(--sp-4); border-radius: var(--r-md);
+      font-size: var(--fs-md); font-weight: 600;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      cursor: pointer; border: 1px solid transparent; background: var(--c-bg-2); color: var(--c-fg-1);
+      font-family: inherit; transition: all var(--t-fast);
+      white-space: nowrap; user-select: none;
+    }
     .btn:hover { background: var(--c-btn-hover); color: var(--c-fg-0); }
-    .btn-primary { background: var(--c-bg-3); color: var(--c-fg-0); }
-    .btn-primary:hover { background: var(--c-btn-hover); }
-    .btn-danger { background: var(--c-red-a12); color: var(--c-red); }
-    .btn-danger:hover { background: var(--c-red-a20); }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+    /* Primary: filled accent (iOS-style) */
+    .btn-primary { background: var(--c-accent); color: #fff; }
+    .btn-primary:hover { background: var(--c-accent); filter: brightness(1.08); color: #fff; }
+    /* Secondary: bordered */
+    .btn-secondary { background: transparent; border-color: var(--c-bg-3); color: var(--c-fg-1); }
+    .btn-secondary:hover { background: var(--c-bg-2); }
+    /* Ghost: transparent, hover faint bg */
+    .btn-ghost { background: transparent; color: var(--c-fg-2); }
+    .btn-ghost:hover { background: var(--c-hover-25); color: var(--c-fg-0); }
+    /* Danger */
+    .btn-danger { background: transparent; color: var(--c-red); }
+    .btn-danger:hover { background: var(--c-red-a12); }
+    /* Legacy aliases (kept for backward compat) */
     .btn-accent { background: var(--c-accent-a12); color: var(--c-accent); }
     .btn-accent:hover { background: var(--c-accent-a20); }
     .btn-warn { background: var(--c-amber-a12); color: var(--c-amber); }
     .btn-warn:hover { background: var(--c-amber-a20); }
+    /* Size modifiers */
+    .btn-sm { height: var(--h-sm); padding: 0 var(--sp-3); font-size: var(--fs-sm); border-radius: var(--r-sm); }
+    .btn-lg { height: var(--h-lg); padding: 0 var(--sp-6); font-size: var(--fs-md); }
+    .btn-icon { width: var(--h-md); padding: 0; min-width: var(--h-md); }
+    .btn-icon.btn-sm { width: var(--h-sm); min-width: var(--h-sm); }
+
+    /* Card */
+    .ui-card {
+      background: var(--c-bg-card); border: 1px solid var(--c-bg-2);
+      border-radius: var(--r-lg); padding: var(--sp-4);
+      transition: all var(--t-fast);
+    }
+    .ui-card-interactive { cursor: pointer; }
+    .ui-card-interactive:hover {
+      border-color: var(--c-accent); transform: translateY(-2px); box-shadow: var(--elev-2);
+    }
+
+    /* Chip (compact pill for device / tag) */
+    .ui-chip {
+      display: inline-flex; align-items: center; gap: var(--sp-2);
+      padding: 6px var(--sp-3); border-radius: 999px;
+      background: var(--c-bg-2); color: var(--c-fg-1);
+      font-size: var(--fs-sm); font-weight: 500;
+    }
+    .ui-chip-ok { background: var(--c-green-a12); color: var(--c-green); }
+    .ui-chip-warn { background: var(--c-amber-a12); color: var(--c-amber); }
+    .ui-chip-err { background: var(--c-red-a12); color: var(--c-red); }
+
+    /* Typography helpers */
+    .t-xs { font-size: var(--fs-xs); } .t-sm { font-size: var(--fs-sm); }
+    .t-md { font-size: var(--fs-md); } .t-lg { font-size: var(--fs-lg); }
+    .t-xl { font-size: var(--fs-xl); } .t-xxl { font-size: var(--fs-xxl); }
+    .t-muted { color: var(--c-fg-3); }
+    .t-strong { color: var(--c-fg-0); font-weight: 600; }
     .inp { background: var(--c-bg-1); border: 1px solid var(--c-bg-3); border-radius: 8px; height: 32px; padding: 0 10px; font-size: 11px; color: var(--c-fg-1); font-family: inherit; outline: none; transition: border-color .15s; }
     .inp:focus { border-color: var(--c-accent); }
     textarea.inp { height: auto; padding: 6px 10px; }
@@ -149,7 +225,7 @@
 <div style="display:flex;height:100vh;background:var(--c-bg-1)">
 
   <!-- Sidebar -->
-  <aside id="sidebar" style="width:200px;background:var(--c-bg-0);display:flex;flex-shrink:0;transition:width .15s;border-radius:0 12px 12px 0;overflow:hidden">
+  <aside id="sidebar" style="width:250px;background:var(--c-bg-0);display:flex;flex-shrink:0;transition:width .15s;border-radius:0 12px 12px 0;overflow:hidden">
     <div id="sidebar-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <!-- Rendered by sidebar.js -->
     </div>
@@ -180,6 +256,7 @@
       <div id="page-history" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
       <div id="page-settings" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
       <div id="page-monitor" class="page-panel" style="display:none;flex:1;overflow:auto;padding:16px 20px"></div>
+      <div id="page-recorder" class="page-panel" style="display:none;flex:1;overflow:hidden;padding:0"></div>
     </main>
 
     <!-- Console Panel (resizable) -->
@@ -238,7 +315,7 @@
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">Flow</label>
-        <select id="modal-flow" style="width:100%;padding:6px 8px"><option value="shopee_upload">Shopee Video</option><option value="tiktok_upload">TikTok Upload</option></select>
+        <select id="modal-flow" style="width:100%;padding:6px 8px"><option value="shopee_upload">Shopee Video</option><option value="shopee_upload_u2">Shopee Video (u2, cross-device)</option><option value="tiktok_upload">TikTok Upload</option></select>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn" id="modal-cancel">Cancel</button>

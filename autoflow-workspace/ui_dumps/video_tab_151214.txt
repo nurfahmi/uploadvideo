@@ -1,0 +1,29 @@
+# UI dump: video_tab
+# package:  com.shopee.id
+# activity: com.shopee.app.react.ReactActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   -                               ViewPager             [0,0][720,1532]
+-                                                   -                               ScrollView            [0,0][720,1532]
+-                                                   -                               HorizontalScrollView  [23,292][697,438]
+-                                                   -                               ViewGroup             [23,461][697,636]
+-                                                   -                               ViewGroup             [54,728][666,755]
+-                                                   -                               ViewGroup             [484,659][666,744]
+-                                                   -                               ViewGroup             [54,912][258,1030]
+-                                                   -                               ViewGroup             [258,912][462,1030]
+-                                                   -                               ViewGroup             [462,912][666,1030]
+-                                                   -                               ViewGroup             [560,1085][666,1169]
+-                                                   -                               ViewGroup             [54,1177][666,1269]
+-                                                   -                               ViewGroup             [528,1198][666,1248]
+-                                                   -                               ViewGroup             [54,1300][666,1392]
+-                                                   -                               ViewGroup             [528,1321][666,1371]
+-                                                   -                               ViewGroup             [54,1423][666,1515]
+-                                                   -                               ViewGroup             [528,1444][666,1494]
+-                                                   -                               ViewGroup             [0,184][240,268] desc='Live'
+-                                                   -                               ViewGroup             [240,184][480,268] desc='Video'
+-                                                   -                               ViewGroup             [480,184][720,268] desc='Produk Teratas'
+-                                                   -                               ViewGroup             [208,1363][512,1467]

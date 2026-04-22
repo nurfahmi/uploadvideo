@@ -1,8 +1,9 @@
 // ── Upload Queue Page ─────────────────────────────────
 
 import { $, esc, parseCSV } from '../utils/helpers.js';
-import state, { set, on, emit } from '../state.js';
+import state, { set, on, emit, getDeviceLabel as getSavedDeviceLabel, getTestStatus } from '../state.js';
 import { appendLog } from '../components/console-panel.js';
+import { navigate } from '../router.js';
 
 const { invoke } = window.__TAURI__.core;
 const convertFileSrc = window.__TAURI__.core.convertFileSrc || ((path) => `asset://localhost/${encodeURIComponent(path)}`);
@@ -95,6 +96,8 @@ export function init() {
       if (a === 'clear-done') { const count = state.queue.filter(q => q._status === 'success').length; if (!count || !confirm(`Remove ${count} completed items?`)) return; state.queue = state.queue.filter(q => q._status !== 'success'); expandedRow = -1; render(); }
       if (a === 'clear-all') { if (!state.queue.length || !confirm(`Clear all ${state.queue.length} items in queue?`)) return; state.queue = []; expandedRow = -1; render(); }
       if (a === 'assign-selected') openAssignModal();
+      if (a === 'go-devices') navigate('devices');
+      if (a === 'csv-menu') { openCsvMenu(btn); return; }
       return;
     }
 
@@ -143,6 +146,8 @@ export function init() {
 
   on('flow', render);
   on('devices', render);
+  on('selectedTemplate', render);
+  on('platform', render);
 }
 
 async function pickFile(row, field) {
@@ -216,6 +221,132 @@ function applyAssign() {
   render();
 }
 
+// ── CSV menu (popup with Impor / Unduh template) ──────
+
+function closeCsvMenu() {
+  document.querySelectorAll('.csv-popover').forEach(m => m.remove());
+}
+
+function openCsvMenu(anchorBtn) {
+  closeCsvMenu();
+  const rect = anchorBtn.getBoundingClientRect();
+  const hasFlow = !!(state.flow?.batch_fields?.length);
+  const menu = document.createElement('div');
+  menu.className = 'csv-popover ui-card';
+  const menuWidth = 260;
+  const vw = window.innerWidth;
+  // Right-align so popup doesn't overflow viewport when button is near right edge
+  let leftPos = rect.right - menuWidth;
+  if (leftPos < 8) leftPos = Math.min(rect.left, vw - menuWidth - 8);
+  menu.style.cssText = `
+    position: fixed;
+    top: ${rect.bottom + 6}px;
+    left: ${leftPos}px;
+    width: ${menuWidth}px;
+    padding: var(--sp-1);
+    z-index: 5000;
+    box-shadow: var(--elev-2);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  `;
+  menu.innerHTML = `
+    <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start;text-align:left;padding:var(--sp-2) var(--sp-3);height:auto" data-csv-action="upload">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-right:var(--sp-2)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <div style="flex:1;min-width:0">
+        <div class="t-sm t-strong">Impor CSV</div>
+        <div class="t-xs t-muted" style="margin-top:1px">Dari file yang sudah kamu punya</div>
+      </div>
+    </button>
+    <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start;text-align:left;padding:var(--sp-2) var(--sp-3);height:auto${hasFlow ? '' : ';opacity:.5;pointer-events:none'}" data-csv-action="download" ${hasFlow ? '' : 'disabled'}>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-right:var(--sp-2)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      <div style="flex:1;min-width:0">
+        <div class="t-sm t-strong">Unduh template CSV</div>
+        <div class="t-xs t-muted" style="margin-top:1px">${hasFlow ? 'Dengan kolom yang dibutuhkan template ini' : 'Pilih template dulu'}</div>
+      </div>
+    </button>
+  `;
+  document.body.appendChild(menu);
+
+  // Attach click handlers directly on menu items (they're outside the queue panel scope)
+  menu.addEventListener('click', (ev) => {
+    const act = ev.target.closest('[data-csv-action]');
+    if (!act) return;
+    ev.stopPropagation();
+    const a = act.dataset.csvAction;
+    closeCsvMenu();
+    if (a === 'upload') {
+      document.getElementById('csv-input')?.click();
+    } else if (a === 'download') {
+      downloadCsvTemplate();
+    }
+  });
+
+  setTimeout(() => {
+    const close = (ev) => {
+      if (!menu.contains(ev.target) && !anchorBtn.contains(ev.target)) {
+        closeCsvMenu();
+        document.removeEventListener('click', close);
+      }
+    };
+    document.addEventListener('click', close);
+  }, 50);
+}
+
+async function downloadCsvTemplate() {
+  const fields = state.flow?.batch_fields || [];
+  if (!fields.length) {
+    appendLog('[SYSTEM] Tidak ada template aktif — pilih template dari Perangkat dulu');
+    return;
+  }
+  const headers = fields.map(f => f.label || f.key);
+  const sampleRow = fields.map(f => {
+    const k = (f.key || '').toLowerCase();
+    if (k === 'video_path') return '/path/ke/video.mp4';
+    if (k === 'caption') return 'Contoh caption untuk upload';
+    if (k === 'hashtags') return '#fyp #viral';
+    if (k.includes('link') || k.includes('url')) return 'https://shopee.co.id/...';
+    return '';
+  });
+  const csv = [headers, sampleRow]
+    .map(row => row.map(cell => {
+      const needsQuote = /[,"\n]/.test(cell);
+      return needsQuote ? `"${cell.replace(/"/g, '""')}"` : cell;
+    }).join(','))
+    .join('\n');
+  const bom = '\uFEFF';
+
+  const today = new Date().toISOString().slice(0, 10);  // YYYY-MM-DD
+  const filename = `AutoFlow_Template_${today}.csv`;
+
+  try {
+    // Recommend ~/Documents/AutoFlow/<filename> as default location
+    const defaultPath = await invoke('default_export_path', { filename }).catch(() => filename);
+    const save = window.__TAURI__?.dialog?.save;
+    if (!save) {
+      appendLog('[SYSTEM] Save dialog tidak tersedia');
+      return;
+    }
+    const chosen = await save({
+      defaultPath,
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+      title: 'Simpan template CSV',
+    });
+    if (!chosen) return;  // user cancelled
+    await invoke('write_text_file', { path: chosen, content: bom + csv });
+    appendLog(`[SYSTEM] Template CSV disimpan: ${chosen}`);
+    try {
+      const { toast } = await import('../components/toast.js');
+      toast.success(`Template CSV disimpan`, {
+        title: chosen.split('/').pop(),
+        duration: 6000,
+      });
+    } catch {}
+  } catch (err) {
+    appendLog(`[ERROR] Gagal simpan CSV: ${err}`);
+  }
+}
+
 function handleCSVImport(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -284,9 +415,46 @@ export async function render() {
   const counts = { success: 0, failed: 0, uploading: 0, pending: 0 };
   queue.forEach(item => { counts[item._status || 'pending']++; });
 
-  const platLabel = state.platform === 'shopee_upload' ? 'Shopee' : 'TikTok';
+  const platLabel = (state.platform === 'shopee_upload' || state.platform === 'shopee_upload_u2') ? 'Shopee' : 'TikTok';
+
+  // ── Template context banner ──
+  const hasTemplate = !!state.selectedTemplate;
+  const tplName = state.selectedTemplate;
+  const selectedIds = [...state.selectedDevices];
+
+  // Full guard: if neither a selectedTemplate nor a loaded flow, block + redirect hint
+  const hasAnyFlow = hasTemplate || !!state.flow;
+  if (!hasAnyFlow) {
+    panel.innerHTML = `
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:var(--sp-6)">
+        <div class="ui-card" style="max-width:420px;text-align:center;padding:var(--sp-6)">
+          <div style="width:56px;height:56px;border-radius:var(--r-lg);background:var(--c-amber-a12);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4)">
+            <svg width="28" height="28" fill="none" stroke="var(--c-amber)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 10H3M21 6H3M21 14H3M21 18H3"/></svg>
+          </div>
+          <h3 class="t-lg t-strong" style="margin-bottom:var(--sp-2)">Pilih template dulu</h3>
+          <p class="t-sm t-muted" style="margin-bottom:var(--sp-4);line-height:1.5">Buka Perangkat, pilih HP, lalu klik <strong>Pakai →</strong> pada template yang sudah teruji.</p>
+          <button class="btn btn-primary" data-action="go-devices">Ke Perangkat →</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
 
   panel.innerHTML = `
+    ${hasTemplate ? `
+      <div style="padding:var(--sp-3) var(--sp-4);background:var(--c-accent-a08);border-bottom:1px solid var(--c-accent-a15);display:flex;align-items:center;gap:var(--sp-3);flex-shrink:0">
+        <svg width="16" height="16" fill="none" stroke="var(--c-accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <div style="flex:1;min-width:0">
+          <div class="t-sm t-strong" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            Template: ${esc(tplName)}
+          </div>
+          <div class="t-xs t-muted" style="margin-top:1px">
+            ${selectedIds.length ? selectedIds.map(id => esc(getSavedDeviceLabel(id, id.slice(-6)))).join(' · ') : 'Belum ada HP dipilih'}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-action="go-devices">Ganti</button>
+      </div>
+    ` : ''}
     <!-- Toolbar -->
     <div style="padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0">
       <span style="font-size:11px;font-weight:600;color:var(--c-fg-0)">${queue.length} videos</span>
@@ -301,7 +469,11 @@ export async function render() {
       ${counts.failed ? `<button class="btn btn-danger" data-action="retry-failed">Retry</button>` : ''}
       ${counts.success ? `<button class="btn" data-action="clear-done">Clear done</button>` : ''}
       ${queue.length ? `<button class="btn" data-action="clear-all">Clear all</button>` : ''}
-      <button class="btn" data-action="import-csv">Import CSV</button>
+      <button class="btn" data-action="csv-menu">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        CSV
+        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
       <input type="file" id="csv-input" accept=".csv,.tsv,.txt" style="display:none">
       <button class="btn btn-primary" data-action="add-row">Add video
       </button>
@@ -337,7 +509,7 @@ export async function render() {
               const fileName = getFileName(item.video_path);
               const phoneLabel = getDeviceLabel(item._phone);
               const flowId = item._flow || state.platform;
-              const flowBrand = flowId === 'shopee_upload' ? 'shopee' : flowId === 'tiktok_upload' ? 'tiktok' : '';
+              const flowBrand = (flowId === 'shopee_upload' || flowId === 'shopee_upload_u2') ? 'shopee' : flowId === 'tiktok_upload' ? 'tiktok' : '';
               const isOpen = expandedRow === i;
               const caption = item.caption || '';
               const captionPreview = caption.length > 40 ? caption.slice(0, 40) + '...' : caption;
@@ -362,7 +534,7 @@ export async function render() {
                   </div>
                 </td>
                 <td style="color:var(--c-fg-2);font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(captionPreview) || '<span style="color:var(--c-bg-3)">No caption</span>'}</td>
-                <td style="text-align:center"><span title="${flowId === 'shopee_upload' ? 'Shopee Video' : flowId === 'tiktok_upload' ? 'TikTok Upload' : flowId}" style="cursor:default;display:inline-flex">${FLOW_ICONS[flowBrand] || flowId}</span></td>
+                <td style="text-align:center"><span title="${flowId === 'shopee_upload' ? 'Shopee Video' : flowId === 'shopee_upload_u2' ? 'Shopee Video (u2)' : flowId === 'tiktok_upload' ? 'TikTok Upload' : flowId}" style="cursor:default;display:inline-flex">${FLOW_ICONS[flowBrand] || flowId}</span></td>
                 <td style="font-size:10px;color:var(--c-fg-2)">${phoneLabel}</td>
                 <td>
                   ${status === 'uploading'
@@ -398,6 +570,7 @@ export async function render() {
                       <label style="font-size:9px;color:var(--c-fg-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">Flow</label>
                       <select data-row="${i}" data-field="_flow" class="inp" style="width:100%;font-size:10px">
                         <option value="shopee_upload" ${(item._flow || state.platform) === 'shopee_upload' ? 'selected' : ''}>Shopee Video</option>
+                        <option value="shopee_upload_u2" ${(item._flow || state.platform) === 'shopee_upload_u2' ? 'selected' : ''}>Shopee Video (u2, cross-device)</option>
                         <option value="tiktok_upload" ${(item._flow || state.platform) === 'tiktok_upload' ? 'selected' : ''}>TikTok Upload</option>
                       </select>
                     </div>

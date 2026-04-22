@@ -1,0 +1,244 @@
+{
+  "name": "Shopee Video Upload (u2, cross-device)",
+  "platform": "shopee",
+  "batch": true,
+  "notes": "Cross-device flow via uiautomator2 selectors. Retry + wait_for only at critical activity transitions (launch, editor→form). Guards (u2_wait) only where race conditions or UI variance exist. Validated on itel S666LN 720x1612 Android 13 + Samsung A05s 1080x2400 Android 15.",
+  "batch_fields": [
+    { "key": "video_path", "label": "Video File", "required": true },
+    { "key": "caption", "label": "Caption", "placeholder": "Deskripsi produk..." },
+    { "key": "hashtags", "label": "Hashtags", "placeholder": "#shopee #promo" },
+    { "key": "affiliate_link", "label": "Affiliate Link", "placeholder": "https://shopee.co.id/...", "required": false }
+  ],
+  "steps": [
+    { "_phase": "A", "_title": "=== PREPARATION ===" },
+    { "action": "kill_app", "package": "com.shopee.id", "description": "Kill Shopee" },
+    { "action": "shell_cmd", "command": "rm -f /sdcard/DCIM/AutoFlow/*", "description": "Clear old videos" },
+    { "action": "push_file", "local_path": "{{video_path}}", "remote_path": "/sdcard/DCIM/AutoFlow/", "description": "Push video to device", "stop_on_fail": true },
+    { "action": "media_scan", "path": "/sdcard/DCIM/AutoFlow/", "description": "Refresh media gallery" },
+    { "action": "wait", "duration": 2, "description": "Settle media scan" },
+
+    { "_phase": "B", "_title": "=== LAUNCH & NAVIGATE TO SAYA ===" },
+    {
+      "action": "launch_intent",
+      "intent": "-n com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "description": "Launch Shopee",
+      "wait_for": "HomeActivity",
+      "wait_timeout": 15,
+      "retry": 2
+    },
+    {
+      "action": "u2_wait",
+      "contentDescription": "tab_bar_button_home",
+      "description": "Wait home tab bar ready",
+      "timeout": 10
+    },
+    {
+      "action": "u2_click",
+      "contentDescription": "tab_bar_button_home",
+      "description": "Tap Beranda (reset tab)",
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "contentDescription": "tab_bar_button_me",
+      "description": "Tap Saya",
+      "delay_after": 2
+    },
+
+    { "_phase": "C", "_title": "=== PROFILE → LIVE & VIDEO ===" },
+    {
+      "action": "u2_click",
+      "text": "Lihat Semua",
+      "description": "Expand menu (optional — Shopee hides 'Live dan Video' behind this on some builds)",
+      "timeout": 4,
+      "optional": true,
+      "delay_after": 5
+    },
+    {
+      "action": "u2_wait",
+      "text": "Live dan Video",
+      "description": "Wait RN render — element must exist in hierarchy before scroll can find it",
+      "timeout": 10
+    },
+    {
+      "action": "u2_scroll_to",
+      "text": "Live dan Video",
+      "description": "Scroll until card fully visible (optional — element may already be in view)",
+      "optional": true,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Live dan Video",
+      "description": "Open Live & Video section",
+      "wait_for": "ReactActivity",
+      "wait_timeout": 12
+    },
+
+    { "_phase": "D", "_title": "=== VIDEO TAB → POST VIDEO ===" },
+    {
+      "action": "u2_click",
+      "text": "Video",
+      "description": "Select Video tab",
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Post Video",
+      "description": "Tap Post Video",
+      "wait_for": "SSZMediaActivity",
+      "wait_timeout": 12
+    },
+
+    { "_phase": "E", "_title": "=== PICK VIDEO FROM GALLERY ===" },
+    {
+      "action": "u2_click",
+      "text": "Galeri",
+      "description": "Switch to Galeri tab",
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Video",
+      "description": "Tap Video filter (required — without this, pushed videos stay hidden)",
+      "delay_after": 1
+    },
+    {
+      "action": "u2_wait",
+      "resourceId": "com.shopee.id:id/tv_duration",
+      "description": "Wait for video thumbnails to render (avoids race with filter-tap)",
+      "timeout": 15
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/tv_duration",
+      "description": "Tap first video thumbnail",
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Lanjutkan",
+      "description": "Confirm preview",
+      "wait_for": "SSZMultipleEditActivity",
+      "wait_timeout": 12
+    },
+
+    { "_phase": "F", "_title": "=== EDITOR → POST FORM ===" },
+    {
+      "action": "u2_click",
+      "text": "Lanjutkan",
+      "description": "Skip editor, proceed to post form",
+      "wait_for": "PublishVideoActivity",
+      "wait_timeout": 25,
+      "retry": 3
+    },
+
+    { "_phase": "G", "_title": "=== CAPTION (via u2_type, bypasses ADB input) ===" },
+    { "action": "wait", "duration": 2, "description": "Settle post form" },
+    {
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "{{caption}} {{hashtags}}",
+      "description": "Set caption via u2 set_text (solves ADB-input-tap issue on Shopee caption)",
+      "clear": true,
+      "delay_after": 1
+    },
+    {
+      "action": "key_event",
+      "keycode": "back",
+      "description": "Dismiss keyboard",
+      "delay_after": 1
+    },
+
+    { "_phase": "G2", "_title": "=== AFFILIATE PRODUCT (optional) ===" },
+    {
+      "action": "skip_if_empty",
+      "field": "affiliate_link",
+      "skip_to_phase": "H",
+      "description": "Skip affiliate if empty"
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/ll_add_product_symbol",
+      "description": "Tap Tambah Produk (RN transition post-form → picker; click sometimes fires without nav, retry recovers)",
+      "wait_for": "ReactActivity",
+      "wait_timeout": 10,
+      "retry": 2,
+      "delay_after": 2
+    },
+    {
+      "action": "u2_wait",
+      "text": "Cari Produk",
+      "description": "Secondary guard: confirm picker rendered before link-icon tap",
+      "timeout": 10
+    },
+    {
+      "action": "tap_pct",
+      "x_pct": 0.925,
+      "y_pct": 0.077,
+      "description": "Tap top-right Import Link icon (position-based, no resourceId available)",
+      "delay_after": 2
+    },
+    {
+      "action": "u2_wait",
+      "text": "Paste Link",
+      "description": "Guard: confirm Import Link screen (without this, URL could type into wrong EditText)",
+      "timeout": 10
+    },
+    {
+      "action": "u2_type",
+      "className": "android.widget.EditText",
+      "text": "{{affiliate_link}}",
+      "description": "Type affiliate link into Import Link EditText",
+      "clear": true,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Import",
+      "description": "Tap Import to submit URL",
+      "delay_after": 3
+    },
+    {
+      "action": "u2_wait",
+      "text": "Pilih Semua",
+      "description": "Wait matched product to populate",
+      "timeout": 15
+    },
+    {
+      "action": "u2_click",
+      "text": "Pilih Semua",
+      "description": "Select all matched products",
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "textContains": "Tambah(",
+      "description": "Add selected products (button text is 'Tambah(N)' once selected)",
+      "delay_after": 3
+    },
+
+    { "_phase": "H", "_title": "=== PUBLISH ===" },
+    {
+      "action": "screenshot",
+      "output": "_debug_before_publish.png",
+      "description": "Screenshot before publish",
+      "optional": true
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/btn_post",
+      "description": "Tap Posting",
+      "delay_after": 15
+    },
+    {
+      "action": "screenshot",
+      "output": "_debug_after_publish.png",
+      "description": "Screenshot after publish",
+      "optional": true
+    },
+
+    { "_phase": "I", "_title": "=== CLEANUP ===" },
+    { "action": "kill_app", "package": "com.shopee.id", "description": "Close Shopee" }
+  ]
+}

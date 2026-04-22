@@ -1,0 +1,18 @@
+# UI dump: after_import
+# package:  com.shopee.id
+# activity: com.shopee.app.react.ReactActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+-                                                   -                               ViewGroup             [465,216][672,244]
+-                                                   Hanya berlaku untuk link produ  EditText              [48,272][672,578]
+-                                                   -                               ViewGroup             [167,641][554,712]
+-                                                   -                               ScrollView            [8,878][712,1344]
+-                                                   -                               ViewGroup             [24,878][696,1067]
+-                                                   -                               ViewGroup             [24,976][60,1012]
+-                                                   -                               ViewGroup             [80,894][680,1067]
+-                                                   -                               ViewGroup             [24,1390][228,1428]
+-                                                   -                               ViewGroup             [264,1365][680,1453]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

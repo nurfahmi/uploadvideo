@@ -1,0 +1,14 @@
+# UI dump: selected
+# package:  com.shopee.id
+# activity: com.shopee.sz.mediasdk.album.preview.activity.SSZBasePreviewActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+-                                                   -                               RecyclerView          [0,0][720,1612]
+-                                                   -                               ImageView             [0,0][720,1612]
+com.shopee.id:id/btn_back                           -                               ImageView             [36,108][92,164]
+-                                                   -                               TextView              [628,108][684,164]
+-                                                   Lanjutkan                       TextView              [488,1414][680,1476]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

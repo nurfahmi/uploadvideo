@@ -1,0 +1,25 @@
+# UI dump: after_galeri_tap
+# package:  com.shopee.id
+# activity: com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.shopee.id:id/scroll_viewpager                   -                               ViewPager             [0,80][720,1532]
+-                                                   -                               RecyclerView          [0,80][720,1532]
+com.shopee.id:id/lyt_close                          -                               LinearLayout          [0,80][88,192]
+com.shopee.id:id/lyt_pick_title                     -                               LinearLayout          [294,80][425,192]
+com.shopee.id:id/vp_container                       -                               ViewPager             [0,192][720,1412]
+com.shopee.id:id/tabs_gallery                       -                               HorizontalScrollView  [0,194][720,282]
+-                                                   -                               LinearLayout          [0,194][240,282] desc='Semua'
+-                                                   -                               LinearLayout          [240,194][480,282] desc='Video'
+-                                                   -                               LinearLayout          [480,194][720,282] desc='Foto'
+-                                                   -                               RecyclerView          [0,284][720,1412]
+com.shopee.id:id/rv_gallery                         -                               RecyclerView          [0,284][720,1412]
+-                                                   -                               RelativeLayout        [0,284][178,462]
+com.shopee.id:id/ll_check                           -                               LinearLayout          [106,284][178,356]
+com.shopee.id:id/rl_bottom_container                -                               LinearLayout          [0,1412][720,1532]
+com.shopee.id:id/iv_information                     -                               ImageView             [468,1455][500,1487]
+com.shopee.id:id/tv_pick_next                       Lanjutkan                       TextView              [524,1444][696,1500]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

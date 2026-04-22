@@ -1,0 +1,13 @@
+# UI dump: post_launch
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/scrim_behind                -                               View                  [0,0][720,1612]
+com.android.systemui:id/scrim_notifications         -                               View                  [0,0][720,1612]
+com.android.systemui:id/scrim_in_front              -                               View                  [0,0][720,1612]
+com.android.systemui:id/clock_date                  Sel, 21 Apr                     TextView              [284,418][436,466]
+com.android.systemui:id/left_button                 -                               ImageView             [48,1440][172,1564] desc='Senter'
+com.android.systemui:id/camera_button               -                               ImageView             [548,1440][672,1564] desc='Kamera'
+com.android.systemui:id/slide_host_container        -                               HorizontalScrollView  [0,0][720,1612]

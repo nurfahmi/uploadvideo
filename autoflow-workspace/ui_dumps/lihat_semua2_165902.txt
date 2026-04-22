@@ -1,0 +1,38 @@
+# UI dump: lihat_semua2
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+-                                                   -                               ViewPager             [0,0][720,1432]
+com.shopee.id:id/swipe_refresh_layout               -                               ViewGroup             [0,0][720,1432]
+com.shopee.id:id/main_view                          -                               RecyclerView          [0,0][720,1432]
+-                                                   -                               RecyclerView          [16,0][704,102]
+-                                                   -                               ViewGroup             [16,118][704,203]
+-                                                   -                               RecyclerView          [16,203][704,463]
+-                                                   -                               ViewGroup             [40,203][354,327]
+-                                                   -                               ViewGroup             [366,203][680,327]
+-                                                   -                               ViewGroup             [40,339][354,463]
+-                                                   -                               ViewGroup             [366,339][680,463]
+-                                                   -                               ViewGroup             [16,503][704,588]
+-                                                   -                               RecyclerView          [16,588][704,984]
+-                                                   -                               ViewGroup             [40,588][354,712]
+-                                                   -                               ViewGroup             [366,588][680,712]
+-                                                   -                               ViewGroup             [40,724][354,848]
+-                                                   -                               ViewGroup             [366,724][680,848]
+-                                                   -                               ViewGroup             [40,860][354,984]
+-                                                   -                               ViewGroup             [366,860][680,984]
+-                                                   -                               ViewGroup             [16,1024][704,1109]
+-                                                   -                               RecyclerView          [16,1109][704,1285]
+-                                                   -                               ViewGroup             [40,1109][704,1197]
+-                                                   -                               ViewGroup             [40,1197][704,1285]
+item_card_28376448249                               -                               ViewGroup             [12,1386][348,1432]
+item_card_24288162486                               -                               ViewGroup             [366,1386][702,1432]
+-                                                   -                               FrameLayout           [0,1432][144,1532]
+-                                                   -                               FrameLayout           [144,1432][288,1532]
+-                                                   -                               FrameLayout           [288,1432][432,1532]
+-                                                   -                               FrameLayout           [432,1432][576,1532]
+-                                                   -                               FrameLayout           [576,1432][720,1532]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

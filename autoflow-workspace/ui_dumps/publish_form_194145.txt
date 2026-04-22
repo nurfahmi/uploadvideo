@@ -1,0 +1,19 @@
+# UI dump: publish_form
+# package:  com.shopee.id
+# activity: com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+com.shopee.id.dfpluginshopee16:id/iv_left           -                               ImageView             [0,80][83,168]
+com.shopee.id.dfpluginshopee16:id/rl_video_preview  -                               RelativeLayout        [32,201][232,469]
+com.shopee.id.dfpluginshopee16:id/tv_select_cover   Pilih Cover                     TextView              [32,416][232,469]
+com.shopee.id.dfpluginshopee16:id/et_caption        Acakk Mobil RC drift keren ban  EditText              [256,201][720,396]
+com.shopee.id.dfpluginshopee16:id/ll_hashtag_container  -                               LinearLayout          [256,416][414,469]
+com.shopee.id.dfpluginshopee16:id/ll_friends_container  -                               LinearLayout          [438,416][587,469]
+com.shopee.id.dfpluginshopee16:id/ll_add_product_symbol  -                               LinearLayout          [274,525][656,575]
+com.shopee.id.dfpluginshopee16:id/iv_right_arrow    -                               ImageView             [664,534][696,566]
+com.shopee.id.dfpluginshopee16:id/tv_drafts_box     Draf                            TextView              [24,1417][114,1516]
+com.shopee.id.dfpluginshopee16:id/btn_post          Posting                         TextView              [138,1417][688,1508]

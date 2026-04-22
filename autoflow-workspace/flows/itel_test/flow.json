@@ -1,0 +1,242 @@
+{
+  "name": "ITel (from template)",
+  "platform": "shopee",
+  "batch": true,
+  "notes": "Converted from template ITel",
+  "batch_fields": [
+    {
+      "key": "affiliate_link",
+      "label": "affiliate_link",
+      "required": false
+    },
+    {
+      "key": "caption",
+      "label": "caption",
+      "required": true
+    },
+    {
+      "key": "hashtags",
+      "label": "hashtags",
+      "required": false
+    }
+  ],
+  "steps": [
+    {
+      "action": "launch_intent",
+      "intent": "-n com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "description": "Launch Shopee (replaced from launcher tap)",
+      "wait_for": "HomeActivity",
+      "wait_timeout": 15,
+      "retry": 2
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/icon",
+      "contentDescription": "tab_bar_button_video_and_live",
+      "description": "Step 2: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.4917,
+        "y_pct": 0.915
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "contentDescription": "click top right create icon",
+      "description": "Step 3: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.9278,
+        "y_pct": 0.0831
+      },
+      "wait_for": "SSZMediaActivity",
+      "wait_timeout": 15,
+      "retry": 2,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/iv_album_icon",
+      "description": "Step 4: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.7944,
+        "y_pct": 0.7779
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Video",
+      "description": "Step 5: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.4958,
+        "y_pct": 0.1458
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/ll_check",
+      "description": "Step 6: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.1667,
+        "y_pct": 0.201
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/tv_pick_top_next",
+      "text": "Lanjutkan (1)",
+      "description": "Step 7: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.7986,
+        "y_pct": 0.8158
+      },
+      "wait_for": "SSZMultipleEditActivity",
+      "wait_timeout": 15,
+      "retry": 2,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/tv_compress",
+      "text": "Lanjutkan",
+      "description": "Step 8: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.8333,
+        "y_pct": 0.8939
+      },
+      "wait_for": "PublishVideoActivity",
+      "wait_timeout": 15,
+      "retry": 2,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "Tambah keterangan pada Video-mu",
+      "description": "Step 9: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.4403,
+        "y_pct": 0.1495
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "{{caption}}",
+      "description": "Step 10: type",
+      "clear": true,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "{{hashtags}}",
+      "description": "Step 11: type",
+      "clear": false,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_right",
+      "text": "OK",
+      "description": "Step 12: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.925,
+        "y_pct": 0.0744
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_add_product_tip",
+      "text": "Tambah Produk dan Voucher",
+      "description": "Step 13: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.6194,
+        "y_pct": 0.3406
+      },
+      "wait_for": "ReactActivity",
+      "wait_timeout": 15,
+      "retry": 2,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/action_bar_root",
+      "description": "Step 14: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.9278,
+        "y_pct": 0.0769
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Hanya berlaku untuk link produk Shopee. Masukkan 1 grup produk link ATAU maksimal 50 produk link tunggal",
+      "description": "Step 15: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.1111,
+        "y_pct": 0.2072
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_type",
+      "className": "android.widget.EditText",
+      "text": "{{affiliate_link}}",
+      "description": "Step 16: type",
+      "clear": true,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Import",
+      "description": "Step 17: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5181,
+        "y_pct": 0.4287
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "className": "android.view.ViewGroup",
+      "description": "Step 18: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.0597,
+        "y_pct": 0.6154
+      },
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "text": "Tambah(1)",
+      "description": "Step 19: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5639,
+        "y_pct": 0.871
+      },
+      "wait_for": "PublishVideoActivity",
+      "wait_timeout": 15,
+      "retry": 2,
+      "delay_after": 1
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/btn_post",
+      "text": "Posting",
+      "description": "Step 20: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5472,
+        "y_pct": 0.9076
+      },
+      "wait_for": "HomeActivity",
+      "wait_timeout": 15,
+      "retry": 2,
+      "delay_after": 1
+    }
+  ]
+}

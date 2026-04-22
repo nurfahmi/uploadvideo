@@ -107,6 +107,7 @@ const BRAND_SVG = {
 
 const FLOW_TEMPLATES = [
   { id: 'shopee_upload', name: 'Shopee Video', brand: 'shopee', color: '#EE4D2D', desc: 'Upload product videos to Shopee with product links', steps: 29, status: 'installed' },
+  { id: 'shopee_upload_u2', name: 'Shopee Video (u2, cross-device)', brand: 'shopee', color: '#EE4D2D', desc: 'Cross-device Shopee upload via uiautomator2 selectors', steps: 42, status: 'installed' },
   { id: 'tiktok_upload', name: 'TikTok Upload', brand: 'tiktok', color: '#ff0050', desc: 'Upload videos to TikTok with captions & hashtags', steps: 23, status: 'installed' },
   { id: 'youtube_shorts', name: 'YouTube Shorts', brand: 'youtube', color: '#FF0000', desc: 'Upload short videos to YouTube Shorts', steps: 0, status: 'available' },
   { id: 'instagram_reels', name: 'Instagram Reels', brand: 'instagram', color: '#E4405F', desc: 'Upload reels to Instagram with captions & tags', steps: 0, status: 'available' },

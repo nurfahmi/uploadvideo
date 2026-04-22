@@ -1,0 +1,27 @@
+# UI dump: _test
+# package:  com.sec.android.app.launcher
+# activity: .activities.LauncherActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.sec.android.app.launcher:id/icon                Smart Tutor                     TextView              [41,224][290,515] desc='Smart Tutor'
+com.sec.android.app.launcher:id/icon                ONE Esports                     TextView              [290,224][539,515] desc='ONE Esports'
+com.sec.android.app.launcher:id/icon                Slack                           TextView              [539,224][788,515] desc='Slack'
+com.sec.android.app.launcher:id/icon                Speedtest                       TextView              [788,224][1037,515] desc='Speedtest'
+com.sec.android.app.launcher:id/icon                Smart Switch                    TextView              [41,515][290,806] desc='Smart Switch'
+com.sec.android.app.launcher:id/icon                by.U                            TextView              [290,515][539,806] desc='by.U'
+com.sec.android.app.launcher:id/icon                ATX                             TextView              [539,515][788,806] desc='ATX'
+com.sec.android.app.launcher:id/icon                Instagram                       TextView              [788,515][1037,806] desc='Instagram'
+com.sec.android.app.launcher:id/icon                Shopee                          TextView              [41,806][290,1097] desc='Shopee, 2 notifikasi'
+com.sec.android.app.launcher:id/icon                Shopee                          TextView              [290,806][539,1097] desc='Shopee'
+com.sec.android.app.launcher:id/icon                TikTok                          TextView              [539,806][788,1097] desc='TikTok'
+com.sec.android.app.launcher:id/icon                WhatsApp                        TextView              [788,806][1037,1097] desc='WhatsApp, 29 notifikasi'
+com.sec.android.app.launcher:id/icon                2048                            TextView              [41,1097][290,1388] desc='Intip'
+-                                                   -                               FrameLayout           [490,1991][540,2041] desc='Halaman 1 dari 2.'
+-                                                   -                               FrameLayout           [540,1991][590,2041] desc='Halaman 2 dari 2.'
+com.sec.android.app.launcher:id/app_search_edit_text_wrapper  -                               LinearLayout          [28,2091][900,2237]
+com.sec.android.app.launcher:id/more_icon_imageview  -                               ImageView             [900,2102][1024,2226] desc='Pilihan lagi'
+com.android.systemui:id/battery                     -                               LinearLayout          [938,19][1016,61] desc='Baterai 95 persen.'
+com.android.systemui:id/recent_apps                 -                               ImageView             [118,2265][357,2400] desc='Terbaru'
+com.android.systemui:id/back                        -                               ImageView             [723,2265][962,2400] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [420,2265][659,2400] desc='Depan'

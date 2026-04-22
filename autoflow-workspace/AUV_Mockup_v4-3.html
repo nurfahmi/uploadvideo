@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUV - AutoFlow Uploader Video</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+tailwindcss.config={theme:{extend:{fontFamily:{sans:['IBM Plex Sans','system-ui'],mono:['IBM Plex Mono','monospace']},colors:{bg:{0:'#0d1117',1:'#161b22',2:'#21262d',3:'#30363d'},fg:{0:'#f0f6fc',1:'#c9d1d9',2:'#8b949e',3:'#484f58'},accent:'#58a6ff',green:'#3fb950',red:'#f85149',amber:'#d29922',purple:'#bc8cff',cyan:'#39d2c0'}}}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+.nav-item{display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:12px;font-weight:500;color:#8b949e;cursor:pointer;transition:all .1s;border-radius:4px;border-left:2px solid transparent}
+.nav-item:hover{color:#c9d1d9;background:rgba(48,54,61,.5)}
+.nav-item.active{color:#58a6ff;background:rgba(88,166,255,.08);border-left-color:#58a6ff}
+.badge{padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.2px}
+.b-green{background:rgba(63,185,80,.12);color:#3fb950}
+.b-red{background:rgba(248,81,73,.12);color:#f85149}
+.b-amber{background:rgba(210,153,34,.12);color:#d29922}
+.b-gray{background:rgba(139,148,158,.12);color:#8b949e}
+.b-blue{background:rgba(88,166,255,.12);color:#58a6ff}
+.b-cyan{background:rgba(57,210,192,.12);color:#39d2c0}
+.b-purple{background:rgba(188,140,255,.12);color:#bc8cff}
+.panel{display:none;flex-direction:column;height:100%}
+.panel.active{display:flex}
+.btn{padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #30363d;background:#21262d;color:#c9d1d9;font-family:inherit;transition:all .1s}
+.btn:hover{background:#30363d;border-color:#484f58}
+.btn-primary{background:#238636;border-color:#2ea043;color:#fff}
+.btn-primary:hover{background:#2ea043}
+.btn-danger{background:rgba(248,81,73,.1);border-color:rgba(248,81,73,.3);color:#f85149}
+.btn-danger:hover{background:rgba(248,81,73,.2)}
+.btn-accent{background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.3);color:#58a6ff}
+.btn-accent:hover{background:rgba(88,166,255,.2)}
+.btn-warn{background:rgba(210,153,34,.1);border-color:rgba(210,153,34,.3);color:#d29922}
+.btn-warn:hover{background:rgba(210,153,34,.2)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;background:#161b22;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:5}
+.tbl td{padding:5px 10px;border-bottom:1px solid rgba(33,38,45,.6)}
+.tbl tr:hover td{background:rgba(48,54,61,.3)}
+select,.inp{background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:4px 8px;font-size:11px;color:#c9d1d9;font-family:inherit;outline:none}
+select:focus,.inp:focus{border-color:#58a6ff}
+.stat{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px}
+.card{background:#161b22;border:1px solid #21262d;border-radius:6px}
+.step-row{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid rgba(33,38,45,.4);font-size:12px;transition:background .1s}
+.step-row:hover{background:rgba(48,54,61,.25)}
+.step-row .act{opacity:0;transition:opacity .1s}
+.step-row:hover .act{opacity:1}
+.dev-card{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;transition:border-color .1s}
+.dev-card:hover{border-color:#30363d}
+.monitor-card{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;position:relative;overflow:hidden}
+.monitor-card .progress-bg{position:absolute;left:0;top:0;height:100%;opacity:.04;transition:width .3s}
+.flow-menu{position:absolute;top:100%;left:0;margin-top:2px;width:200px;background:#161b22;border:1px solid #30363d;border-radius:6px;z-index:50;overflow:hidden;display:none}
+.flow-menu.open{display:block}
+.flow-menu button{width:100%;text-align:left;padding:7px 12px;font-size:11px;color:#c9d1d9;border:none;background:transparent;cursor:pointer;font-family:inherit}
+.flow-menu button:hover{background:#21262d}
+.flow-menu button.sel{color:#58a6ff;background:rgba(88,166,255,.08)}
+.console-line{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.7;white-space:pre}
+.view-tog{display:flex;background:#21262d;border-radius:4px;padding:1px;border:1px solid #30363d}
+.view-tog button{padding:3px 10px;border-radius:3px;font-size:10px;font-weight:600;color:#8b949e;border:none;cursor:pointer;background:transparent;font-family:inherit}
+.view-tog button.on{background:#30363d;color:#f0f6fc}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pulse{animation:pulse 2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<div style="display:flex;height:100vh">
+
+<aside id="sidebar" style="width:170px;background:#0d1117;border-right:1px solid #21262d;display:flex;flex-direction:column;flex-shrink:0;transition:width .15s">
+  <div style="display:flex;align-items:center;gap:7px;padding:10px;border-bottom:1px solid #21262d">
+    <div style="width:24px;height:24px;border-radius:5px;background:linear-gradient(135deg,#58a6ff,#bc8cff);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="12" height="12" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    </div>
+    <span class="nl" style="font-size:13px;font-weight:700;color:#f0f6fc">AUV</span>
+    <button onclick="togSB()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#484f58;padding:0;line-height:0">
+      <svg id="sb-ico" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+  </div>
+  <nav style="flex:1;padding:8px 6px;display:flex;flex-direction:column;gap:1px">
+    <div class="nav-item active" data-p="dashboard" onclick="go('dashboard')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0v-4a1 1 0 011-1h2a1 1 0 011 1v4"/></svg><span class="nl">Dashboard</span></div>
+    <div class="nav-item" data-p="queue" onclick="go('queue')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><span class="nl">Upload Queue</span></div>
+    <div class="nav-item" data-p="devices" onclick="go('devices')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg><span class="nl">Devices</span></div>
+    <div class="nav-item" data-p="editor" onclick="go('editor')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"/></svg><span class="nl">Flow Editor</span></div>
+    <div class="nav-item" data-p="history" onclick="go('history')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="nl">History</span></div>
+    <div class="nav-item" data-p="settings" onclick="go('settings')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg><span class="nl">Settings</span></div>
+  </nav>
+  <div style="padding:6px">
+    <div class="nl" style="display:flex;align-items:center;gap:5px;padding:4px 10px;margin-bottom:6px">
+      <span class="pulse" style="width:6px;height:6px;border-radius:50%;background:#3fb950"></span>
+      <span style="font-size:10px;color:#484f58;font-weight:500">3 phones ready</span>
+    </div>
+    <button id="start-btn" onclick="toggleRun()" style="width:100%;background:#238636;border:1px solid #2ea043;color:#fff;padding:7px 0;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px">
+      <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <span class="nl">Start all</span>
+    </button>
+  </div>
+</aside>
+
+<div style="flex:1;display:flex;flex-direction:column;min-width:0">
+
+<!-- DASHBOARD -->
+<div id="p-dashboard" class="panel active" style="overflow:auto;padding:16px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div><h1 style="font-size:15px;font-weight:700;color:#f0f6fc">Welcome back</h1><p style="font-size:10px;color:#484f58;margin-top:1px">Wednesday, April 2, 2026</p></div>
+    <div style="display:flex;gap:6px"><button class="btn btn-primary" style="font-size:11px">Upload now</button><button class="btn">Import CSV</button></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+    <div class="stat"><p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Uploaded today</p><p style="font-size:22px;font-weight:700;color:#58a6ff">47</p><p style="font-size:9px;color:#484f58;margin-top:2px">Target: 60</p></div>
+    <div class="stat"><p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Successful</p><p style="font-size:22px;font-weight:700;color:#3fb950">44</p><p style="font-size:9px;color:#484f58;margin-top:2px">93.6% rate</p></div>
+    <div class="stat"><p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Failed</p><p style="font-size:22px;font-weight:700;color:#f85149">3</p><p style="font-size:9px;color:#484f58;margin-top:2px">2 retryable</p></div>
+    <div class="stat"><p style="font-size:9px;color:#484f58;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Connected</p><p style="font-size:22px;font-weight:700;color:#39d2c0">3</p><p style="font-size:9px;color:#484f58;margin-top:2px">All active</p></div>
+  </div>
+  <div style="display:grid;grid-template-columns:5fr 3fr;gap:12px">
+    <div class="card" style="padding:12px"><p style="font-size:10px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Recent activity</p><div id="act-list"></div></div>
+    <div class="card" style="padding:12px"><p style="font-size:10px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Connected phones</p><div id="ph-list" style="display:flex;flex-direction:column;gap:6px"></div></div>
+  </div>
+</div>
+
+<!-- UPLOAD QUEUE -->
+<div id="p-queue" class="panel">
+  <div style="padding:8px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:12px;flex-shrink:0;background:#161b22">
+    <span style="font-size:10px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px">Default assignment</span>
+    <span style="font-size:10px;color:#30363d">|</span>
+    <span style="font-size:10px;color:#8b949e">Phone:</span>
+    <select style="font-size:10px;padding:2px 6px"><option>Auto-distribute</option><option>Redmi Note 10</option><option>Samsung A32</option><option>Oppo A96</option></select>
+    <span style="font-size:10px;color:#8b949e">Flow:</span>
+    <select style="font-size:10px;padding:2px 6px"><option>Shopee Upload</option><option>TikTok Upload</option></select>
+    <div style="flex:1"></div>
+    <span style="font-size:10px;color:#3fb950">2 success</span>
+    <span style="font-size:10px;color:#f85149">1 failed</span>
+    <span style="font-size:10px;color:#d29922">1 uploading</span>
+    <span style="font-size:10px;color:#8b949e">2 queued</span>
+  </div>
+  <div style="padding:4px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <input type="checkbox" id="q-selall" style="accent-color:#58a6ff" onchange="toggleSelectAll(this)"><span style="font-size:10px;color:#8b949e">Select all</span>
+    <span style="font-size:10px;color:#30363d">|</span>
+    <span style="font-size:10px;color:#8b949e;font-weight:500" id="q-count">6 videos</span>
+    <span id="q-sel-info" style="font-size:10px;color:#58a6ff;display:none">(<span id="q-sel-n">0</span> selected)</span>
+    <div style="flex:1"></div>
+    <button class="btn btn-accent" style="font-size:10px;padding:2px 8px;display:none" id="q-assign-btn" onclick="openAssignModal()">Assign selected</button>
+    <button class="btn btn-danger" style="font-size:10px;padding:2px 8px">Retry failed</button>
+    <button class="btn" style="font-size:10px;padding:2px 8px">Import CSV</button>
+    <button class="btn btn-accent" style="font-size:10px;padding:2px 8px">+ Add row</button>
+  </div>
+  <div style="flex:1;overflow:auto"><table class="tbl"><thead><tr>
+    <th style="width:28px"><input type="checkbox" style="accent-color:#58a6ff"></th>
+    <th style="width:28px">#</th><th>Video</th><th>Caption</th><th>Hashtags</th><th>Product link</th><th>Phone</th><th>Flow</th><th style="width:70px">Status</th>
+  </tr></thead><tbody id="q-body"></tbody></table></div>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div id="assign-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:20px;width:320px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <p style="font-size:13px;font-weight:700;color:#f0f6fc">Assign to selected <span id="modal-count" style="color:#58a6ff"></span></p>
+      <button onclick="closeAssignModal()" style="background:none;border:none;color:#484f58;cursor:pointer;font-size:16px;line-height:1">&times;</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">Phone</label>
+      <select id="modal-phone" style="width:100%;padding:6px 8px"><option>Auto-distribute</option><option>Redmi Note 10</option><option>Samsung A32</option><option>Oppo A96</option></select>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">Flow</label>
+      <select id="modal-flow" style="width:100%;padding:6px 8px"><option>Shopee Upload</option><option>TikTok Upload</option></select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeAssignModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyAssign()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEVICES -->
+<div id="p-devices" class="panel" style="overflow:auto;padding:16px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><h2 style="font-size:14px;font-weight:700;color:#f0f6fc">Connected phones</h2><p style="font-size:10px;color:#484f58;margin-top:1px">3 connected, 2 uploading</p></div>
+    <button class="btn">Scan devices</button>
+  </div>
+  <div id="dev-list" style="display:flex;flex-direction:column;gap:8px"></div>
+</div>
+
+<!-- FLOW EDITOR -->
+<div id="p-editor" class="panel" style="overflow:auto;padding:16px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="position:relative">
+        <button onclick="document.getElementById('fmenu').classList.toggle('open')" style="display:flex;align-items:center;gap:6px;background:#21262d;border:1px solid #30363d;border-radius:4px;padding:4px 10px;cursor:pointer;color:#f0f6fc;font-size:13px;font-weight:700;font-family:inherit">
+          <span id="af-name">Shopee Upload</span>
+          <svg width="12" height="12" fill="none" stroke="#484f58" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="fmenu" class="flow-menu">
+          <button class="sel" onclick="selFlow('Shopee Upload')">Shopee Upload</button>
+          <button onclick="selFlow('TikTok Upload')">TikTok Upload</button>
+          <div style="border-top:1px solid #30363d"></div>
+          <button style="color:#484f58" onclick="selFlow('New')">+ Create new flow</button>
+        </div>
+      </div>
+      <span style="font-size:10px;color:#484f58">20 steps</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="view-tog"><button class="on" onclick="setEV('list',this)">List</button><button onclick="setEV('flow',this)">Flowchart</button></div>
+      <div style="width:1px;height:16px;background:#30363d"></div>
+      <select style="width:110px;font-size:10px"><option>Redmi Note 10</option><option>Samsung A32</option></select>
+      <button class="btn btn-accent" style="font-size:10px">Capture</button>
+      <div style="width:1px;height:16px;background:#30363d"></div>
+      <button class="btn" style="font-size:10px">+ Add step</button>
+      <button class="btn btn-primary" style="font-size:10px">Save</button>
+    </div>
+  </div>
+  <div id="ed-list"></div>
+  <div id="ed-fc" style="display:none"><div class="card" style="height:380px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:8px;left:8px;display:flex;gap:3px;z-index:10">
+      <button class="btn" style="font-size:9px;padding:2px 6px">Zoom +</button>
+      <button class="btn" style="font-size:9px;padding:2px 6px">Zoom -</button>
+      <button class="btn" style="font-size:9px;padding:2px 6px">Fit</button>
+    </div>
+    <svg width="100%" height="100%" viewBox="0 0 700 380" id="fc-svg"></svg>
+  </div></div>
+</div>
+
+<!-- HISTORY -->
+<div id="p-history" class="panel" style="overflow:auto;padding:16px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><h2 style="font-size:14px;font-weight:700;color:#f0f6fc">Upload history</h2><p style="font-size:10px;color:#484f58;margin-top:1px">203 total, 191 successful (94.1%)</p></div>
+    <div style="display:flex;gap:4px;align-items:center">
+      <select style="font-size:10px"><option>All status</option></select>
+      <select style="font-size:10px"><option>All phones</option></select>
+      <select style="font-size:10px"><option>All flows</option></select>
+      <button class="btn" style="font-size:10px">Export CSV</button>
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Time</th><th>Video</th><th>Phone</th><th>Flow</th><th>Duration</th><th>Status</th></tr></thead><tbody id="h-body"></tbody></table></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="p-settings" class="panel" style="overflow:auto;padding:16px 20px">
+  <h2 style="font-size:14px;font-weight:700;color:#f0f6fc;margin-bottom:12px">Settings</h2>
+  <div style="max-width:520px;display:flex;flex-direction:column;gap:10px">
+    <div class="card" style="padding:14px"><p style="font-size:9px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Delay & safety</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Min delay (sec)</label><input type="number" value="30" class="inp"></div>
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Max delay (sec)</label><input type="number" value="120" class="inp"></div>
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Max uploads/phone/day</label><input type="number" value="30" class="inp"></div>
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Distribution</label><select style="width:100%"><option>Gaussian</option><option>Uniform</option></select></div>
+      </div>
+    </div>
+    <div class="card" style="padding:14px"><p style="font-size:9px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">License</p>
+      <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">License key</label>
+      <div style="display:flex;gap:6px"><input type="text" value="550e8400-e29b-41d4-a716-446655440000" class="inp" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:10px"><button class="btn btn-accent">Validate</button></div>
+      <p style="font-size:10px;color:#3fb950;margin-top:5px">Active: Pro (10 phones, 300 videos/day)</p>
+    </div>
+    <div class="card" style="padding:14px"><p style="font-size:9px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Application</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Language</label><select style="width:100%"><option>English</option><option>Bahasa Indonesia</option></select></div>
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Theme</label><select style="width:100%"><option>Dark</option><option>Light</option></select></div>
+        <div><label style="font-size:10px;color:#8b949e;display:block;margin-bottom:3px">Updates</label><select style="width:100%"><option>Auto-check</option><option>Manual</option></select></div>
+      </div>
+      <button style="font-size:10px;color:#58a6ff;background:none;border:none;cursor:pointer;margin-top:8px;font-family:inherit;font-weight:500">Run setup wizard again</button>
+    </div>
+    <div class="card" style="padding:14px"><p style="font-size:9px;font-weight:600;color:#484f58;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">About</p>
+      <p style="font-size:10px;color:#484f58;line-height:1.6">AUV - AutoFlow Uploader Video v1.0.0<br>Tauri 2 + Python Engine | wrk-project</p>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE MONITOR (hidden until Start) -->
+<div id="p-monitor" class="panel" style="overflow:auto;padding:16px 20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <h2 style="font-size:14px;font-weight:700;color:#f0f6fc">Live monitor</h2>
+      <span class="badge b-amber pulse" id="mon-status">Running</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-warn" onclick="pauseAll()"><svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:-1px"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg> Pause all</button>
+      <button class="btn btn-danger" onclick="stopAll()"><svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:-1px"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Stop all</button>
+    </div>
+  </div>
+  <div id="mon-cards" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div id="mon-summary" style="display:none;margin-top:16px"></div>
+</div>
+
+<!-- CONSOLE -->
+<div style="border-top:1px solid #21262d;flex-shrink:0">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 12px;background:#0d1117;border-bottom:1px solid #21262d">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="display:flex;gap:3px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(248,81,73,.5)"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(210,153,34,.5)"></span><span style="width:5px;height:5px;border-radius:50%;background:rgba(63,185,80,.5)"></span></div>
+      <span style="font-size:9px;color:#30363d;font-family:'IBM Plex Mono',monospace">console</span>
+    </div>
+    <div style="display:flex;gap:6px"><button style="font-size:9px;color:#484f58;background:none;border:none;cursor:pointer;font-family:inherit">Expand</button><button style="font-size:9px;color:#484f58;background:none;border:none;cursor:pointer;font-family:inherit">Clear</button></div>
+  </div>
+  <div id="console-out" style="padding:4px 12px;height:65px;overflow:auto"></div>
+</div>
+
+</div></div>
+
+<script>
+let running=false,paused=false;
+
+function go(p){
+  document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));
+  document.getElementById('p-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.p===p));
+}
+function togSB(){
+  const sb=document.getElementById('sidebar'),c=sb.style.width==='48px';
+  sb.style.width=c?'170px':'48px';
+  document.querySelectorAll('.nl').forEach(e=>e.style.display=c?'':'none');
+  document.getElementById('sb-ico').innerHTML=c?'<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>':'<path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>';
+}
+function selFlow(n){document.getElementById('af-name').textContent=n;document.getElementById('fmenu').classList.remove('open');document.querySelectorAll('.flow-menu button').forEach(b=>b.classList.remove('sel'));event.target.classList.add('sel');}
+document.addEventListener('click',e=>{if(!e.target.closest('[onclick*="fmenu"]')&&!e.target.closest('.flow-menu'))document.getElementById('fmenu').classList.remove('open');});
+function setEV(v,btn){document.querySelectorAll('.view-tog button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.getElementById('ed-list').style.display=v==='list'?'':'none';document.getElementById('ed-fc').style.display=v==='flow'?'block':'none';}
+
+function toggleRun(){
+  if(!running){
+    running=true;paused=false;
+    document.getElementById('start-btn').innerHTML='<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span class="nl">Stop all</span>';
+    document.getElementById('start-btn').style.background='#da3633';document.getElementById('start-btn').style.borderColor='#f85149';
+    go('monitor');renderMonitor();
+  } else { stopAll(); }
+}
+function pauseAll(){
+  paused=!paused;
+  document.getElementById('mon-status').textContent=paused?'Paused':'Running';
+  document.getElementById('mon-status').className=paused?'badge b-gray':'badge b-amber pulse';
+}
+function stopAll(){
+  running=false;paused=false;
+  document.getElementById('start-btn').innerHTML='<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span class="nl">Start all</span>';
+  document.getElementById('start-btn').style.background='#238636';document.getElementById('start-btn').style.borderColor='#2ea043';
+  document.getElementById('mon-status').textContent='Completed';document.getElementById('mon-status').className='badge b-green';
+  document.getElementById('mon-summary').style.display='block';
+  document.getElementById('mon-summary').innerHTML=`
+    <div class="card" style="padding:16px">
+      <p style="font-size:12px;font-weight:700;color:#f0f6fc;margin-bottom:10px">Upload complete</p>
+      <div style="display:flex;gap:16px;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:600;color:#3fb950">68 successful</span>
+        <span style="font-size:13px;font-weight:600;color:#f85149">7 failed</span>
+        <span style="font-size:13px;font-weight:600;color:#8b949e">0 skipped</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:#0d1117;border-radius:4px">
+          <span style="color:#c9d1d9">Redmi Note 10</span><span style="color:#3fb950">28/30 (93%)</span><span style="color:#484f58">1h 24m</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:#0d1117;border-radius:4px">
+          <span style="color:#c9d1d9">Samsung A32</span><span style="color:#3fb950">22/25 (88%)</span><span style="color:#484f58">2h 01m</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:#0d1117;border-radius:4px">
+          <span style="color:#c9d1d9">Oppo A96</span><span style="color:#3fb950">18/20 (90%)</span><span style="color:#484f58">1h 35m</span></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-danger" style="font-size:11px">Retry 7 failed</button>
+        <button class="btn" style="font-size:11px">Export report</button>
+        <button class="btn btn-accent" style="font-size:11px" onclick="go('queue')">Back to queue</button>
+      </div>
+    </div>`;
+}
+
+function renderMonitor(){
+  const devs=[
+    {n:'Redmi Note 10',id:'A4F2',vid:'gadget_deal_004.mp4',cur:4,tot:30,step:'Type caption',stepN:12,stepT:20,pct:60,eta:'1h 12m',c:'#58a6ff'},
+    {n:'Samsung A32',id:'B8C1',vid:'bag_viral_002.mp4',cur:2,tot:25,step:'Push video',stepN:2,stepT:20,pct:10,eta:'2h 05m',c:'#bc8cff'},
+    {n:'Oppo A96',id:'D3E7',vid:'',cur:0,tot:20,step:'Delay: 45s remaining',stepN:0,stepT:0,pct:0,eta:'1h 38m',c:'#39d2c0',waiting:true},
+  ];
+  document.getElementById('mon-cards').innerHTML=devs.map(d=>`
+    <div class="monitor-card">
+      <div class="progress-bg" style="width:${d.pct}%;background:${d.c}"></div>
+      <div style="position:relative;z-index:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:600;color:#f0f6fc">${d.n}</span>
+            <span style="font-size:10px;color:#484f58;font-family:'IBM Plex Mono',monospace">${d.id}</span>
+          </div>
+          <span class="badge ${d.waiting?'b-gray':'b-amber'}">${d.waiting?'Waiting':'Uploading'}</span>
+        </div>
+        ${d.waiting?`
+          <p style="font-size:11px;color:#8b949e;margin-bottom:8px">${d.step} (before video ${d.cur+1}/${d.tot})</p>
+        `:`
+          <p style="font-size:11px;color:#c9d1d9;margin-bottom:2px">Video ${d.cur}/${d.tot}: <span style="font-family:'IBM Plex Mono',monospace;color:#8b949e">${d.vid}</span></p>
+          <p style="font-size:10px;color:#484f58;margin-bottom:8px">Step: ${d.step} (${d.stepN}/${d.stepT})</p>
+        `}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="flex:1;height:4px;background:#21262d;border-radius:2px;overflow:hidden"><div style="width:${d.pct}%;height:100%;background:${d.c};border-radius:2px;transition:width .3s"></div></div>
+          <span style="font-size:10px;color:#8b949e;font-weight:600;min-width:30px">${d.pct}%</span>
+          <span style="font-size:10px;color:#484f58">ETA: ${d.eta}</span>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-warn" style="font-size:9px;padding:2px 6px">Pause</button>
+          <button class="btn btn-danger" style="font-size:9px;padding:2px 6px">Stop</button>
+          <button class="btn" style="font-size:9px;padding:2px 6px">${d.waiting?'Skip delay':'Skip video'}</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('mon-summary').style.display='none';
+}
+
+// Data renders
+const acts=[
+  {v:'shoes_promo_001.mp4',s:'Success',hp:'Redmi Note 10',f:'Shopee',t:'2m ago',c:'green'},
+  {v:'bag_viral_002.mp4',s:'Success',hp:'Samsung A32',f:'TikTok',t:'5m ago',c:'green'},
+  {v:'skincare_003.mp4',s:'Failed',hp:'Redmi Note 10',f:'Shopee',t:'8m ago',c:'red'},
+  {v:'gadget_deal_004.mp4',s:'Uploading',hp:'Oppo A96',f:'Shopee',t:'now',c:'amber'},
+  {v:'outfit_trend_005.mp4',s:'Queued',hp:'Redmi Note 10',f:'TikTok',t:'waiting',c:'gray'},
+];
+document.getElementById('act-list').innerHTML=acts.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:4px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='rgba(33,38,45,.6)'" onmouseout="this.style.background='transparent'"><div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;background:#21262d;border-radius:4px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" fill="none" stroke="#484f58" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div><div><p style="font-size:11px;font-weight:500;color:#c9d1d9">${r.v}</p><p style="font-size:9px;color:#484f58">${r.hp} - ${r.f}</p></div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge b-${r.c}">${r.s}</span><span style="font-size:9px;color:#30363d;width:40px;text-align:right">${r.t}</span></div></div>`).join('');
+
+const phs=[{n:'Redmi Note 10',f:'Shopee',s:'Uploading',bat:'72%',c:'amber'},{n:'Samsung A32',f:'TikTok',s:'Idle',bat:'89%',c:'green'},{n:'Oppo A96',f:'Shopee',s:'Uploading',bat:'45%',c:'amber'}];
+document.getElementById('ph-list').innerHTML=phs.map(d=>`<div style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:500;color:#c9d1d9">${d.n}</span><span class="badge b-${d.c}">${d.s}</span></div><div style="display:flex;justify-content:space-between"><span style="font-size:9px;color:#58a6ff">${d.f}</span><span style="font-size:9px;color:#484f58">${d.bat}</span></div></div>`).join('');
+
+const qd=[
+  {v:'shoes_001.mp4',cap:'Check the yellow cart!',tag:'#shoes #viral #murah',lnk:'shope.ee/abc',hp:'Auto',fl:'Shopee',st:'success'},
+  {v:'bag_002.mp4',cap:'Branded bag deal',tag:'#bag #branded #sale',lnk:'shope.ee/def',hp:'Samsung A32',fl:'TikTok',st:'success'},
+  {v:'skincare_003.mp4',cap:'Viral skincare review',tag:'#skincare #review #viral',lnk:'shope.ee/ghi',hp:'Auto',fl:'Shopee',st:'failed'},
+  {v:'gadget_004.mp4',cap:'Budget gadgets 2026',tag:'#gadget #tech #murah',lnk:'shope.ee/jkl',hp:'Oppo A96',fl:'Shopee',st:'uploading'},
+  {v:'outfit_005.mp4',cap:'Trending outfit OOTD',tag:'#outfit #ootd #fashion',lnk:'shope.ee/mno',hp:'Auto',fl:'Shopee',st:'pending'},
+  {v:'makeup_006.mp4',cap:'5-min natural makeup',tag:'#makeup #tutorial #beauty',lnk:'shope.ee/pqr',hp:'Auto',fl:'TikTok',st:'pending'},
+];
+const sm={success:{c:'green',l:'Success'},failed:{c:'red',l:'Failed'},uploading:{c:'amber',l:'Uploading'},pending:{c:'gray',l:'Queued'}};
+function renderQueue(){
+document.getElementById('q-body').innerHTML=qd.map((r,i)=>{const b=sm[r.st];const sc=r.st==='uploading'?`<div style="display:flex;align-items:center;gap:4px"><div style="width:50px;height:3px;background:#21262d;border-radius:2px;overflow:hidden"><div style="width:65%;height:100%;background:#d29922;border-radius:2px"></div></div><span style="font-size:9px;color:#d29922">65%</span></div>`:`<span class="badge b-${b.c}">${b.l}</span>`;return`<tr><td style="padding:4px 10px"><input type="checkbox" class="q-cb" data-i="${i}" style="accent-color:#58a6ff" onchange="updateSelCount()"></td><td style="color:#484f58;font-size:10px">${i+1}</td><td><div style="display:flex;align-items:center;gap:6px"><div style="width:28px;height:18px;background:#21262d;border-radius:3px;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" fill="none" stroke="#484f58" stroke-width="2" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg></div><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#c9d1d9">${r.v}</span></div></td><td style="color:#8b949e;font-size:10px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.cap}</td><td style="color:#58a6ff;font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.6">${r.tag}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(88,166,255,.4)">${r.lnk}</td><td style="font-size:10px;color:#8b949e">${r.hp}</td><td><span class="badge b-${r.fl==='Shopee'?'blue':'purple'}" style="font-size:9px">${r.fl}</span></td><td>${sc}</td></tr>`;}).join('');
+}
+renderQueue();
+
+function toggleSelectAll(cb){document.querySelectorAll('.q-cb').forEach(c=>c.checked=cb.checked);updateSelCount();}
+function updateSelCount(){
+  const n=document.querySelectorAll('.q-cb:checked').length;
+  document.getElementById('q-sel-info').style.display=n>0?'':'none';
+  document.getElementById('q-sel-n').textContent=n;
+  document.getElementById('q-assign-btn').style.display=n>0?'':'none';
+}
+function openAssignModal(){
+  const n=document.querySelectorAll('.q-cb:checked').length;
+  document.getElementById('modal-count').textContent='('+n+' videos)';
+  document.getElementById('assign-modal').style.display='flex';
+}
+function closeAssignModal(){document.getElementById('assign-modal').style.display='none';}
+function applyAssign(){
+  const ph=document.getElementById('modal-phone').value;
+  const fl=document.getElementById('modal-flow').value;
+  document.querySelectorAll('.q-cb:checked').forEach(cb=>{
+    const i=parseInt(cb.dataset.i);
+    qd[i].hp=ph;qd[i].fl=fl;
+  });
+  renderQueue();closeAssignModal();
+  document.querySelectorAll('.q-cb').forEach(c=>c.checked=false);
+  document.getElementById('q-selall').checked=false;
+  updateSelCount();
+}
+
+const dvs=[
+  {n:'Redmi Note 10',id:'R28M30ABC4F2',s:'uploading',bat:'72%',upl:156,rate:'94.2%'},
+  {n:'Samsung Galaxy A32',id:'RFCN30XYB8C1',s:'idle',bat:'89%',upl:203,rate:'97.1%'},
+  {n:'Oppo A96',id:'OPP0A96D3E7F',s:'uploading',bat:'45%',upl:89,rate:'91.8%'},
+];
+document.getElementById('dev-list').innerHTML=dvs.map(d=>`<div class="dev-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;background:#21262d;border-radius:6px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" stroke="#484f58" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div><div><p style="font-size:12px;font-weight:600;color:#f0f6fc">${d.n}</p><p style="font-size:9px;color:#30363d;font-family:'IBM Plex Mono',monospace;margin-top:1px">${d.id}</p></div></div><div style="display:flex;gap:4px;align-items:center"><span class="badge b-${d.s==='uploading'?'amber':'green'}">${d.s==='uploading'?'Uploading':'Idle'}</span><button class="btn" style="font-size:9px;padding:2px 6px">Test</button></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding-top:8px;border-top:1px solid #21262d"><div><p style="font-size:8px;color:#484f58;margin-bottom:1px">BATTERY</p><p style="font-size:11px;font-weight:500;color:#c9d1d9">${d.bat}</p></div><div><p style="font-size:8px;color:#484f58;margin-bottom:1px">UPLOADS</p><p style="font-size:11px;font-weight:500;color:#c9d1d9">${d.upl}</p></div><div><p style="font-size:8px;color:#484f58;margin-bottom:1px">SUCCESS</p><p style="font-size:11px;font-weight:500;color:#3fb950">${d.rate}</p></div><div><p style="font-size:8px;color:#484f58;margin-bottom:1px">LAST ACTIVE</p><p style="font-size:11px;font-weight:500;color:#c9d1d9">Now</p></div></div></div>`).join('');
+
+const steps=[
+  {a:'kill_app',d:'Force stop Shopee',c:'red'},{a:'push_file',d:'Push video to device',c:'amber'},
+  {a:'media_scan',d:'Refresh gallery',c:'cyan'},{a:'wait',d:'Wait for scan',c:'gray'},
+  {a:'open_app',d:'Open Shopee',c:'green'},{a:'wait',d:'Wait for load',c:'gray'},
+  {a:'click',d:'Tap profile tab',c:'blue'},{a:'wait',d:'Wait',c:'gray'},
+  {a:'click',d:'Tap video section',c:'blue'},{a:'click',d:'Tap upload btn',c:'blue'},
+  {a:'wait',d:'Wait for gallery',c:'gray'},{a:'click',d:'Select video',c:'blue'},
+  {a:'click',d:'Tap next',c:'blue'},{a:'click',d:'Skip editing',c:'blue'},
+  {a:'click',d:'Tap caption field',c:'blue'},{a:'type_text',d:'Type caption',c:'purple'},
+  {a:'click',d:'Add product',c:'blue'},{a:'type_text',d:'Paste URL',c:'purple'},
+  {a:'click',d:'Tap publish',c:'blue'},{a:'wait',d:'Wait for upload',c:'gray'},
+];
+document.getElementById('ed-list').innerHTML=steps.map((s,i)=>`<div class="step-row"><span style="font-size:10px;color:#30363d;font-family:'IBM Plex Mono',monospace;width:18px;text-align:right">${i+1}</span><span class="badge b-${s.c}" style="min-width:62px;text-align:center">${s.a}</span><span style="color:#c9d1d9;flex:1;font-size:11px">${s.d}</span><div class="act" style="display:flex;gap:2px"><button style="background:none;border:none;color:#30363d;cursor:pointer;padding:1px"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg></button><button style="background:none;border:none;color:#30363d;cursor:pointer;padding:1px"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg></button><button style="background:none;border:none;color:#30363d;cursor:pointer;padding:1px"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg></button></div></div>`).join('');
+
+const fcN=[{a:'kill_app',d:'Force stop',c:'#f85149',x:270,y:10},{a:'push_file',d:'Push video',c:'#d29922',x:270,y:60},{a:'media_scan',d:'Media scan',c:'#39d2c0',x:270,y:110},{a:'open_app',d:'Open Shopee',c:'#3fb950',x:270,y:160},{a:'click',d:'Tap profile',c:'#58a6ff',x:170,y:215},{a:'click',d:'Tap video',c:'#58a6ff',x:370,y:215},{a:'click',d:'Upload btn',c:'#58a6ff',x:270,y:270},{a:'type_text',d:'Caption',c:'#bc8cff',x:270,y:320}];
+const fcE=[[0,1],[1,2],[2,3],[3,4],[3,5],[4,6],[5,6],[6,7]];
+let svg='<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#30363d" stroke-width="1.5" stroke-linecap="round"/></marker></defs>';
+fcE.forEach(([a,b])=>{const n1=fcN[a],n2=fcN[b];svg+=`<line x1="${n1.x+45}" y1="${n1.y+32}" x2="${n2.x+45}" y2="${n2.y}" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>`});
+fcN.forEach(n=>{svg+=`<g class="fc-node"><rect x="${n.x}" y="${n.y}" width="90" height="32" rx="4" fill="${n.c}10" stroke="${n.c}40" stroke-width="1"/><text x="${n.x+45}" y="${n.y+13}" text-anchor="middle" fill="${n.c}" font-size="9" font-weight="600" font-family="IBM Plex Sans">${n.a}</text><text x="${n.x+45}" y="${n.y+25}" text-anchor="middle" fill="#8b949e" font-size="9" font-family="IBM Plex Sans">${n.d}</text></g>`});
+svg+='<text x="350" y="375" text-anchor="middle" fill="#21262d" font-size="10" font-family="IBM Plex Sans">Drag to rearrange - Click to edit</text>';
+document.getElementById('fc-svg').innerHTML=svg;
+
+const hd=[
+  {d:'Apr 2, 14:32',v:'shoes_001.mp4',hp:'Redmi Note 10',f:'Shopee',dur:'2m 34s',s:'success'},
+  {d:'Apr 2, 14:29',v:'bag_002.mp4',hp:'Samsung A32',f:'TikTok',dur:'3m 12s',s:'success'},
+  {d:'Apr 2, 14:25',v:'skincare_003.mp4',hp:'Redmi Note 10',f:'Shopee',dur:'1m 08s',s:'failed'},
+  {d:'Apr 2, 14:20',v:'hoodie_004.mp4',hp:'Oppo A96',f:'Shopee',dur:'2m 51s',s:'success'},
+  {d:'Apr 2, 14:15',v:'earphone_005.mp4',hp:'Samsung A32',f:'TikTok',dur:'2m 22s',s:'success'},
+  {d:'Apr 1, 22:10',v:'tumbler_006.mp4',hp:'Redmi Note 10',f:'Shopee',dur:'3m 05s',s:'success'},
+  {d:'Apr 1, 21:55',v:'case_007.mp4',hp:'Oppo A96',f:'Shopee',dur:'2m 47s',s:'success'},
+  {d:'Apr 1, 21:40',v:'lamp_008.mp4',hp:'Samsung A32',f:'TikTok',dur:'3m 31s',s:'failed'},
+];
+document.getElementById('h-body').innerHTML=hd.map(l=>`<tr><td style="color:#484f58;font-size:10px">${l.d}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#c9d1d9">${l.v}</td><td style="color:#8b949e;font-size:10px">${l.hp}</td><td><span class="badge b-${l.f==='Shopee'?'blue':'purple'}">${l.f}</span></td><td style="color:#484f58;font-size:10px">${l.dur}</td><td><span class="badge b-${l.s==='success'?'green':'red'}">${l.s==='success'?'Success':'Failed'}</span></td></tr>`).join('');
+
+document.getElementById('console-out').innerHTML=[
+  {c:'#58a6ff',t:'[SYSTEM] AUV ready - 3 device(s) connected'},
+  {c:'#3fb950',t:'[A4F2] Upload success: shoes_001.mp4 (2m 34s)'},
+  {c:'#3fb950',t:'[B8C1] Upload success: bag_002.mp4 (3m 12s)'},
+  {c:'#f85149',t:'[A4F2] Upload failed: skincare_003.mp4 - template not found'},
+  {c:'#d29922',t:'[D3E7] Uploading: gadget_004.mp4 (step 12/20)'},
+].map((l,i)=>`<div class="console-line"><span style="color:#21262d;margin-right:6px">${i+1}</span><span style="color:${l.c}">${l.t}</span></div>`).join('');
+</script>
+</body>
+</html>

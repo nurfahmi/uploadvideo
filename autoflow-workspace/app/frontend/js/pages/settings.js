@@ -7,6 +7,7 @@ import { setTheme, getTheme } from '../theme.js';
 import { t, setLanguage, getLanguage } from '../i18n.js';
 import { renderSidebar } from '../components/sidebar.js';
 import { renderHeader } from '../components/header.js';
+import { navigate } from '../router.js';
 
 const { invoke } = window.__TAURI__.core;
 
@@ -156,6 +157,33 @@ export function render() {
         </div>
       </div>
 
+      <!-- Lanjutan (Advanced) -->
+      <div>
+        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">Lanjutan</p>
+        <div class="card" style="padding:0">
+          <button class="set-advanced-row" data-nav-route="editor" style="width:100%;display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:none;border:none;cursor:pointer;text-align:left;font-family:inherit;border-bottom:1px solid var(--c-border-30)" onmouseover="this.style.background='var(--c-hover-15)'" onmouseout="this.style.background='none'">
+            <div style="width:32px;height:32px;border-radius:var(--r-sm);background:var(--c-purple-a12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" fill="none" stroke="var(--c-purple)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 3h6l2 2v4l-2 2H9L7 9V5l2-2zM7 13h4l2 2v4l-2 2H7l-2-2v-4l2-2zm6 0h4l2 2v4l-2 2h-4l-2-2v-4l2-2z"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="t-sm t-strong">Template Editor</div>
+              <div class="t-xs t-muted" style="margin-top:2px">Edit flow step-by-step (untuk power user)</div>
+            </div>
+            <svg width="14" height="14" fill="none" stroke="var(--c-fg-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button class="set-advanced-row" data-nav-route="recorder" style="width:100%;display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:none;border:none;cursor:pointer;text-align:left;font-family:inherit" onmouseover="this.style.background='var(--c-hover-15)'" onmouseout="this.style.background='none'">
+            <div style="width:32px;height:32px;border-radius:var(--r-sm);background:var(--c-red-a12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" fill="none" stroke="var(--c-red)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="t-sm t-strong">Perekam Template</div>
+              <div class="t-xs t-muted" style="margin-top:2px">Rekam flow baru dari layar HP (standalone)</div>
+            </div>
+            <svg width="14" height="14" fill="none" stroke="var(--c-fg-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
       <!-- About -->
       <div>
         <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">${t('settings.about')}</p>
@@ -194,6 +222,12 @@ export function render() {
   panel.querySelector('#btn-replay-wizard')?.addEventListener('click', () => {
     if (window.onboarding) window.onboarding.init(() => {});
     else appendLog('[SYSTEM] Onboarding wizard not available');
+  });
+  panel.querySelectorAll('.set-advanced-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const route = row.dataset.navRoute;
+      if (route) navigate(route);
+    });
   });
   panel.querySelector('#btn-validate-license')?.addEventListener('click', async () => {
     const key = $('#set-license')?.value?.trim();

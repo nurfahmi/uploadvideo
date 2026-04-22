@@ -183,6 +183,444 @@ fn capture_screen(device_id: String, flow_name: String, app_handle: tauri::AppHa
     Ok(filename)
 }
 
+// ── Recorder commands (Sprint 1) ──────────────────────────
+
+#[tauri::command]
+fn recorder_screenshot(device_id: String, app_handle: tauri::AppHandle) -> Result<String, String> {
+    let t0 = std::time::Instant::now();
+    let paths = resolve_paths(&app_handle)?;
+    let result = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("exec-out").arg("screencap").arg("-p")
+        .stdout(Stdio::piped())
+        .output()
+        .map_err(|e| format!("adb failed: {}", e))?;
+    let adb_ms = t0.elapsed().as_millis();
+    if result.stdout.is_empty() {
+        return Err("Screenshot empty — device connected?".to_string());
+    }
+    let png_size = result.stdout.len();
+    let t1 = std::time::Instant::now();
+    use base64::Engine as _;
+    use image::ImageReader;
+    use std::io::Cursor;
+    let img = ImageReader::new(Cursor::new(&result.stdout))
+        .with_guessed_format()
+        .map_err(|e| format!("decode format: {}", e))?
+        .decode()
+        .map_err(|e| format!("decode image: {}", e))?;
+    let rgb = img.to_rgb8();
+    let mut jpeg_bytes: Vec<u8> = Vec::with_capacity(rgb.len() / 8);
+    let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg_bytes, 70);
+    encoder
+        .encode(&rgb, img.width(), img.height(), image::ExtendedColorType::Rgb8)
+        .map_err(|e| format!("jpeg encode: {}", e))?;
+    let jpeg_size = jpeg_bytes.len();
+    let encode_ms = t1.elapsed().as_millis();
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&jpeg_bytes);
+    if adb_ms > 400 || encode_ms > 100 {
+        let _ = app_handle.emit("recorder:log",
+            format!("[rust] screenshot adb={}ms encode={}ms png={}KB jpeg={}KB",
+                adb_ms, encode_ms, png_size / 1024, jpeg_size / 1024));
+    }
+    Ok(format!("data:image/jpeg;base64,{}", b64))
+}
+
+#[tauri::command]
+fn recorder_open_mirror_window(
+    device_id: String,
+    width: f64,
+    height: f64,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    use tauri::WebviewUrl;
+    let label = "mirror";
+    // Always destroy any existing "mirror" window first to avoid stale refs
+    if let Some(w) = app_handle.get_webview_window(label) {
+        let _ = w.destroy();
+        // small delay so Tauri cleans up fully before recreating
+        std::thread::sleep(std::time::Duration::from_millis(150));
+    }
+    let url = format!("mirror.html?device={}", device_id);
+    let builder = tauri::WebviewWindowBuilder::new(
+        &app_handle,
+        label,
+        WebviewUrl::App(url.into()),
+    )
+    .title("Device Mirror")
+    .inner_size(width, height)
+    .min_inner_size(200.0, 400.0)
+    .resizable(true)
+    .always_on_top(true);
+    builder.build().map_err(|e| format!("window create: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command]
+fn recorder_type_text(
+    device_id: String,
+    selector: serde_json::Value,
+    text: String,
+    clear: Option<bool>,
+    app_handle: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    use std::io::Write;
+    let paths = resolve_paths(&app_handle)?;
+    let helper = paths.engine_script.parent()
+        .ok_or("engine dir missing")?
+        .join("recorder_helper.py");
+    if !helper.exists() {
+        return Err("recorder_helper.py not found".to_string());
+    }
+    let mut child = Command::new(&paths.python_bin)
+        .arg(&helper).arg("type")
+        .arg(&device_id)
+        .arg(paths.adb_bin.to_str().unwrap_or("adb"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("spawn python: {}", e))?;
+    let payload = serde_json::json!({
+        "selector": selector,
+        "text": text,
+        "clear": clear.unwrap_or(true),
+    });
+    if let Some(stdin) = child.stdin.take() {
+        let mut stdin = stdin;
+        stdin.write_all(payload.to_string().as_bytes())
+            .map_err(|e| format!("write stdin: {}", e))?;
+    }
+    let output = child.wait_with_output().map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        return Err(format!("helper failed: stdout={} stderr={}", stdout.trim(), stderr.trim()));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(stdout.trim()).map_err(|e| format!("parse: {} — output: {}", e, stdout))
+}
+
+/// Run pre-flight checks (battery, storage, video, URL, limits) before engine starts.
+/// Returns structured JSON that UI renders as check-list.
+#[tauri::command]
+fn prerun_check(
+    device_id: String,
+    item: serde_json::Value,
+    app_handle: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let helper = paths.engine_script.parent()
+        .ok_or("engine dir missing")?
+        .join("prerun_check.py");
+    if !helper.exists() {
+        return Err("prerun_check.py not found".to_string());
+    }
+    let out = Command::new(&paths.python_bin)
+        .arg(&helper)
+        .arg(&device_id)
+        .arg(paths.adb_bin.to_str().unwrap_or("adb"))
+        .arg(item.to_string())
+        .output()
+        .map_err(|e| format!("spawn: {}", e))?;
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    serde_json::from_str(stdout.trim()).map_err(|e| format!("parse: {} — {}", e, stdout))
+}
+
+/// Update template health metadata (success/failure counter + last run timestamp).
+/// Called from frontend after engine finishes.
+#[tauri::command]
+fn template_record_health(
+    template_name: String,
+    success: bool,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    let dir = templates_dir(&app_handle)?;
+    let path = dir.join(format!("{}.json", template_name));
+    let s = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let mut doc: serde_json::Value = serde_json::from_str(&s).map_err(|e| e.to_string())?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let health = doc.get("health").cloned().unwrap_or(serde_json::json!({
+        "runs": 0, "success": 0, "last_run": 0, "last_failure": 0
+    }));
+    let mut h = health.as_object().cloned().unwrap_or_default();
+    let runs = h.get("runs").and_then(|v| v.as_u64()).unwrap_or(0) + 1;
+    let succ = h.get("success").and_then(|v| v.as_u64()).unwrap_or(0)
+        + if success { 1 } else { 0 };
+    h.insert("runs".into(), serde_json::json!(runs));
+    h.insert("success".into(), serde_json::json!(succ));
+    h.insert("last_run".into(), serde_json::json!(now));
+    if !success {
+        h.insert("last_failure".into(), serde_json::json!(now));
+    }
+    doc.as_object_mut().ok_or("not object")?
+        .insert("health".into(), serde_json::Value::Object(h));
+    fs::write(&path, serde_json::to_string_pretty(&doc).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())
+}
+
+/// Detect device profile for smart template matching. Queries ADB for
+/// brand/model/OS version and Shopee app version in a single call.
+#[tauri::command]
+fn device_detect_profile(device_id: String, app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let prop = |key: &str| -> String {
+        Command::new(&paths.adb_bin)
+            .args(["-s", &device_id, "shell", "getprop", key])
+            .output()
+            .ok()
+            .and_then(|o| String::from_utf8(o.stdout).ok())
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default()
+    };
+    let brand = prop("ro.product.brand");
+    let model = prop("ro.product.model");
+    let os_version = prop("ro.build.version.release");
+    let sdk = prop("ro.build.version.sdk");
+    let (width, height) = fetch_wm_size(&paths.adb_bin, &device_id).unwrap_or((0, 0));
+
+    // Shopee app version via dumpsys package
+    let app_version = Command::new(&paths.adb_bin)
+        .args(["-s", &device_id, "shell", "dumpsys", "package", "com.shopee.id"])
+        .output().ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .and_then(|s| s.lines()
+            .find(|l| l.trim_start().starts_with("versionName="))
+            .map(|l| l.trim_start().trim_start_matches("versionName=").trim().to_string()))
+        .unwrap_or_default();
+
+    Ok(serde_json::json!({
+        "brand": brand,
+        "model": model,
+        "os_version": os_version,
+        "sdk": sdk,
+        "resolution": { "width": width, "height": height },
+        "shopee_version": app_version,
+    }))
+}
+
+#[tauri::command]
+fn engine_send_signal(signal: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let data_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
+    let sig_file = data_dir.join("engine_control.txt");
+    let allowed = ["resume", "skip", "abort"];
+    let s = signal.trim().to_lowercase();
+    if !allowed.contains(&s.as_str()) {
+        return Err(format!("signal must be one of: {:?}", allowed));
+    }
+    fs::write(&sig_file, &s).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn recorder_screen_info(device_id: String, app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let out = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg("wm").arg("size")
+        .output()
+        .map_err(|e| format!("adb failed: {}", e))?;
+    let s = String::from_utf8_lossy(&out.stdout);
+    // Parse "Physical size: 720x1612"
+    for line in s.lines() {
+        if let Some(idx) = line.find(':') {
+            let val = line[idx + 1..].trim();
+            if let Some((w, h)) = val.split_once('x') {
+                if let (Ok(w), Ok(h)) = (w.trim().parse::<i32>(), h.trim().parse::<i32>()) {
+                    return Ok(serde_json::json!({ "width": w, "height": h }));
+                }
+            }
+        }
+    }
+    Err(format!("could not parse wm size output: {}", s))
+}
+
+#[tauri::command]
+fn recorder_close_mirror_window(app_handle: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app_handle.get_webview_window("mirror") {
+        w.close().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn recorder_tap_and_capture(
+    device_id: String,
+    x: i32,
+    y: i32,
+    app_handle: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let helper = paths.engine_script.parent()
+        .ok_or("engine dir missing")?
+        .join("recorder_helper.py");
+    if !helper.exists() {
+        return Err(format!("recorder_helper.py not found at {}", helper.display()));
+    }
+    let output = Command::new(&paths.python_bin)
+        .arg(&helper)
+        .arg("tap")
+        .arg(&device_id)
+        .arg(x.to_string())
+        .arg(y.to_string())
+        .arg(paths.adb_bin.to_str().unwrap_or("adb"))
+        .output()
+        .map_err(|e| format!("python helper failed: {}", e))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("helper exit non-zero: {}", stderr));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str::<serde_json::Value>(stdout.trim())
+        .map_err(|e| format!("parse helper output: {} — stdout: {}", e, stdout))
+}
+
+fn templates_dir(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let data_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
+    let dir = data_dir.join("templates");
+    if !dir.exists() { fs::create_dir_all(&dir).map_err(|e| e.to_string())?; }
+    Ok(dir)
+}
+
+#[tauri::command]
+fn recorder_save_template(
+    name: String,
+    data: serde_json::Value,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    let dir = templates_dir(&app_handle)?;
+    let safe_name = name.chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .collect::<String>();
+    let path = dir.join(format!("{}.json", safe_name));
+    let s = serde_json::to_string_pretty(&data).map_err(|e| e.to_string())?;
+    fs::write(&path, s).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn recorder_list_templates(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let dir = templates_dir(&app_handle)?;
+    let mut names: Vec<String> = Vec::new();
+    if !dir.exists() { return Ok(names); }
+    for entry in fs::read_dir(&dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let p = entry.path();
+        if p.extension().and_then(|s| s.to_str()) == Some("json") {
+            if let Some(stem) = p.file_stem().and_then(|s| s.to_str()) {
+                names.push(stem.to_string());
+            }
+        }
+    }
+    Ok(names)
+}
+
+#[tauri::command]
+fn recorder_get_template(name: String, app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let dir = templates_dir(&app_handle)?;
+    let path = dir.join(format!("{}.json", name));
+    let s = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&s).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn recorder_delete_template(name: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let dir = templates_dir(&app_handle)?;
+    let path = dir.join(format!("{}.json", name));
+    if !path.exists() { return Err(format!("not found: {}", name)); }
+    fs::remove_file(&path).map_err(|e| e.to_string())
+}
+
+/// Writes arbitrary text content to a user-chosen path. Used by CSV template
+/// export from the Job page — after the user picks a location via save dialog.
+#[tauri::command]
+fn write_text_file(path: String, content: String) -> Result<(), String> {
+    let p = PathBuf::from(&path);
+    if let Some(parent) = p.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent).map_err(|e| format!("create parent: {}", e))?;
+        }
+    }
+    fs::write(&p, content).map_err(|e| format!("write file: {}", e))
+}
+
+/// Returns a recommended default path for saving exported files. Goes to
+/// ~/Documents/AutoFlow/<filename> (creates the folder if missing).
+#[tauri::command]
+fn default_export_path(filename: String, app_handle: tauri::AppHandle) -> Result<String, String> {
+    let home = app_handle.path().home_dir().map_err(|e| e.to_string())?;
+    let dir = home.join("Documents").join("AutoFlow");
+    if !dir.exists() {
+        let _ = fs::create_dir_all(&dir);
+    }
+    Ok(dir.join(filename).to_string_lossy().to_string())
+}
+
+fn fetch_wm_size(adb_bin: &PathBuf, device_id: &str) -> Option<(i32, i32)> {
+    let out = Command::new(adb_bin)
+        .arg("-s").arg(device_id)
+        .arg("shell").arg("wm").arg("size")
+        .output().ok()?;
+    let s = String::from_utf8_lossy(&out.stdout);
+    for line in s.lines() {
+        if let Some(idx) = line.find(':') {
+            let val = line[idx + 1..].trim();
+            if let Some((w, h)) = val.split_once('x') {
+                if let (Ok(w), Ok(h)) = (w.trim().parse::<i32>(), h.trim().parse::<i32>()) {
+                    return Some((w, h));
+                }
+            }
+        }
+    }
+    None
+}
+
+#[tauri::command]
+fn recorder_convert_template_to_flow(
+    template_name: String,
+    flow_name: String,
+    device_id: Option<String>,
+    app_handle: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let tdir = templates_dir(&app_handle)?;
+    let tpath = tdir.join(format!("{}.json", template_name));
+    if !tpath.exists() {
+        return Err(format!("template not found: {}", template_name));
+    }
+    let helper = paths.engine_script.parent()
+        .ok_or("engine dir missing")?
+        .join("template_converter.py");
+    if !helper.exists() {
+        return Err(format!("template_converter.py not found at {}", helper.display()));
+    }
+    let safe_flow = flow_name.chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .collect::<String>();
+    let flow_dir = paths.flows_dir.join(&safe_flow);
+    let mut cmd = Command::new(&paths.python_bin);
+    cmd.arg(&helper).arg(&tpath).arg(&flow_dir);
+    // If device_id given, fetch wm size and append as target args — enables
+    // smart scaling per target device at convert time.
+    if let Some(ref did) = device_id {
+        if let Some((w, h)) = fetch_wm_size(&paths.adb_bin, did) {
+            cmd.arg(w.to_string()).arg(h.to_string());
+        }
+    }
+    let output = cmd.output().map_err(|e| format!("spawn converter: {}", e))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("converter failed: {}", stderr));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let result: serde_json::Value = serde_json::from_str(stdout.trim())
+        .map_err(|e| format!("parse converter output: {} — {}", e, stdout))?;
+    let mut r = result.as_object().cloned().unwrap_or_default();
+    r.insert("flow_name".into(), serde_json::Value::String(safe_flow));
+    Ok(serde_json::Value::Object(r))
+}
+
 #[tauri::command]
 fn list_flow_images(flow_name: String, app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
     let paths = resolve_paths(&app_handle)?;
@@ -464,6 +902,12 @@ fn start_automation(
     let adb_str = paths.adb_bin.to_str().ok_or("Invalid path")?.to_string();
     let count = device_ids.len();
 
+    // Signal file for engine↔UI control (Sprint 4c interruption)
+    let signal_file = paths.data_dir.join("engine_control.txt");
+    let signal_str = signal_file.to_str().unwrap_or("").to_string();
+    // Clean any stale signal
+    let _ = fs::remove_file(&signal_file);
+
     let _ = app_handle.emit("engine-log",
         format!("[SYSTEM] Starting automation on {} device(s)...", count));
 
@@ -475,6 +919,7 @@ fn start_automation(
         let adb = adb_str.clone();
         let v = vars.clone();
         let dev = device_id.clone();
+        let sig = signal_str.clone();
         let short = if dev.len() > 8 { dev[dev.len()-6..].to_string() } else { dev.clone() };
 
         std::thread::spawn(move || {
@@ -487,6 +932,7 @@ fn start_automation(
                 .arg("--flow_path").arg(&flow)
                 .arg("--vars").arg(&v)
                 .arg("--adb_path").arg(&adb)
+                .arg("--signal_file").arg(&sig)
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn();
@@ -591,7 +1037,24 @@ pub fn run() {
             clear_history,
             delete_history_record,
             get_queue,
-            save_queue
+            save_queue,
+            recorder_screenshot,
+            recorder_tap_and_capture,
+            recorder_save_template,
+            recorder_list_templates,
+            recorder_get_template,
+            recorder_open_mirror_window,
+            recorder_close_mirror_window,
+            recorder_screen_info,
+            recorder_type_text,
+            recorder_convert_template_to_flow,
+            engine_send_signal,
+            device_detect_profile,
+            prerun_check,
+            template_record_health,
+            recorder_delete_template,
+            write_text_file,
+            default_export_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

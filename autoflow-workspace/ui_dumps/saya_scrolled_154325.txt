@@ -1,0 +1,37 @@
+# UI dump: saya_scrolled
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   -                               ViewPager             [0,0][720,1432]
+com.shopee.id:id/swipe_refresh_layout               -                               ViewGroup             [0,0][720,1432]
+com.shopee.id:id/main_view                          -                               RecyclerView          [0,0][720,1432]
+-                                                   -                               ViewGroup             [0,32][720,113]
+-                                                   -                               RecyclerView          [0,113][720,381]
+-                                                   -                               ViewGroup             [24,113][354,241]
+-                                                   -                               ViewGroup             [366,113][696,241]
+-                                                   -                               ViewGroup             [24,253][354,381]
+-                                                   -                               ViewGroup             [366,253][696,381]
+-                                                   -                               ViewGroup             [0,421][720,502]
+-                                                   -                               RecyclerView          [0,502][720,910]
+-                                                   -                               ViewGroup             [24,502][354,630]
+-                                                   -                               ViewGroup             [366,502][696,630]
+-                                                   -                               ViewGroup             [24,642][354,770]
+-                                                   -                               ViewGroup             [366,642][696,770]
+-                                                   -                               ViewGroup             [24,782][354,910]
+-                                                   -                               ViewGroup             [366,782][696,910]
+-                                                   -                               ViewGroup             [0,950][720,1031]
+-                                                   -                               RecyclerView          [0,1031][720,1223]
+-                                                   -                               ViewGroup             [24,1031][720,1127]
+-                                                   -                               ViewGroup             [24,1127][720,1223]
+item_card_29584916242                               -                               ViewGroup             [12,1324][348,1432]
+item_card_47906527860                               -                               ViewGroup             [366,1324][702,1432]
+-                                                   -                               FrameLayout           [0,1432][144,1532]
+-                                                   -                               FrameLayout           [144,1432][288,1532]
+-                                                   -                               FrameLayout           [288,1432][432,1532]
+-                                                   -                               FrameLayout           [432,1432][576,1532]
+-                                                   -                               FrameLayout           [576,1432][720,1532]

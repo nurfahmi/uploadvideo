@@ -1,0 +1,253 @@
+{
+  "name": "Itel shopee_v4",
+  "platform": "shopee",
+  "batch": true,
+  "batch_fields": [
+    {
+      "key": "affiliate_link",
+      "label": "affiliate_link",
+      "required": false
+    },
+    {
+      "key": "caption",
+      "label": "caption",
+      "required": true
+    },
+    {
+      "key": "hashtags",
+      "label": "hashtags",
+      "required": false
+    }
+  ],
+  "steps": [
+    {
+      "action": "launch_intent",
+      "intent": "-n com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "description": "Launch target app",
+      "wait_for": "HomeActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 3
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/icon",
+      "contentDescription": "tab_bar_button_video_and_live",
+      "description": "Step 2: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5042,
+        "y_pct": 0.9113
+      },
+      "delay_after": 14
+    },
+    {
+      "action": "u2_click",
+      "contentDescription": "click top right create icon",
+      "description": "Step 3: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.9278,
+        "y_pct": 0.0868
+      },
+      "wait_for": "SSZMediaActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 9
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/iv_album_icon",
+      "description": "Step 4: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.8028,
+        "y_pct": 0.7798
+      },
+      "delay_after": 6
+    },
+    {
+      "action": "u2_click",
+      "text": "Video",
+      "description": "Step 5: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5083,
+        "y_pct": 0.1495
+      },
+      "delay_after": 5
+    },
+    {
+      "action": "tap_pct",
+      "x_pct": 0.1111,
+      "y_pct": 0.2301,
+      "description": "Step 6: tap (coord)",
+      "wait_for": "SSZBasePreviewActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 9
+    },
+    {
+      "action": "u2_click",
+      "text": "Lanjutkan",
+      "description": "Step 7: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.7903,
+        "y_pct": 0.8958
+      },
+      "wait_for": "SSZMultipleEditActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 9
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/tv_compress",
+      "text": "Lanjutkan",
+      "description": "Step 8: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.8292,
+        "y_pct": 0.9001
+      },
+      "wait_for": "PublishVideoActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 5
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "Tambah keterangan pada Video-mu",
+      "description": "Step 9: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.4528,
+        "y_pct": 0.1495
+      },
+      "delay_after": 6
+    },
+    {
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "{{caption}}",
+      "clear": true,
+      "description": "Step 10: type",
+      "delay_after": 13
+    },
+    {
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "{{hashtags}}",
+      "clear": false,
+      "description": "Step 11: type",
+      "delay_after": 8
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_right",
+      "text": "OK",
+      "description": "Step 12: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.925,
+        "y_pct": 0.0744
+      },
+      "delay_after": 7
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_add_product_tip",
+      "text": "Tambah Produk dan Voucher",
+      "description": "Step 13: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5986,
+        "y_pct": 0.3406
+      },
+      "wait_for": "ReactActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 9
+    },
+    {
+      "action": "tap_pct",
+      "x_pct": 0.9236,
+      "y_pct": 0.0732,
+      "description": "Step 14: tap (coord)",
+      "delay_after": 6
+    },
+    {
+      "action": "tap_pct",
+      "x_pct": 0.0806,
+      "y_pct": 0.1935,
+      "description": "Step 15: tap (coord)",
+      "delay_after": 8
+    },
+    {
+      "action": "u2_type",
+      "className": "android.widget.EditText",
+      "text": "{{affiliate_link}}",
+      "clear": true,
+      "description": "Step 16: type",
+      "delay_after": 7
+    },
+    {
+      "action": "u2_click",
+      "text": "Import",
+      "description": "Step 17: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.4819,
+        "y_pct": 0.4249
+      },
+      "delay_after": 8
+    },
+    {
+      "action": "tap_pct",
+      "x_pct": 0.0556,
+      "y_pct": 0.6154,
+      "description": "Step 18: tap (coord)",
+      "delay_after": 7
+    },
+    {
+      "action": "u2_click",
+      "text": "Tambah(1)",
+      "description": "Step 19: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.6278,
+        "y_pct": 0.8772
+      },
+      "wait_for": "PublishVideoActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 9
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/btn_post",
+      "text": "Posting",
+      "description": "Step 20: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.5514,
+        "y_pct": 0.9094
+      },
+      "wait_for": "HomeActivity",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 13
+    },
+    {
+      "action": "u2_click",
+      "resourceId": "com.android.systemui:id/recent_apps",
+      "contentDescription": "Ringkasan",
+      "description": "Step 21: tap",
+      "fallback_tap_pct": {
+        "x_pct": 0.2569,
+        "y_pct": 0.9746
+      },
+      "wait_for": "QuickstepLauncher",
+      "wait_timeout": 20,
+      "retry": 2,
+      "delay_after": 7
+    },
+    {
+      "action": "tap_pct",
+      "x_pct": 0.5,
+      "y_pct": 0.915,
+      "description": "Step 22: tap (coord)",
+      "delay_after": 2
+    }
+  ]
+}

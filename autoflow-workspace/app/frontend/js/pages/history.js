@@ -48,6 +48,7 @@ export async function render() {
           <option value="all" ${filter.platform==='all'?'selected':''}>All platforms</option>
           <option value="tiktok_upload" ${filter.platform==='tiktok_upload'?'selected':''}>TikTok</option>
           <option value="shopee_upload" ${filter.platform==='shopee_upload'?'selected':''}>Shopee</option>
+          <option value="shopee_upload_u2" ${filter.platform==='shopee_upload_u2'?'selected':''}>Shopee (u2)</option>
         </select>
         <select id="filter-status">
           <option value="all" ${filter.status==='all'?'selected':''}>All status</option>
@@ -105,7 +106,7 @@ export async function render() {
               <p style="color:var(--c-bg-3);font-size:10px;margin-top:2px">Records will appear here after running automation</p>
             </td></tr>
           ` : filtered.slice(0, 200).reverse().map((h, idx) => {
-            const platLabel = h.platform === 'tiktok_upload' ? 'TikTok' : h.platform === 'shopee_upload' ? 'Shopee' : h.platform || '–';
+            const platLabel = h.platform === 'tiktok_upload' ? 'TikTok' : h.platform === 'shopee_upload' ? 'Shopee' : h.platform === 'shopee_upload_u2' ? 'Shopee (u2)' : h.platform || '–';
             const platC = platLabel === 'TikTok' ? 'purple' : 'blue';
             const isSuccess = h.status === 'success';
             const d = new Date(h.timestamp);

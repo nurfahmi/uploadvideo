@@ -1,0 +1,21 @@
+# UI dump: saya_now2
+# package:  com.transsion.itel.launcher
+# activity: com.transsion.xlauncher.search.CustomerSearchActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+com.transsion.itel.launcher:id/search_bg            -                               RelativeLayout        [0,0][720,1612]
+com.transsion.itel.launcher:id/et_search            Cari                            EditText              [88,119][608,157] desc='custom search sa edit'
+com.transsion.itel.launcher:id/x_iv_gs_setting      -                               ImageView             [640,114][688,162]
+com.transsion.itel.launcher:id/scroll_view          -                               ScrollView            [0,228][720,1612]
+com.transsion.itel.launcher:id/touch_finish_layout  -                               LinearLayout          [0,228][720,1612]
+com.transsion.itel.launcher:id/x_rl_gs_title        -                               LinearLayout          [32,228][688,316]
+com.transsion.itel.launcher:id/x_iv_gs_open_close   -                               ImageView             [620,249][656,285]
+com.transsion.itel.launcher:id/x_gv_gs_apps         -                               GridView              [32,316][688,485]
+com.transsion.itel.launcher:id/x_item_ll            -                               LinearLayout          [32,316][184,449]
+com.transsion.itel.launcher:id/x_item_ll            -                               LinearLayout          [200,316][352,449]
+com.transsion.itel.launcher:id/x_item_ll            -                               LinearLayout          [368,316][520,449]
+com.transsion.itel.launcher:id/x_item_ll            -                               LinearLayout          [536,316][688,449]

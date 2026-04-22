@@ -89,14 +89,15 @@ def resolve_step(step, variables):
 # ─── Screen Detection ────────────────────────────────────────
 
 def get_current_activity(device_id):
-    """Get the current foreground activity name."""
+    """Get the current foreground activity name.
+    Checks multiple markers because format varies across Android versions:
+    mResumedActivity / topResumedActivity (older), mFocusedApp (Android 12+).
+    """
     result = adb(device_id, "shell", "dumpsys", "activity", "activities")
+    markers = ("topResumedActivity", "mResumedActivity", "mFocusedApp")
     for line in result.splitlines():
-        if "topResumedActivity" in line:
-            # Extract activity name from line like:
-            # topResumedActivity=ActivityRecord{... com.shopee.id/...PublishVideoActivity t155}
-            parts = line.strip().split()
-            for part in parts:
+        if any(m in line for m in markers):
+            for part in line.strip().split():
                 if "/" in part and "." in part:
                     return part.split("}")[0].strip()
     return ""
@@ -413,15 +414,19 @@ def action_assert_exists(device_id, step, flow_path):
 
 
 def action_screenshot(device_id, step, flow_path):
-    """Take a screenshot and save locally."""
-    output = step.get("output", "screenshot.png")
-    output_path = os.path.join(flow_path, output)
+    """Take a screenshot and save to device gallery (/sdcard/DCIM/AutoFlow_Shots/).
+    Faster than pull-to-laptop and ends up in phone's gallery app automatically."""
+    output = step.get("output", f"shot_{int(time.time())}.png")
+    remote_dir = "/sdcard/DCIM/AutoFlow_Shots"
+    remote_path = f"{remote_dir}/{output}"
     try:
-        subprocess.run(
-            f'"{ADB_PATH}" -s {device_id} exec-out screencap -p > "{output_path}"',
-            shell=True, timeout=15
-        )
-        log(f"  -> Screenshot saved: {output_path}")
+        adb_shell(device_id, f"mkdir -p {remote_dir}")
+        adb_shell(device_id, f"screencap -p {remote_path}", timeout=15)
+        # Media scan so the new file appears in gallery apps
+        adb_shell(device_id,
+            f'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://{remote_path}"',
+            timeout=5)
+        log(f"  -> Screenshot saved on device: {remote_path}")
     except Exception as e:
         log(f"  -> Screenshot failed: {e}")
     return True
@@ -511,50 +516,214 @@ def action_shell_cmd(device_id, step, flow_path):
     return True
 
 
-def action_u2_click(device_id, step, flow_path):
-    """Click a UI element using uiautomator2 (accessibility framework).
-    Use this for elements that don't respond to regular input tap.
-    Selectors: text, textContains, resourceId, className, description.
-    """
+def _u2_selector(step, exclude=()):
+    # Map JSON-schema selector names → uiautomator2 UiSelector kwargs.
+    # `contentDescription` is our JSON name (avoids colliding with step-level
+    # `description` log field); u2 expects `description`.
+    # `exclude` lets callers (like u2_type) omit `text`, which for type actions
+    # is the value to TYPE rather than a selector criterion.
+    mapping = {
+        "text": "text",
+        "textContains": "textContains",
+        "textStartsWith": "textStartsWith",
+        "resourceId": "resourceId",
+        "className": "className",
+        "contentDescription": "description",
+    }
+    return {v: step[k] for k, v in mapping.items() if k not in exclude and step.get(k)}
+
+
+def _u2_connect(device_id):
     try:
         import uiautomator2 as u2
     except ImportError:
         log("  -> ERROR: uiautomator2 not installed. Run: pip install uiautomator2")
-        # Fallback to regular tap if coordinates provided
+        return None
+    try:
+        return u2.connect(device_id)
+    except Exception as e:
+        log(f"  -> u2 connect error: {e}")
+        return None
+
+
+def action_u2_click(device_id, step, flow_path):
+    """Click a UI element using uiautomator2. Falls back to `fallback_tap_pct`
+    (or legacy x/y) ONLY if step has wait_for (so we can verify fallback worked).
+    Without wait_for, element-not-found usually means wrong app state, and a
+    coord fallback would tap something random and worsen the divergence."""
+    def _try_fallback(reason):
+        # Only attempt coord fallback when we have a verifiable transition;
+        # otherwise silent fail is safer than tapping a random coord.
+        has_wait_for = bool(step.get("wait_for"))
+        if not has_wait_for:
+            if step.get("optional"):
+                log(f"  -> {reason}, step is optional — skipping (no wait_for to verify fallback)")
+                return True
+            log(f"  -> {reason}, no wait_for — skipping fallback (coord might hit wrong UI)")
+            return False
+        fb = step.get("fallback_tap_pct")
+        if fb and (fb.get("x_pct") is not None or fb.get("x_abs") is not None):
+            log(f"  -> {reason}, trying fallback coord")
+            return action_tap_pct(device_id, fb, flow_path)
         if "x" in step and "y" in step:
+            log(f"  -> {reason}, legacy fallback to tap ({step['x']}, {step['y']})")
             return action_tap(device_id, step, flow_path)
         return False
 
+    d = _u2_connect(device_id)
+    if d is None:
+        return _try_fallback("u2 unavailable")
+
+    selector = _u2_selector(step)
+    if not selector:
+        log("  -> ERROR: No selector provided for u2_click")
+        return _try_fallback("no selector")
+
     try:
-        d = u2.connect(device_id)
-
-        # Build selector from step params (only UI selector keys)
-        selector_keys = ["text", "textContains", "textStartsWith",
-                         "resourceId", "className", "contentDescription"]
-        selector = {}
-        for key in selector_keys:
-            if step.get(key):
-                selector[key] = step[key]
-
-        if not selector:
-            log("  -> ERROR: No selector provided for u2_click")
-            return False
-
         el = d(**selector)
         timeout = step.get("timeout", 10)
-
         if el.wait(timeout=timeout):
             el.click()
             log(f"  -> u2_click: clicked element {selector}")
             return True
-        else:
-            log(f"  -> u2_click: element not found {selector}")
-            return False
+        log(f"  -> u2_click: element not found {selector}")
+        return _try_fallback("element not found")
     except Exception as e:
         log(f"  -> u2_click error: {e}")
-        if "x" in step and "y" in step:
-            log(f"  -> Fallback to tap ({step['x']}, {step['y']})")
-            return action_tap(device_id, step, flow_path)
+        return _try_fallback("click exception")
+
+
+def action_u2_type(device_id, step, flow_path):
+    """Set text of a UI element via uiautomator2.
+    Bypasses ADB `input text` entirely — works on fields that reject
+    keyboard input (e.g. Shopee caption).
+    """
+    d = _u2_connect(device_id)
+    if d is None:
+        return False
+    selector = _u2_selector(step, exclude=("text",))
+    if not selector:
+        log("  -> ERROR: No selector provided for u2_type")
+        return False
+    text = step.get("text", "")
+    timeout = step.get("timeout", 10)
+    clear = step.get("clear", True)
+    try:
+        el = d(**selector)
+        if not el.wait(timeout=timeout):
+            log(f"  -> u2_type: element not found {selector}")
+            return False
+        if clear:
+            el.clear_text()
+            el.set_text(text)
+            log(f"  -> u2_type: set {len(text)} chars into {selector}")
+        else:
+            # Append: read existing + concat + set (set_text replaces, so must combine)
+            try:
+                existing = el.get_text() or ""
+                hint = el.info.get("hint") or ""
+            except Exception:
+                existing, hint = "", ""
+            if existing == hint:
+                existing = ""  # hint shown as text when empty
+            combined = existing + text
+            el.set_text(combined)
+            log(f"  -> u2_type: appended {len(text)} → total {len(combined)} chars into {selector}")
+        return True
+    except Exception as e:
+        log(f"  -> u2_type error: {e}")
+        return False
+
+
+def action_u2_wait(device_id, step, flow_path):
+    """Wait for a UI element to appear. Used for screen sync / assertions."""
+    d = _u2_connect(device_id)
+    if d is None:
+        return False
+    selector = _u2_selector(step)
+    if not selector:
+        log("  -> ERROR: No selector provided for u2_wait")
+        return False
+    timeout = step.get("timeout", 15)
+    try:
+        if d(**selector).wait(timeout=timeout):
+            log(f"  -> u2_wait: element appeared {selector}")
+            return True
+        log(f"  -> u2_wait: timeout {timeout}s waiting for {selector}")
+        return False
+    except Exception as e:
+        log(f"  -> u2_wait error: {e}")
+        return False
+
+
+def action_u2_scroll_to(device_id, step, flow_path):
+    """Scroll a scrollable container until the element is visible."""
+    d = _u2_connect(device_id)
+    if d is None:
+        return False
+    selector = _u2_selector(step)
+    if not selector:
+        log("  -> ERROR: No selector provided for u2_scroll_to")
+        return False
+    try:
+        found = d(scrollable=True).scroll.to(**selector)
+        if found:
+            log(f"  -> u2_scroll_to: reached {selector}")
+            return True
+        log(f"  -> u2_scroll_to: element not found after scrolling {selector}")
+        return False
+    except Exception as e:
+        log(f"  -> u2_scroll_to error: {e}")
+        return False
+
+
+def action_tap_pct(device_id, step, flow_path):
+    """Tap coord. Prefers pre-computed x_abs/y_abs (from smart scaling at convert
+    time) over pct scaling (which miss for edge-region elements due to status
+    bar drift between devices)."""
+    x_abs = step.get("x_abs")
+    y_abs = step.get("y_abs")
+    if x_abs is not None and y_abs is not None:
+        x, y = int(x_abs), int(y_abs)
+        adb_shell(device_id, f"input tap {x} {y}")
+        log(f"  -> tap_pct: x_abs/y_abs ({x}, {y})")
+        return True
+    x_pct = step.get("x_pct")
+    y_pct = step.get("y_pct")
+    if x_pct is None or y_pct is None:
+        log("  -> ERROR: tap_pct needs x_pct/y_pct or x_abs/y_abs")
+        return False
+    try:
+        wm = adb_shell(device_id, "wm size")
+        parts = wm.split(":")[-1].strip().split("x")
+        w, h = int(parts[0]), int(parts[1])
+    except Exception as e:
+        log(f"  -> tap_pct: wm size failed ({e}), defaulting to 1080x2400")
+        w, h = 1080, 2400
+    x = int(w * float(x_pct))
+    y = int(h * float(y_pct))
+    adb_shell(device_id, f"input tap {x} {y}")
+    log(f"  -> tap_pct: ({x_pct}, {y_pct}) on {w}x{h} -> ({x}, {y})")
+    return True
+
+
+def action_u2_exists(device_id, step, flow_path):
+    """Check presence of a UI element. `expect: false` flips the success condition."""
+    d = _u2_connect(device_id)
+    if d is None:
+        return False
+    selector = _u2_selector(step)
+    if not selector:
+        log("  -> ERROR: No selector provided for u2_exists")
+        return False
+    timeout = step.get("timeout", 3)
+    expect = step.get("expect", True)
+    try:
+        found = d(**selector).exists(timeout=timeout)
+        log(f"  -> u2_exists: {selector} -> {found} (expect {expect})")
+        return found == expect
+    except Exception as e:
+        log(f"  -> u2_exists error: {e}")
         return False
 
 
@@ -688,7 +857,12 @@ ACTION_MAP = {
     "check_activity": action_check_activity,
     "dismiss_popup": action_dismiss_popup,
     "scroll_to": action_scroll_to,
+    "tap_pct": action_tap_pct,
     "u2_click": action_u2_click,
+    "u2_type": action_u2_type,
+    "u2_wait": action_u2_wait,
+    "u2_scroll_to": action_u2_scroll_to,
+    "u2_exists": action_u2_exists,
     "skip_if_empty": action_skip_if_empty,
     "shell_cmd": action_shell_cmd,
 }
@@ -703,6 +877,47 @@ def load_flow(flow_path):
         sys.exit(1)
     with open(json_path, "r") as f:
         return json.load(f)
+
+
+# ─── Signal-file based engine↔UI control (Sprint 4c) ────────────
+
+SIGNAL_FILE = None  # set in main() from --signal_file arg
+
+def wait_for_user_signal(timeout=60):
+    """Block up to `timeout`s for UI to write a control signal.
+    Returns 'resume' | 'skip' | 'abort' | 'timeout'."""
+    global SIGNAL_FILE
+    if not SIGNAL_FILE:
+        return 'resume'  # no signal file configured — fail-open
+    elapsed = 0
+    while elapsed < timeout:
+        try:
+            if os.path.exists(SIGNAL_FILE):
+                with open(SIGNAL_FILE, 'r') as f:
+                    action = f.read().strip().lower()
+                try: os.remove(SIGNAL_FILE)
+                except Exception: pass
+                if action in ('resume', 'skip', 'abort'):
+                    log(f"  -> [SIGNAL] received: {action}")
+                    return action
+        except Exception as e:
+            log(f"  -> [SIGNAL] read error: {e}")
+        time.sleep(1)
+        elapsed += 1
+    log(f"  -> [SIGNAL] timeout after {timeout}s")
+    return 'timeout'
+
+
+def check_expected_activity(device_id, step):
+    """Sprint 4c: verify phone is at step's expected_activity before running.
+    Returns (ok: bool, current_activity: str)."""
+    expected = step.get("expected_activity")
+    if not expected:
+        return True, ""
+    current = get_current_activity(device_id)
+    if expected in current:
+        return True, current
+    return False, current
 
 
 def connect_device(device_id):
@@ -771,6 +986,34 @@ def execute_steps(device_id, steps, flow_path, variables):
 
         log(f"[Step {step_num}/{len(steps)}] {description}")
 
+        # ── Sprint 4c: interruption detection ─────────────────
+        # If step declares expected_activity, verify phone is there. If not,
+        # pause + ask UI. Skip check for system/prep actions without expectation.
+        ok, current = check_expected_activity(device_id, step)
+        if not ok:
+            expected = step.get("expected_activity", "")
+            log(f"  -> [INTERRUPTION] expected '{expected}', current '{current}'")
+            log(f"  -> [INTERRUPTION] waiting for user (Resume/Skip/Abort) via signal file…")
+            action_signal = wait_for_user_signal(timeout=120)
+            if action_signal == 'abort':
+                log("  -> [INTERRUPTION] user aborted — stopping flow")
+                step["_force_stop"] = True
+                failed_steps += 1
+                break
+            elif action_signal == 'skip':
+                log("  -> [INTERRUPTION] user skipped this step")
+                continue
+            elif action_signal == 'timeout':
+                log("  -> [INTERRUPTION] timed out waiting — treating as abort")
+                step["_force_stop"] = True
+                failed_steps += 1
+                break
+            # 'resume' → fall through and execute step (user fixed state)
+            log("  -> [INTERRUPTION] user resumed — re-verifying…")
+            ok2, current2 = check_expected_activity(device_id, step)
+            if not ok2:
+                log(f"  -> [INTERRUPTION] still mismatched (current: {current2}), continuing anyway")
+
         handler = ACTION_MAP.get(action)
         if not handler:
             log(f"  -> Unknown action: {action}, skipping")
@@ -823,7 +1066,20 @@ def execute_steps(device_id, steps, flow_path, variables):
                     break
                 else:
                     log(f"  -> Expected screen '{wait_for}' not reached")
-                    # Check for Shopee network error before retrying
+                    # Fallback: if step has fallback_tap_pct, try coord tap and re-wait
+                    # (handles case where u2 click fired but Shopee ignored it — happens
+                    # on some elements that require real touch events)
+                    fb = step.get("fallback_tap_pct")
+                    if fb and fb.get("x_pct") is not None and not step.get("_fallback_tried"):
+                        step["_fallback_tried"] = True
+                        log(f"  -> trying fallback_tap_pct ({fb['x_pct']}, {fb['y_pct']})")
+                        try:
+                            action_tap_pct(device_id, fb, flow_path)
+                        except Exception as e:
+                            log(f"  -> fallback tap error: {e}")
+                        if wait_for_activity(device_id, wait_for, timeout=wait_timeout, interval=2):
+                            log(f"  -> Step {step_num} complete (via fallback coord)")
+                            break
                     check_and_recover_network_error(device_id)
                     if attempt < max_retries - 1:
                         continue  # retry
@@ -946,10 +1202,18 @@ def main():
     parser.add_argument("--flow_path", required=True, help="Path to the flow directory")
     parser.add_argument("--vars", default="{}", help="JSON string of variables")
     parser.add_argument("--adb_path", default="adb", help="Path to ADB binary")
+    parser.add_argument("--signal_file", default=None, help="Path for engine↔UI signal file (for pause/resume control)")
     args = parser.parse_args()
 
-    global ADB_PATH
+    global ADB_PATH, SIGNAL_FILE
     ADB_PATH = args.adb_path
+    SIGNAL_FILE = args.signal_file
+    if SIGNAL_FILE:
+        # Clean any stale signal at startup
+        try:
+            if os.path.exists(SIGNAL_FILE): os.remove(SIGNAL_FILE)
+        except Exception:
+            pass
 
     try:
         variables = json.loads(args.vars)

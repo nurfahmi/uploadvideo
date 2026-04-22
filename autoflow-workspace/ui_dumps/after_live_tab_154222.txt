@@ -1,0 +1,44 @@
+# UI dump: after_live_tab
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+-                                                   -                               ViewPager             [0,0][720,1532]
+-                                                   -                               RecyclerView          [0,0][720,1532]
+-                                                   -                               RecyclerView          [0,0][720,1532]
+com.shopee.id.dfpluginshopee7:id/container_audience  -                               ViewGroup             [0,0][720,1532]
+-                                                   HANCUR LEBUR                    EditText              [300,1174][558,1220]
+com.shopee.id.dfpluginshopee7:id/iv_anchor_portrait  -                               ViewGroup             [28,192][92,256]
+com.shopee.id.dfpluginshopee7:id/ll_name            -                               ViewGroup             [100,189][325,260]
+com.shopee.id.dfpluginshopee7:id/btn_follow         Ikuti                           TextView              [333,196][440,252]
+com.shopee.id.dfpluginshopee7:id/live_page_leader_board_entrance_v2  -                               FrameLayout           [24,280][280,324]
+com.shopee.id.dfpluginshopee7:id/iv_show_product    -                               ImageView             [24,346][204,526]
+com.shopee.id.dfpluginshopee7:id/layout_price_new   -                               LinearLayout          [24,506][204,594]
+com.shopee.id.dfpluginshopee7:id/highlight_btn_view  Lihat                           TextView              [24,944][132,997]
+com.shopee.id.dfpluginshopee7:id/danmaku_view       -                               RecyclerView          [24,1020][524,1292]
+com.shopee.id.dfpluginshopee7:id/tv_product_num     6                               TextView              [24,1334][100,1410]
+com.shopee.id.dfpluginshopee7:id/tv_send_message    Beri Komentar...                TextView              [132,1334][372,1410]
+com.shopee.id.dfpluginshopee7:id/iv_more            -                               ImageView             [404,1334][480,1410]
+com.shopee.id.dfpluginshopee7:id/iv_share           -                               ImageView             [512,1334][588,1410]
+com.shopee.id.dfpluginshopee7:id/tv_likes           221,1RB                         TextView              [615,1314][701,1344]
+com.shopee.id.dfpluginshopee7:id/iv_like            -                               ImageView             [620,1334][696,1410]
+com.shopee.id.dfpluginshopee7:id/adview             -                               ImageView             [472,188][696,268]
+-                                                   -                               ViewGroup             [472,284][696,340]
+-                                                   -                               ViewGroup             [472,340][696,428]
+-                                                   -                               ViewGroup             [472,428][696,516]
+-                                                   -                               ViewGroup             [28,114][76,162] desc='click me page icon'
+-                                                   -                               ViewGroup             [96,114][144,162] desc='click search icon'
+-                                                   -                               HorizontalScrollView  [176,100][612,175]
+-                                                   -                               ViewGroup             [243,100][306,175] desc='click 0 tab'
+-                                                   -                               ViewGroup             [337,100][383,175] desc='click 1 tab'
+-                                                   -                               ViewGroup             [414,100][545,175] desc='click 2 tab'
+-                                                   -                               ViewGroup             [644,114][692,162] desc='click top right create icon'
+-                                                   -                               FrameLayout           [0,1432][144,1532]
+-                                                   -                               FrameLayout           [144,1432][288,1532]
+-                                                   -                               FrameLayout           [288,1432][432,1532]
+-                                                   -                               FrameLayout           [432,1432][576,1532]
+-                                                   -                               FrameLayout           [576,1432][720,1532]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

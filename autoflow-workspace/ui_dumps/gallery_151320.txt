@@ -1,0 +1,29 @@
+# UI dump: gallery
+# package:  com.shopee.id
+# activity: com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+com.shopee.id:id/scroll_viewpager                   -                               ViewPager             [0,80][720,1532]
+-                                                   -                               RecyclerView          [0,80][720,1532]
+-                                                   -                               RecyclerView          [0,80][720,1532]
+-                                                   -                               LinearLayout          [624,80][720,184]
+-                                                   -                               LinearLayout          [624,184][720,280]
+-                                                   -                               ScrollView            [490,282][720,694]
+-                                                   -                               LinearLayout          [504,282][720,382]
+-                                                   -                               LinearLayout          [561,382][720,486]
+-                                                   -                               LinearLayout          [546,486][720,590]
+-                                                   -                               LinearLayout          [515,590][720,694]
+-                                                   -                               ImageView             [612,694][720,754]
+com.shopee.id:id/another_tab_left_tool_item         -                               LinearLayout          [66,1094][202,1338]
+com.shopee.id:id/ll_gallery_entrance                -                               LinearLayout          [523,1170][627,1334]
+-                                                   -                               LinearLayout          [237,80][483,272]
+com.shopee.id:id/iv_back                            -                               ImageView             [0,80][120,196]
+com.shopee.id:id/rv_tab                             -                               RecyclerView          [0,1406][720,1486]
+-                                                   -                               FrameLayout           [184,1406][296,1486]
+-                                                   -                               FrameLayout           [296,1406][425,1486]
+-                                                   -                               FrameLayout           [425,1406][606,1486]
+-                                                   -                               FrameLayout           [606,1406][712,1486]

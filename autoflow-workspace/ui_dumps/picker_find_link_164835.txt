@@ -1,0 +1,26 @@
+# UI dump: picker_find_link
+# package:  com.shopee.id
+# activity: com.shopee.app.react.ReactActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   Cari Produk                     EditText              [92,199][670,236]
+-                                                   -                               ViewGroup             [0,276][240,364]
+-                                                   -                               ViewGroup             [240,276][480,364]
+-                                                   -                               ViewGroup             [480,276][720,364]
+-                                                   -                               ViewPager             [0,364][720,1532]
+-                                                   -                               ScrollView            [0,364][720,1532]
+-                                                   -                               ViewGroup             [0,389][180,423]
+-                                                   -                               ViewGroup             [180,389][360,423]
+-                                                   -                               ViewGroup             [360,389][540,423]
+-                                                   -                               ViewGroup             [540,389][720,423]
+-                                                   -                               ViewGroup             [672,480][696,504]
+-                                                   -                               ViewGroup             [0,552][720,756]
+-                                                   -                               ViewGroup             [505,669][697,725]
+-                                                   -                               ViewGroup             [0,757][720,962]
+-                                                   -                               ViewGroup             [505,874][697,930]
+-                                                   -                               ViewGroup             [0,961][720,1166]
+-                                                   -                               ViewGroup             [505,1078][697,1134]

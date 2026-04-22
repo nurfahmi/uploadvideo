@@ -1,0 +1,24 @@
+# UI dump: editor
+# package:  com.shopee.id
+# activity: com.shopee.sz.mediasdk.editpage.SSZMultipleEditActivity
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.shopee.id:id/edit_panel_container               -                               FrameLayout           [0,80][720,1532]
+com.shopee.id:id/iv_close                           -                               ImageView             [0,80][120,196]
+com.shopee.id:id/ll_music                           -                               LinearLayout          [258,108][462,168]
+-                                                   -                               ScrollView            [606,80][696,1360]
+-                                                   -                               LinearLayout          [606,112][696,228]
+-                                                   -                               LinearLayout          [606,276][696,392]
+-                                                   -                               LinearLayout          [606,440][696,544]
+-                                                   -                               LinearLayout          [606,592][696,696]
+-                                                   -                               LinearLayout          [606,744][696,848]
+-                                                   -                               LinearLayout          [24,1394][114,1498]
+-                                                   -                               LinearLayout          [138,1394][228,1498]
+-                                                   -                               LinearLayout          [252,1394][342,1498]
+-                                                   -                               LinearLayout          [366,1394][456,1498]
+com.shopee.id:id/tv_compress                        Lanjutkan                       TextView              [512,1418][680,1474]
+-                                                   Coba tambah subtitel secara ot  TextView              [65,1299][562,1363]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

@@ -1,0 +1,40 @@
+# UI dump: saya
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   -                               ViewPager             [0,0][720,1432]
+com.shopee.id:id/swipe_refresh_layout               -                               ViewGroup             [0,0][720,1432]
+com.shopee.id:id/main_view                          -                               RecyclerView          [0,0][720,1432]
+-                                                   -                               RecyclerView          [0,7][720,183]
+-                                                   -                               ViewGroup             [24,7][696,95]
+-                                                   -                               ViewGroup             [24,95][696,183]
+-                                                   -                               ViewGroup             [0,199][720,280]
+-                                                   -                               ViewGroup             [20,280][181,440]
+-                                                   -                               ViewGroup             [193,280][354,440]
+-                                                   -                               ViewGroup             [366,280][527,440]
+-                                                   -                               ViewGroup             [539,280][700,440]
+-                                                   -                               ViewGroup             [0,456][720,537]
+-                                                   -                               RecyclerView          [0,537][720,805]
+-                                                   -                               ViewGroup             [24,537][354,665]
+-                                                   -                               ViewGroup             [366,537][696,665]
+-                                                   -                               ViewGroup             [24,677][354,805]
+-                                                   -                               ViewGroup             [366,677][696,805]
+-                                                   -                               ViewGroup             [0,845][720,926]
+-                                                   -                               RecyclerView          [0,926][720,1334]
+-                                                   -                               ViewGroup             [24,926][354,1054]
+-                                                   -                               ViewGroup             [366,926][696,1054]
+-                                                   -                               ViewGroup             [24,1066][354,1194]
+-                                                   -                               ViewGroup             [366,1066][696,1194]
+-                                                   -                               ViewGroup             [24,1206][354,1334]
+-                                                   -                               ViewGroup             [366,1206][696,1334]
+-                                                   -                               ViewGroup             [0,1374][720,1432]
+-                                                   -                               FrameLayout           [0,1432][144,1532]
+-                                                   -                               FrameLayout           [144,1432][288,1532]
+-                                                   -                               FrameLayout           [288,1432][432,1532]
+-                                                   -                               FrameLayout           [432,1432][576,1532]
+-                                                   -                               FrameLayout           [576,1432][720,1532]

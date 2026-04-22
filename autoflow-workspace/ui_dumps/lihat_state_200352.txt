@@ -1,0 +1,45 @@
+# UI dump: lihat_state
+# package:  com.shopee.id
+# activity: com.shopee.app.ui.home.HomeActivity_
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+-                                                   -                               ViewPager             [0,0][720,1432]
+com.shopee.id:id/swipe_refresh_layout               -                               ViewGroup             [0,0][720,1432]
+com.shopee.id:id/main_view                          -                               RecyclerView          [0,0][720,1432]
+dreMePageHeader                                     -                               ViewGroup             [0,0][720,376]
+buttonSellerShop                                    -                               ViewGroup             [0,106][225,166]
+buttonAccountSettings                               -                               ViewGroup             [456,80][504,192]
+buttonCart                                          -                               ViewGroup             [528,80][616,192]
+buttonChat                                          -                               ViewGroup             [624,80][712,192]
+profileView                                         -                               ImageView             [32,194][128,290]
+labelUserName                                       yukbelanja136                   TextView              [164,200][426,247]
+-                                                   -                               ViewGroup             [442,208][550,240]
+profileEditPen                                      -                               ViewGroup             [96,248][140,292]
+buttonFollowers                                     -                               ViewGroup             [164,259][300,296]
+buttonFollowing                                     -                               ViewGroup             [332,262][454,294]
+-                                                   -                               ViewGroup             [24,314][696,376]
+-                                                   -                               ViewGroup             [80,424][636,452]
+-                                                   -                               ViewGroup             [652,416][696,460]
+-                                                   -                               ViewGroup             [16,500][704,722]
+-                                                   -                               ViewGroup             [0,738][720,819]
+-                                                   -                               RecyclerView          [0,819][720,995]
+-                                                   -                               ViewGroup             [24,819][696,907]
+-                                                   -                               ViewGroup             [24,907][696,995]
+-                                                   -                               ViewGroup             [0,1011][720,1092]
+-                                                   -                               ViewGroup             [20,1092][181,1252]
+-                                                   -                               ViewGroup             [193,1092][354,1252]
+-                                                   -                               ViewGroup             [366,1092][527,1252]
+-                                                   -                               ViewGroup             [539,1092][700,1252]
+-                                                   -                               ViewGroup             [0,1268][720,1349]
+-                                                   -                               RecyclerView          [0,1349][720,1432]
+-                                                   -                               ViewGroup             [24,1349][354,1432]
+-                                                   -                               ViewGroup             [366,1349][696,1432]
+-                                                   -                               FrameLayout           [0,1432][144,1532]
+-                                                   -                               FrameLayout           [144,1432][288,1532]
+-                                                   -                               FrameLayout           [288,1432][432,1532]
+-                                                   -                               FrameLayout           [432,1432][576,1532]
+-                                                   -                               FrameLayout           [576,1432][720,1532]
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'

@@ -1,0 +1,25 @@
+# UI dump: popup_check
+# package:  com.transsion.itel.launcher
+# activity: com.android.quickstep.src.com.android.launcher3.uioverrides.QuickstepLauncher
+
+# Clickable / interactive elements (resourceId | text | class | bounds)
+
+com.android.systemui:id/recent_apps                 -                               ImageView             [100,1532][260,1612] desc='Ringkasan'
+com.android.systemui:id/back                        -                               ImageView             [460,1532][620,1612] desc='Kembali'
+com.android.systemui:id/home                        -                               ImageView             [280,1532][440,1612] desc='Utama'
+-                                                   -                               ViewGroup             [32,136][688,1292]
+-                                                   -                               AppWidgetHostView     [32,904][688,1096] desc='Penelusuran'
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_ghost_google_logo  -                               FrameLayout           [48,944][144,1056]
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_ghost_text_search  -                               FrameLayout           [144,944][480,1056]
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_ghost_voice_search  -                               FrameLayout           [480,944][576,1056]
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_ghost_lens  -                               FrameLayout           [576,944][672,1056]
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_background  -                               ImageView             [48,952][672,1048] desc='Google Penelusuran'
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_google_logo  -                               ImageButton           [48,952][144,1048] desc='Aplikasi Google'
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_voice_btn  -                               ImageButton           [480,952][576,1048] desc='Penelusuran suara'
+com.google.android.googlequicksearchbox:id/googleapp_search_widget_lens_btn  -                               ImageButton           [576,952][672,1048] desc='Penelusuran kamera'
+com.transsion.itel.launcher:id/layout               -                               ViewGroup             [0,1372][720,1532]
+-                                                   -                               TextView              [34,1372][194,1532] desc='Telepon'
+-                                                   -                               TextView              [198,1372][358,1532] desc='Message'
+-                                                   -                               TextView              [362,1372][522,1532] desc='Kamera'
+-                                                   -                               TextView              [526,1372][686,1532] desc='Chrome'
+-                                                   -                               View                  [302,1316][418,1348]

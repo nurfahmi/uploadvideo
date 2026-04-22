@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Device Mirror</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      background: #0a0a0a;
+      overflow: hidden;
+      color: #eee;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      cursor: default;
+    }
+    #wrap {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #top {
+      padding: 6px 10px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+    }
+    #top .status {
+      flex: 1;
+      color: #888;
+    }
+    #top .rec {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      color: #ff4444;
+      font-weight: 600;
+      font-size: 10px;
+    }
+    #top .rec.on { display: flex; }
+    #top .rec span.dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ff4444;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    #stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+    #loading {
+      position: absolute;
+      color: #888;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    #loading.hidden { display: none; }
+    #loading .spinner {
+      width: 22px; height: 22px;
+      border: 2px solid #333;
+      border-top-color: #4af;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Context menu — macOS-style */
+    #ctxmenu {
+      position: fixed;
+      background: rgba(32, 38, 52, .98);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 10px;
+      padding: 6px;
+      min-width: 240px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .45), 0 2px 6px rgba(0, 0, 0, .25);
+      display: none;
+      z-index: 1000;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    }
+    #ctxmenu.on { display: block; animation: ctx-in .14s ease-out; }
+    @keyframes ctx-in {
+      from { opacity: 0; transform: translateY(-4px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #ctxmenu .ctx-header {
+      padding: 6px 10px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #8892a6;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #ctxmenu .item {
+      padding: 7px 10px;
+      font-size: 12px;
+      color: #e8ecf2;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border-radius: 6px;
+      transition: background .08s;
+    }
+    #ctxmenu .item:hover:not(.disabled) { background: #6ab0ff; color: #fff; }
+    #ctxmenu .item:hover:not(.disabled) .kbd,
+    #ctxmenu .item:hover:not(.disabled) .v { color: rgba(255,255,255,.85); }
+    #ctxmenu .item.disabled { opacity: .35; cursor: not-allowed; }
+    #ctxmenu .item .icon {
+      width: 14px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    #ctxmenu .item .label { flex: 1; }
+    #ctxmenu .item .kbd {
+      font-size: 10px;
+      color: #8892a6;
+      font-family: -apple-system, monospace;
+      letter-spacing: .3px;
+    }
+    #ctxmenu .item .v {
+      color: #6ab0ff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0;
+    }
+    #ctxmenu .sep {
+      height: 1px;
+      background: rgba(255, 255, 255, .08);
+      margin: 4px 6px;
+    }
+    #ctxmenu .ctx-hint {
+      padding: 6px 10px 4px;
+      font-size: 10px;
+      color: #5b6b82;
+      line-height: 1.4;
+    }
+    #mirror {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+      cursor: crosshair !important;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    #flash {
+      position: absolute;
+      border: 3px solid #4af;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    #flash.on { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="top">
+      <span class="status" id="status">Connecting…</span>
+      <span class="rec" id="rec-indicator"><span class="dot"></span> REC</span>
+    </div>
+    <div id="stage">
+      <canvas id="mirror"></canvas>
+      <div id="loading"><div class="spinner"></div><span>Connecting to device…</span></div>
+      <div id="flash"></div>
+    </div>
+  </div>
+
+  <div id="ctxmenu">
+    <div class="ctx-header" id="ctx-title">📋 Paste</div>
+    <div class="item" data-var="caption" id="ctx-caption">
+      <span class="icon">📝</span>
+      <span class="label">Caption</span>
+      <span class="v">{{caption}}</span>
+    </div>
+    <div class="item" data-var="hashtags" id="ctx-hashtags">
+      <span class="icon">#️⃣</span>
+      <span class="label">Hashtags</span>
+      <span class="v">{{hashtags}}</span>
+    </div>
+    <div class="item" data-var="affiliate_link" id="ctx-link">
+      <span class="icon">🔗</span>
+      <span class="label">Link / URL</span>
+      <span class="v">{{link}}</span>
+    </div>
+    <div class="sep"></div>
+    <div class="item" data-var="video_path">
+      <span class="icon">🎬</span>
+      <span class="label">Video path</span>
+      <span class="v">{{video}}</span>
+    </div>
+    <div class="item" data-var="__custom__">
+      <span class="icon">✏️</span>
+      <span class="label">Teks lain…</span>
+    </div>
+    <div class="sep"></div>
+    <div class="item" data-action="screenshot">
+      <span class="icon">📸</span>
+      <span class="label">Tambah screenshot step</span>
+    </div>
+    <div class="ctx-hint" id="ctx-hint" style="display:none"></div>
+  </div>
+  <script type="module">
+    const { invoke } = window.__TAURI__.core;
+    const { listen, emit } = window.__TAURI__.event;
+
+    const params = new URLSearchParams(window.location.search);
+    const deviceId = params.get('device') || '';
+    let recording = false;
+    let samples = {};  // caption, hashtags, affiliate_link, video_path
+
+    function resolveSample(text) {
+      return text.replace(/\{\{(\w+)\}\}/g, (_, k) => samples[k] != null && samples[k] !== '' ? samples[k] : `[${k}]`);
+    }
+    function suggestText(element, activity) {
+      const rid = (element?.resourceId || '').toLowerCase();
+      const act = (activity || '').toLowerCase();
+      if (rid.includes('caption') || rid.includes('description') || rid.includes('et_caption') || rid.includes('title')) {
+        return '{{caption}} {{hashtags}}';
+      }
+      if (rid.includes('link') || rid.includes('url') || act.includes('import')) {
+        return '{{affiliate_link}}';
+      }
+      return '';
+    }
+
+    const ctxmenu = document.getElementById('ctxmenu');
+    let lastTapStep = null;       // last captured step (any tap)
+    let lastEditTextStep = null;  // last tap that hit an EditText/TextField — used for paste
+    let typeMode = false;    // when tapped element is EditText
+    let typeBuffer = '';
+    let firstActionForField = true; // first paste/commit after tap uses clear=true; subsequent append
+
+    function isEditTextElement(el) {
+      const cls = (el && el.className) || '';
+      const rid = (el && el.resourceId) || '';
+      return cls.includes('EditText') || cls.includes('TextField')
+        || /caption|description|title|link|url|et_/i.test(rid);
+    }
+
+    function showCtxMenu(x, y) {
+      if (!lastTapStep) return;
+      // Update menu context based on last tapped element
+      const tgt = lastEditTextStep || (isEditTextElement(lastTapStep.element) ? lastTapStep : null);
+      const title = document.getElementById('ctx-title');
+      const hint = document.getElementById('ctx-hint');
+      const pasteItems = ctxmenu.querySelectorAll('.item[data-var]');
+      if (tgt) {
+        const rid = (tgt.element?.resourceId || '').toLowerCase();
+        const fieldHint = rid.includes('caption') || rid.includes('et_caption') ? 'Caption field'
+          : rid.includes('link') || rid.includes('url') ? 'Link field'
+          : rid.includes('title') || rid.includes('description') ? 'Text field'
+          : 'EditText';
+        if (title) title.textContent = `📋 Paste ke ${fieldHint}`;
+        if (hint) hint.style.display = 'none';
+        pasteItems.forEach(it => it.classList.remove('disabled'));
+      } else {
+        if (title) title.textContent = '📋 Paste';
+        if (hint) {
+          hint.style.display = 'block';
+          hint.textContent = '⚠ Tap field teks dulu (caption / link) sebelum paste';
+        }
+        // Disable paste items when no text field in context — they'll show error on click
+        pasteItems.forEach(it => {
+          if (it.dataset.var !== '__custom__') it.classList.add('disabled');
+        });
+      }
+      ctxmenu.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+      ctxmenu.style.top = Math.min(y, window.innerHeight - 260) + 'px';
+      ctxmenu.classList.add('on');
+    }
+    function hideCtxMenu() { ctxmenu.classList.remove('on'); }
+    document.addEventListener('click', (e) => {
+      if (!ctxmenu.contains(e.target)) hideCtxMenu();
+    });
+
+    function renderTypeStatus() {
+      if (!typeMode) return;
+      const preview = typeBuffer || '(empty)';
+      statusEl.textContent = `✏️ Typing: ${preview.slice(0, 40)}${preview.length > 40 ? '…' : ''}  [Enter=send · Esc=cancel]`;
+    }
+    function enterTypeMode() {
+      typeMode = true;
+      typeBuffer = '';
+      firstActionForField = true;
+      renderTypeStatus();
+      emit('recorder:log', 'type mode ON (fresh field)');
+    }
+    function exitTypeMode(committed) {
+      typeMode = false;
+      typeBuffer = '';
+      if (deviceId) statusEl.textContent = `Device: ${deviceId}`;
+      emit('recorder:log', `type mode OFF (${committed ? 'committed' : 'cancelled'})`);
+    }
+    async function commitBuffer() {
+      if (!lastTapStep) { exitTypeMode(false); return; }
+      const templateText = typeBuffer;
+      if (!templateText) { exitTypeMode(false); return; }
+      const actualText = resolveSample(templateText);
+      const clear = firstActionForField;
+      emit('recorder:log', `commit: template="${templateText.slice(0,60)}" actual="${actualText.slice(0,60)}" clear=${clear}`);
+      try {
+        await invoke('recorder_type_text', {
+          deviceId,
+          selector: lastTapStep.element,
+          text: actualText,
+          clear,
+        });
+        await emit('recorder:step-added', {
+          action: 'type',
+          element: lastTapStep.element,
+          text: templateText,
+          append: !clear,
+          activity_before: lastTapStep.activity_before,
+          activity_after: lastTapStep.activity_after,
+          activity_changed: lastTapStep.activity_changed,
+          ts: Date.now(),
+        });
+        firstActionForField = false;
+        typeBuffer = '';
+        renderTypeStatus();
+      } catch (e) {
+        emit('recorder:log', `commit FAILED: ${e}`);
+        alert(`Type failed: ${e}`);
+        exitTypeMode(false);
+      }
+    }
+
+    // Keyboard capture when type mode active
+    document.addEventListener('keydown', (ev) => {
+      if (!typeMode) return;
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        commitBuffer();
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        exitTypeMode(false);
+      } else if (ev.key === 'Backspace') {
+        ev.preventDefault();
+        typeBuffer = typeBuffer.slice(0, -1);
+        renderTypeStatus();
+      } else if (ev.key.length === 1 && !ev.metaKey && !ev.ctrlKey && !ev.altKey) {
+        ev.preventDefault();
+        typeBuffer += ev.key;
+        if (typeBuffer.length > 5000) typeBuffer = typeBuffer.slice(0, 5000);
+        renderTypeStatus();
+      }
+    });
+
+    function insertIntoBufferOrPaste(variableOrCustom) {
+      // For variable paste, require an EditText context. Custom text is flexible.
+      const needsEditText = variableOrCustom !== '__custom__';
+      if (needsEditText && !lastEditTextStep) {
+        emit('recorder:log', `paste ${variableOrCustom}: no text field context — tap field dulu`);
+        statusEl.textContent = '⚠ Tap field caption/link dulu sebelum paste';
+        setTimeout(() => { if (deviceId) statusEl.textContent = `Device: ${deviceId}`; }, 2500);
+        return;
+      }
+      if (!lastTapStep) {
+        emit('recorder:log', 'paste: no field context (tap a field first)');
+        return;
+      }
+      let token;
+      if (variableOrCustom === '__custom__') {
+        const t = prompt('Custom text to type:');
+        if (!t) return;
+        token = t;
+      } else {
+        token = `{{${variableOrCustom}}}`;
+      }
+      // Auto-prepend space for hashtags if something already exists before
+      const needsSpace = variableOrCustom === 'hashtags' &&
+        ((typeMode && typeBuffer.length > 0) || !firstActionForField);
+      const finalToken = needsSpace ? ' ' + token : token;
+
+      // If user is mid-typing (buffer non-empty), append token to buffer.
+      // Otherwise send immediately to phone (append or replace depending on firstActionForField).
+      if (typeMode && typeBuffer.length > 0) {
+        typeBuffer += finalToken;
+        renderTypeStatus();
+        emit('recorder:log', `inserted ${finalToken} into buffer (mid-typing)`);
+      } else {
+        commitDirectPaste(finalToken);
+      }
+    }
+
+    async function commitDirectPaste(templateText) {
+      // Prefer lastEditTextStep (a real text field). Fall back to lastTapStep for custom text.
+      const target = lastEditTextStep || lastTapStep;
+      if (!target) {
+        emit('recorder:log', 'direct paste: no target');
+        return;
+      }
+      const actualText = resolveSample(templateText);
+      const clear = firstActionForField;
+      emit('recorder:log', `direct paste: "${templateText}" → ${actualText.length} chars clear=${clear} rid=${target.element?.resourceId || '?'}`);
+      try {
+        await invoke('recorder_type_text', {
+          deviceId,
+          selector: target.element,
+          text: actualText,
+          clear,
+        });
+        await emit('recorder:step-added', {
+          action: 'type',
+          element: target.element,
+          text: templateText,
+          append: !clear,
+          activity_before: target.activity_before,
+          activity_after: target.activity_after,
+          activity_changed: target.activity_changed,
+          ts: Date.now(),
+        });
+        firstActionForField = false;
+      } catch (e) {
+        emit('recorder:log', `direct paste FAILED: ${e}`);
+        statusEl.textContent = '⚠ Paste gagal — cek field yang aktif';
+        setTimeout(() => { if (deviceId) statusEl.textContent = `Device: ${deviceId}`; }, 3000);
+      }
+    }
+
+    ctxmenu.querySelectorAll('.item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hideCtxMenu();
+        if (el.dataset.action === 'screenshot') {
+          addScreenshotStep();
+        } else if (el.dataset.var) {
+          insertIntoBufferOrPaste(el.dataset.var);
+        }
+      });
+    });
+
+    async function addScreenshotStep() {
+      const ts = Date.now();
+      const name = `_shot_${ts}.png`;
+      emit('recorder:log', `add screenshot step: ${name}`);
+      await emit('recorder:step-added', {
+        action: 'screenshot',
+        output: name,
+        ts,
+      });
+    }
+
+    const canvas = document.getElementById('mirror');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+    const recEl = document.getElementById('rec-indicator');
+    const flashEl = document.getElementById('flash');
+    let naturalSize = { w: 720, h: 1612 };
+    let pollTimer = null;
+
+    statusEl.textContent = deviceId ? `Device: ${deviceId}` : 'No device';
+
+    const loadingEl = document.getElementById('loading');
+    function drawFrame(url) {
+      const img = new Image();
+      img.onload = () => {
+        if (canvas.width !== img.naturalWidth) canvas.width = img.naturalWidth;
+        if (canvas.height !== img.naturalHeight) canvas.height = img.naturalHeight;
+        naturalSize = { w: img.naturalWidth, h: img.naturalHeight };
+        ctx.drawImage(img, 0, 0);
+        const stage = document.getElementById('stage').getBoundingClientRect();
+        const scale = Math.min(stage.width / canvas.width, stage.height / canvas.height);
+        canvas.style.width = (canvas.width * scale) + 'px';
+        canvas.style.height = (canvas.height * scale) + 'px';
+        loadingEl.classList.add('hidden');
+      };
+      img.src = url;
+    }
+
+    let firstFrameLogged = false;
+    let fetchInFlight = false;
+    const openedAt = performance.now();
+    async function pollFrame() {
+      if (!deviceId) return;
+      if (fetchInFlight) return;  // prevent overlapping invokes piling up
+      fetchInFlight = true;
+      const t0 = performance.now();
+      try {
+        const url = await invoke('recorder_screenshot', { deviceId });
+        const fetchMs = Math.round(performance.now() - t0);
+        drawFrame(url);
+        if (!firstFrameLogged) {
+          firstFrameLogged = true;
+          emit('recorder:log', `first frame ${Math.round(performance.now() - openedAt)}ms (fetch ${fetchMs}ms)`);
+        } else if (fetchMs > 800) {
+          emit('recorder:log', `slow frame: ${fetchMs}ms`);
+        }
+      } catch (e) {
+        statusEl.textContent = `Error: ${e}`;
+        emit('recorder:log', `frame error: ${e}`);
+      } finally {
+        fetchInFlight = false;
+      }
+    }
+    function startPolling() {
+      if (pollTimer) return;
+      // Use recursive setTimeout instead of setInterval — next tick only after current done.
+      const tick = async () => {
+        if (!pollTimer) return;
+        await pollFrame();
+        if (pollTimer) pollTimer = setTimeout(tick, 350);
+      };
+      pollTimer = setTimeout(tick, 0);
+    }
+    function stopPolling() {
+      if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    }
+
+    function setRecording(on) {
+      recording = on;
+      if (on) recEl.classList.add('on'); else recEl.classList.remove('on');
+    }
+
+    canvas.addEventListener('click', async ev => {
+      if (!recording) return;
+      const rect = canvas.getBoundingClientRect();
+      const cx = ev.clientX - rect.left;
+      const cy = ev.clientY - rect.top;
+      const dx = Math.round(cx * naturalSize.w / rect.width);
+      const dy = Math.round(cy * naturalSize.h / rect.height);
+
+      // Visual flash
+      flashEl.style.left = ev.clientX + 'px';
+      flashEl.style.top = ev.clientY + 'px';
+      flashEl.classList.add('on');
+      setTimeout(() => flashEl.classList.remove('on'), 300);
+
+      // If there's active typing buffer from a previous EditText tap, commit it
+      // before moving focus to a new element (to avoid losing user's keystrokes).
+      if (typeMode && typeBuffer) {
+        await commitBuffer();
+      } else if (typeMode) {
+        exitTypeMode(false);
+      }
+
+      const t0 = performance.now();
+      try {
+        const step = await invoke('recorder_tap_and_capture', {
+          deviceId, x: dx, y: dy,
+        });
+        const ms = Math.round(performance.now() - t0);
+        emit('recorder:log', `tap captured at (${dx},${dy}) in ${ms}ms — element: ${JSON.stringify(step.element || {}).slice(0,120)}`);
+        step.ts = Date.now();
+        lastTapStep = step;
+        // Only update the EditText context if the tapped element is actually a text field.
+        // This prevents paste from targeting the wrong element (e.g. "Compress" button).
+        if (isEditTextElement(step.element)) {
+          lastEditTextStep = step;
+        }
+        await emit('recorder:step-added', { action: 'tap', ...step });
+        const cls = (step.element && step.element.className) || '';
+        if (cls.includes('EditText') || cls.includes('TextField')) {
+          enterTypeMode();
+        }
+        setTimeout(pollFrame, 350);
+      } catch (e) {
+        emit('recorder:log', `tap FAILED: ${e}`);
+        alert(`Tap failed: ${e}`);
+      }
+    });
+
+    // Right-click / 2-finger tap on canvas → show paste menu
+    canvas.addEventListener('contextmenu', (ev) => {
+      ev.preventDefault();
+      if (!recording) {
+        emit('recorder:log', 'right-click ignored (not recording)');
+        return;
+      }
+      if (!lastTapStep) {
+        emit('recorder:log', 'right-click: tap a field first to set context');
+        statusEl.textContent = 'Tap a field first, then right-click';
+        setTimeout(() => { if (deviceId) statusEl.textContent = `Device: ${deviceId}`; }, 2000);
+        return;
+      }
+      showCtxMenu(ev.clientX, ev.clientY);
+    });
+
+    listen('recorder:set-recording', (ev) => setRecording(!!ev.payload));
+    listen('recorder:set-samples', (ev) => {
+      samples = ev.payload || {};
+      const keys = Object.keys(samples).filter(k => samples[k]).join(',');
+      emit('recorder:log', `samples updated: [${keys}]`);
+    });
+    // Ask main for current state (in case this window loaded after main emitted)
+    emit('recorder:mirror-ready', {});
+    startPolling();
+    window.addEventListener('beforeunload', () => {
+      stopPolling();
+      emit('recorder:mirror-closed', {});
+    });
+  </script>
+</body>
+</html>
