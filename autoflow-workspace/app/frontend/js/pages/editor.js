@@ -8,12 +8,14 @@ const { invoke } = window.__TAURI__.core;
 
 const ACTIONS = [
   'click', 'find_and_tap', 'assert_exists', 'sleep_until',
-  'tap', 'long_press', 'swipe', 'select_gallery_item',
+  'tap', 'tap_pct', 'long_press', 'swipe', 'select_gallery_item',
   'type_text', 'type_multiline', 'clear_field',
+  'u2_click', 'u2_type',
   'back', 'key_event',
   'open_app', 'kill_app', 'launch_intent',
   'push_file', 'media_scan',
   'wait', 'screenshot',
+  'scroll_to', 'skip_if_empty', 'check_activity', 'dismiss_popup', 'shell_cmd',
 ];
 
 const ACTION_PROPS = {
@@ -22,12 +24,15 @@ const ACTION_PROPS = {
   assert_exists:      ['target', 'timeout', 'threshold', 'optional'],
   sleep_until:        ['target', 'timeout', 'interval', 'optional'],
   tap:                ['x', 'y'],
+  tap_pct:            ['x_pct', 'y_pct'],
   long_press:         ['x', 'y', 'duration'],
   swipe:              ['direction', 'x1', 'y1', 'x2', 'y2', 'duration'],
   select_gallery_item:['index', 'cols', 'grid_top', 'cell_width', 'cell_height'],
   type_text:          ['text', 'use_clipboard', 'optional'],
   type_multiline:     ['lines'],
   clear_field:        [],
+  u2_click:           ['resourceId', 'text', 'textContains', 'contentDescription', 'timeout', 'optional'],
+  u2_type:            ['resourceId', 'className', 'text', 'clear', 'timeout'],
   back:               [],
   key_event:          ['keycode'],
   open_app:           ['package'],
@@ -37,27 +42,36 @@ const ACTION_PROPS = {
   media_scan:         ['path'],
   wait:               ['duration'],
   screenshot:         ['output'],
+  scroll_to:          ['direction', 'times', 'duration'],
+  skip_if_empty:      ['field', 'skip_to_phase'],
+  check_activity:     ['expected', 'optional'],
+  dismiss_popup:      ['x', 'y', 'retries'],
+  shell_cmd:          ['command'],
 };
 
 const ACTION_COLORS = {
   click: 'blue', find_and_tap: 'blue', assert_exists: 'blue', sleep_until: 'blue',
-  tap: 'amber', long_press: 'amber', swipe: 'amber', select_gallery_item: 'amber',
+  tap: 'amber', tap_pct: 'amber', long_press: 'amber', swipe: 'amber', select_gallery_item: 'amber',
   type_text: 'purple', type_multiline: 'purple', clear_field: 'purple',
+  u2_click: 'cyan', u2_type: 'cyan',
   back: 'gray', key_event: 'gray',
   open_app: 'green', kill_app: 'red', launch_intent: 'green',
   push_file: 'amber', media_scan: 'cyan',
   wait: 'gray', screenshot: 'blue',
+  scroll_to: 'amber', skip_if_empty: 'gray', check_activity: 'blue',
+  dismiss_popup: 'gray', shell_cmd: 'gray',
 };
 
 const ACTION_GROUPS = [
   { label: 'Find & Tap Image', actions: ['click', 'find_and_tap', 'assert_exists', 'sleep_until'] },
-  { label: 'Touch Screen', actions: ['tap', 'long_press', 'swipe', 'select_gallery_item'] },
+  { label: 'Touch Screen', actions: ['tap', 'tap_pct', 'long_press', 'swipe', 'select_gallery_item'] },
   { label: 'Type Text', actions: ['type_text', 'type_multiline', 'clear_field'] },
-  { label: 'Navigate', actions: ['back', 'key_event'] },
+  { label: 'Smart UI (u2)', actions: ['u2_click', 'u2_type'] },
+  { label: 'Navigate', actions: ['back', 'key_event', 'scroll_to'] },
   { label: 'App Control', actions: ['open_app', 'kill_app', 'launch_intent'] },
   { label: 'Transfer Files', actions: ['push_file', 'media_scan'] },
   { label: 'Wait & Capture', actions: ['wait', 'screenshot'] },
-  { label: 'Flow Control', actions: ['skip_if_empty', 'shell_cmd'] },
+  { label: 'Flow Control', actions: ['skip_if_empty', 'check_activity', 'dismiss_popup', 'shell_cmd'] },
 ];
 
 // User-friendly labels + emoji icons per action
@@ -67,12 +81,15 @@ const ACTION_LABEL = {
   assert_exists:       { icon: '👁️', label: 'Wait for Image' },
   sleep_until:         { icon: '⏳', label: 'Wait Until Found' },
   tap:                 { icon: '👆', label: 'Tap Position' },
+  tap_pct:             { icon: '📐', label: 'Tap % Position' },
   long_press:          { icon: '👇', label: 'Long Press' },
   swipe:               { icon: '👉', label: 'Swipe' },
   select_gallery_item: { icon: '🖼️', label: 'Pick from Gallery' },
   type_text:           { icon: '⌨️', label: 'Type Text' },
   type_multiline:      { icon: '📝', label: 'Type Lines' },
   clear_field:         { icon: '🧹', label: 'Clear Text' },
+  u2_click:            { icon: '🎯', label: 'Smart Tap (u2)' },
+  u2_type:             { icon: '✏️', label: 'Smart Type (u2)' },
   back:                { icon: '⬅️', label: 'Back Button' },
   key_event:           { icon: '🔘', label: 'Press Key' },
   open_app:            { icon: '📱', label: 'Open App' },
@@ -82,7 +99,10 @@ const ACTION_LABEL = {
   media_scan:          { icon: '🔄', label: 'Refresh Gallery' },
   wait:                { icon: '⏸️', label: 'Wait' },
   screenshot:          { icon: '📸', label: 'Screenshot' },
+  scroll_to:           { icon: '📜', label: 'Scroll' },
   skip_if_empty:       { icon: '⏭️', label: 'Skip If Empty' },
+  check_activity:      { icon: '🔎', label: 'Check Screen' },
+  dismiss_popup:       { icon: '❌', label: 'Dismiss Popup' },
   shell_cmd:           { icon: '💻', label: 'Shell Command' },
 };
 

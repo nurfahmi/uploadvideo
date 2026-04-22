@@ -50,13 +50,19 @@
       "retry": 2
     },
     {
-      "action": "tap", "x": 108, "y": 2178,
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/icon",
+      "contentDescription": "tab_bar_button_home",
       "description": "Tap Beranda (reset tab)",
+      "fallback_tap_pct": { "x_pct": 0.1, "y_pct": 0.908 },
       "delay_after": 2
     },
     {
-      "action": "tap", "x": 972, "y": 2178,
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/icon",
+      "contentDescription": "tab_bar_button_me",
       "description": "Tap Saya (Profile)",
+      "fallback_tap_pct": { "x_pct": 0.9, "y_pct": 0.908 },
       "delay_after": 3
     },
 
@@ -67,70 +73,103 @@
       "delay_after": 1
     },
     {
-      "action": "tap", "x": 287, "y": 1240,
+      "action": "u2_click",
+      "textContains": "Live dan Video",
       "description": "Tap Live dan Video",
+      "fallback_tap_pct": { "x_pct": 0.266, "y_pct": 0.517 },
       "delay_after": 3
     },
     {
-      "action": "tap", "x": 540, "y": 299,
+      "action": "u2_click",
+      "text": "Video",
       "description": "Tap tab Video",
+      "fallback_tap_pct": { "x_pct": 0.5, "y_pct": 0.125 },
       "delay_after": 2
     },
 
     { "_phase": "D", "_title": "=== POST VIDEO → GALLERY ===" },
     {
-      "action": "tap", "x": 586, "y": 2090,
+      "action": "u2_click",
+      "textContains": "Post Video",
       "description": "Tap Post Video",
+      "fallback_tap_pct": { "x_pct": 0.543, "y_pct": 0.871 },
       "delay_after": 3
     },
     {
-      "action": "tap", "x": 862, "y": 1832,
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/iv_album_icon",
       "description": "Tap Galeri",
+      "fallback_tap_pct": { "x_pct": 0.799, "y_pct": 0.763 },
       "delay_after": 3
     },
 
     { "_phase": "E", "_title": "=== SELECT VIDEO ===" },
     {
-      "action": "tap", "x": 540, "y": 296,
+      "action": "u2_click",
+      "text": "Video",
       "description": "Tap Video filter",
+      "fallback_tap_pct": { "x_pct": 0.5, "y_pct": 0.123 },
       "delay_after": 1
     },
     {
-      "action": "tap", "x": 134, "y": 495,
-      "description": "Select video pertama",
+      "action": "tap_pct",
+      "x_pct": 0.124,
+      "y_pct": 0.206,
+      "description": "Select first video (grid)",
       "delay_after": 1
     },
     {
-      "action": "tap", "x": 888, "y": 2143,
+      "action": "u2_click",
+      "text": "Lanjutkan",
       "description": "Tap Lanjutkan (preview)",
+      "fallback_tap_pct": { "x_pct": 0.822, "y_pct": 0.893 },
+      "wait_for": "SSZBasePreviewActivity",
+      "wait_timeout": 20,
+      "retry": 2,
       "delay_after": 3
     },
 
-    { "_phase": "F", "_title": "=== EDITOR → POST FORM (smart wait) ===" },
+    { "_phase": "F", "_title": "=== EDITOR → POST FORM ===" },
     {
-      "action": "tap", "x": 905, "y": 2130,
-      "description": "Tap Lanjutkan editor → wait PublishVideoActivity",
+      "action": "u2_click",
+      "resourceId": "com.shopee.id:id/tv_compress",
+      "text": "Lanjutkan",
+      "description": "Tap Lanjutkan editor → PublishVideoActivity",
+      "fallback_tap_pct": { "x_pct": 0.838, "y_pct": 0.888 },
       "wait_for": "PublishVideoActivity",
       "wait_timeout": 25,
       "retry": 3
     },
 
-    { "_phase": "G", "_title": "=== CAPTION via uiautomator2 ===" },
+    { "_phase": "G", "_title": "=== CAPTION ===" },
     {
       "action": "wait", "duration": 2,
       "description": "Wait post form settle"
     },
     {
       "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
       "textContains": "Tambah keterangan",
-      "description": "Focus caption field (uiautomator2)",
+      "description": "Focus caption field",
+      "fallback_tap_pct": { "x_pct": 0.45, "y_pct": 0.15 },
       "timeout": 10,
       "delay_after": 1
     },
     {
-      "action": "type_text",
-      "text": "{{caption}} {{hashtags}}",
-      "description": "Type caption + hashtags"
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": "{{caption}}",
+      "clear": true,
+      "description": "Type caption",
+      "delay_after": 2
+    },
+    {
+      "action": "u2_type",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+      "text": " {{hashtags}}",
+      "clear": false,
+      "description": "Append hashtags",
+      "delay_after": 2
     },
     {
       "action": "key_event", "keycode": "back",
@@ -138,8 +177,11 @@
       "delay_after": 1
     },
     {
-      "action": "tap", "x": 1020, "y": 73,
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_right",
+      "text": "OK",
       "description": "Tap OK konfirmasi caption",
+      "fallback_tap_pct": { "x_pct": 0.944, "y_pct": 0.030 },
       "delay_after": 2
     },
 
@@ -151,12 +193,17 @@
       "description": "Skip affiliate if no link provided"
     },
     {
-      "action": "tap", "x": 1030, "y": 735,
-      "description": "Tap Tambah Produk (arrow area)",
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_add_product_tip",
+      "textContains": "Tambah Produk",
+      "description": "Tap Tambah Produk",
+      "fallback_tap_pct": { "x_pct": 0.954, "y_pct": 0.306 },
       "delay_after": 3
     },
     {
-      "action": "tap", "x": 1001, "y": 135,
+      "action": "tap_pct",
+      "x_pct": 0.928,
+      "y_pct": 0.056,
       "description": "Tap link icon (top-right Import Link)",
       "delay_after": 2
     },
@@ -164,23 +211,30 @@
       "action": "u2_click",
       "textContains": "link produk Shopee",
       "description": "Focus Link Produk text area",
+      "fallback_tap_pct": { "x_pct": 0.5, "y_pct": 0.2 },
       "timeout": 5,
       "delay_after": 1
     },
     {
-      "action": "type_text",
+      "action": "u2_type",
+      "className": "android.widget.EditText",
       "text": "{{affiliate_link}}",
-      "description": "Type affiliate link"
+      "clear": true,
+      "description": "Type affiliate link",
+      "delay_after": 2
     },
     {
       "action": "u2_click",
       "text": "Import",
       "description": "Tap Import button",
+      "fallback_tap_pct": { "x_pct": 0.5, "y_pct": 0.42 },
       "timeout": 5,
       "delay_after": 3
     },
     {
-      "action": "tap", "x": 60, "y": 1399,
+      "action": "tap_pct",
+      "x_pct": 0.056,
+      "y_pct": 0.583,
       "description": "Select product checkbox",
       "delay_after": 1
     },
@@ -188,6 +242,7 @@
       "action": "u2_click",
       "textContains": "Tambah",
       "description": "Tap Tambah to add product",
+      "fallback_tap_pct": { "x_pct": 0.63, "y_pct": 0.88 },
       "timeout": 5,
       "delay_after": 3
     },
@@ -200,8 +255,14 @@
       "optional": true
     },
     {
-      "action": "tap", "x": 540, "y": 2130,
+      "action": "u2_click",
+      "resourceId": "com.shopee.id.dfpluginshopee16:id/btn_post",
+      "text": "Posting",
       "description": "Tap Posting",
+      "fallback_tap_pct": { "x_pct": 0.5, "y_pct": 0.888 },
+      "wait_for": "HomeActivity",
+      "wait_timeout": 20,
+      "retry": 2,
       "delay_after": 15
     },
     {

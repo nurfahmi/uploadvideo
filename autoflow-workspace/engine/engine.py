@@ -13,6 +13,7 @@ import re
 
 
 ADB_PATH = "adb"
+DEVICE_SCREEN = {"w": 0, "h": 0}  # detected at runtime
 
 
 def log(message):
@@ -84,6 +85,24 @@ def resolve_step(step, variables):
         else:
             resolved[k] = v
     return resolved
+
+
+# ─── Device Resolution ────────────────────────────────────────
+
+def detect_screen_size(device_id):
+    """Detect actual device screen resolution via 'wm size'."""
+    result = adb_shell(device_id, "wm size")
+    for line in result.splitlines():
+        if "x" in line and ":" in line:
+            val = line.split(":")[-1].strip()
+            parts = val.split("x")
+            if len(parts) == 2:
+                try:
+                    w, h = int(parts[0].strip()), int(parts[1].strip())
+                    return w, h
+                except ValueError:
+                    pass
+    return 0, 0
 
 
 # ─── Screen Detection ────────────────────────────────────────
@@ -172,10 +191,33 @@ def action_media_scan(device_id, step, flow_path):
     return True
 
 
+def scale_coordinates(x, y, design_w, design_h):
+    """Scale absolute coordinates from design resolution to actual device resolution."""
+    if DEVICE_SCREEN["w"] <= 0 or DEVICE_SCREEN["h"] <= 0:
+        return x, y  # no device info, use raw
+    if design_w <= 0 or design_h <= 0:
+        return x, y  # no design info, use raw
+    if design_w == DEVICE_SCREEN["w"] and design_h == DEVICE_SCREEN["h"]:
+        return x, y  # same resolution
+    sx = DEVICE_SCREEN["w"] / design_w
+    sy = DEVICE_SCREEN["h"] / design_h
+    nx, ny = int(x * sx), int(y * sy)
+    if sx != 1.0 or sy != 1.0:
+        log(f"  -> Scaled ({x},{y}) → ({nx},{ny}) [design {design_w}x{design_h} → device {DEVICE_SCREEN['w']}x{DEVICE_SCREEN['h']}]")
+    return nx, ny
+
+
 def action_tap(device_id, step, flow_path):
-    """Tap at specific x,y coordinates."""
+    """Tap at specific x,y coordinates. Auto-scales if device_profile exists."""
     x = step.get("x", 0)
     y = step.get("y", 0)
+
+    # Auto-scale from design resolution to actual device
+    design_w = step.get("_design_w", 0)
+    design_h = step.get("_design_h", 0)
+    if design_w and design_h:
+        x, y = scale_coordinates(x, y, design_w, design_h)
+
     use_sendevent = step.get("sendevent", False)
 
     if use_sendevent:
@@ -201,6 +243,19 @@ def action_tap(device_id, step, flow_path):
     else:
         adb_shell(device_id, f"input tap {x} {y}")
         log(f"  -> Tapped at ({x}, {y})")
+    return True
+
+
+def action_tap_pct(device_id, step, flow_path):
+    """Tap at percentage-based coordinates. Works on any resolution."""
+    x_pct = step.get("x_pct", 0.5)
+    y_pct = step.get("y_pct", 0.5)
+    w = DEVICE_SCREEN["w"] or 1080
+    h = DEVICE_SCREEN["h"] or 2400
+    x = int(x_pct * w)
+    y = int(y_pct * h)
+    adb_shell(device_id, f"input tap {x} {y}")
+    log(f"  -> Tapped at ({x}, {y}) [{x_pct:.1%}, {y_pct:.1%} of {w}x{h}]")
     return True
 
 
@@ -515,15 +570,14 @@ def action_u2_click(device_id, step, flow_path):
     """Click a UI element using uiautomator2 (accessibility framework).
     Use this for elements that don't respond to regular input tap.
     Selectors: text, textContains, resourceId, className, description.
+    Falls back to fallback_tap_pct (percentage coords) if element not found.
     """
     try:
         import uiautomator2 as u2
     except ImportError:
         log("  -> ERROR: uiautomator2 not installed. Run: pip install uiautomator2")
-        # Fallback to regular tap if coordinates provided
-        if "x" in step and "y" in step:
-            return action_tap(device_id, step, flow_path)
-        return False
+        # Fallback to percentage tap, then absolute tap
+        return _u2_fallback(device_id, step, flow_path)
 
     try:
         d = u2.connect(device_id)
@@ -538,7 +592,7 @@ def action_u2_click(device_id, step, flow_path):
 
         if not selector:
             log("  -> ERROR: No selector provided for u2_click")
-            return False
+            return _u2_fallback(device_id, step, flow_path)
 
         el = d(**selector)
         timeout = step.get("timeout", 10)
@@ -549,13 +603,82 @@ def action_u2_click(device_id, step, flow_path):
             return True
         else:
             log(f"  -> u2_click: element not found {selector}")
-            return False
+            return _u2_fallback(device_id, step, flow_path)
     except Exception as e:
         log(f"  -> u2_click error: {e}")
-        if "x" in step and "y" in step:
-            log(f"  -> Fallback to tap ({step['x']}, {step['y']})")
-            return action_tap(device_id, step, flow_path)
-        return False
+        return _u2_fallback(device_id, step, flow_path)
+
+
+def _u2_fallback(device_id, step, flow_path):
+    """Fallback for u2_click: try fallback_tap_pct first, then absolute x,y."""
+    fb = step.get("fallback_tap_pct")
+    if fb and "x_pct" in fb and "y_pct" in fb:
+        log(f"  -> Fallback to tap_pct ({fb['x_pct']:.3f}, {fb['y_pct']:.3f})")
+        return action_tap_pct(device_id, {"x_pct": fb["x_pct"], "y_pct": fb["y_pct"]}, flow_path)
+    if "x" in step and "y" in step:
+        log(f"  -> Fallback to tap ({step['x']}, {step['y']})")
+        return action_tap(device_id, step, flow_path)
+    return False
+
+
+def action_u2_type(device_id, step, flow_path):
+    """Type text into a UI element using uiautomator2 set_text().
+    More reliable than ADB 'input text' for complex text with special chars.
+    Selectors: resourceId, className, text, textContains.
+    """
+    try:
+        import uiautomator2 as u2
+    except ImportError:
+        log("  -> ERROR: uiautomator2 not installed, falling back to type_text")
+        return action_type_text(device_id, step, flow_path)
+
+    try:
+        d = u2.connect(device_id)
+
+        # Build selector
+        selector_keys = ["resourceId", "className", "textContains", "textStartsWith",
+                         "contentDescription"]
+        selector = {}
+        for key in selector_keys:
+            if step.get(key):
+                selector[key] = step[key]
+
+        # For u2_type, 'text' key is the value to type, not a selector.
+        # Use 'selectorText' for text-based element matching if needed.
+        if step.get("selectorText"):
+            selector["text"] = step["selectorText"]
+
+        text_to_type = step.get("text", "")
+        clear = step.get("clear", False)
+
+        if not text_to_type:
+            log("  -> No text to type")
+            return True
+
+        if selector:
+            el = d(**selector)
+            timeout = step.get("timeout", 10)
+            if el.wait(timeout=timeout):
+                if clear:
+                    el.clear_text()
+                    time.sleep(0.2)
+                el.set_text(text_to_type)
+                log(f"  -> u2_type: set_text on {selector} ({len(text_to_type)} chars, clear={clear})")
+                return True
+            else:
+                log(f"  -> u2_type: element not found {selector}, falling back to ADB input")
+                return action_type_text(device_id, step, flow_path)
+        else:
+            # No selector: type into currently focused field
+            if clear:
+                d.clear_text()
+                time.sleep(0.2)
+            d.send_keys(text_to_type)
+            log(f"  -> u2_type: send_keys ({len(text_to_type)} chars)")
+            return True
+    except Exception as e:
+        log(f"  -> u2_type error: {e}, falling back to ADB input")
+        return action_type_text(device_id, step, flow_path)
 
 
 def action_check_activity(device_id, step, flow_path):
@@ -669,6 +792,7 @@ ACTION_MAP = {
     "push_file": action_push_file,
     "media_scan": action_media_scan,
     "tap": action_tap,
+    "tap_pct": action_tap_pct,
     "long_press": action_long_press,
     "type_text": action_type_text,
     "type_multiline": action_type_multiline,
@@ -689,6 +813,7 @@ ACTION_MAP = {
     "dismiss_popup": action_dismiss_popup,
     "scroll_to": action_scroll_to,
     "u2_click": action_u2_click,
+    "u2_type": action_u2_type,
     "skip_if_empty": action_skip_if_empty,
     "shell_cmd": action_shell_cmd,
 }
@@ -858,6 +983,7 @@ def execute_steps(device_id, steps, flow_path, variables):
 
 
 def execute_flow(device_id, flow_path, variables):
+    global DEVICE_SCREEN
     flow = load_flow(flow_path)
     flow_name = flow.get("name", "Unknown Flow")
     steps = flow.get("steps", [])
@@ -876,6 +1002,38 @@ def execute_flow(device_id, flow_path, variables):
     log("")
 
     connect_device(device_id)
+
+    # Detect device screen resolution for tap_pct and auto-scaling
+    w, h = detect_screen_size(device_id)
+    if w > 0 and h > 0:
+        DEVICE_SCREEN["w"] = w
+        DEVICE_SCREEN["h"] = h
+        log(f"Device screen: {w}x{h}")
+    else:
+        log("WARNING: Could not detect screen size, using defaults")
+        DEVICE_SCREEN["w"] = 1080
+        DEVICE_SCREEN["h"] = 2400
+
+    # Inject design resolution into tap steps for auto-scaling
+    dp = flow.get("device_profile", {})
+    design_res = dp.get("resolution", "")
+    if isinstance(design_res, str) and "x" in design_res:
+        parts = design_res.split("x")
+        design_w, design_h = int(parts[0]), int(parts[1])
+    elif isinstance(design_res, dict):
+        design_w = design_res.get("width", design_res.get("w", 0))
+        design_h = design_res.get("height", design_res.get("h", 0))
+    else:
+        design_w, design_h = 0, 0
+
+    if design_w and design_h:
+        log(f"Flow designed for: {design_w}x{design_h}")
+        # Inject design dims into every tap step so action_tap can auto-scale
+        for step in steps:
+            if step.get("action") == "tap" and "x" in step and "y" in step:
+                step["_design_w"] = design_w
+                step["_design_h"] = design_h
+
     log("")
 
     if is_batch and items:
