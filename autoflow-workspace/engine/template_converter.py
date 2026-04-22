@@ -56,12 +56,15 @@ def convert_template(template, target_w=0, target_h=0):
             {"key": "caption", "label": "Caption"},
         ]
 
-    flow_steps = []
+    # Convert recorded steps
+    recorded_steps = []
     for i, step in enumerate(steps):
-        action = step.get("action", "tap")
         converted = convert_step(step, i, rec_w, rec_h)
         if converted:
-            flow_steps.append(converted)
+            recorded_steps.append(converted)
+
+    # Build full step list: setup → recorded → cleanup
+    flow_steps = build_setup_steps(platform) + recorded_steps + build_cleanup_steps(platform)
 
     flow = {
         "name": name,
@@ -72,6 +75,80 @@ def convert_template(template, target_w=0, target_h=0):
         "steps": flow_steps,
     }
     return flow
+
+
+PLATFORM_CONFIG = {
+    "shopee": {
+        "package": "com.shopee.id",
+        "intent": "-n com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+        "wait_for": "HomeActivity",
+    },
+    "tiktok": {
+        "package": "com.zhiliaoapp.musically",
+        "intent": "-n com.zhiliaoapp.musically/.app.MainActivity",
+        "wait_for": "MainActivity",
+    },
+}
+
+
+def build_setup_steps(platform):
+    """Build setup steps: kill app, push video, scan media, launch app."""
+    cfg = PLATFORM_CONFIG.get(platform)
+    if not cfg:
+        return []
+
+    return [
+        {"_phase": "A", "_title": "=== PREPARATION ==="},
+        {
+            "action": "kill_app",
+            "package": cfg["package"],
+            "description": f"Kill {platform} (clean state)",
+        },
+        {
+            "action": "shell_cmd",
+            "command": "rm -f /sdcard/DCIM/AutoFlow/*",
+            "description": "Clear old videos from device",
+        },
+        {
+            "action": "push_file",
+            "local_path": "{{video_path}}",
+            "remote_path": "/sdcard/DCIM/AutoFlow/",
+            "description": "Push video to device",
+            "stop_on_fail": True,
+        },
+        {
+            "action": "media_scan",
+            "path": "/sdcard/DCIM/AutoFlow/",
+            "description": "Refresh media gallery",
+        },
+        {"action": "wait", "duration": 2, "description": "Wait media scan"},
+        {"_phase": "B", "_title": "=== LAUNCH APP ==="},
+        {
+            "action": "launch_intent",
+            "intent": cfg["intent"],
+            "description": f"Launch {platform}",
+            "wait_for": cfg["wait_for"],
+            "wait_timeout": 15,
+            "retry": 2,
+            "delay_after": 3,
+        },
+    ]
+
+
+def build_cleanup_steps(platform):
+    """Build cleanup steps: kill app after posting."""
+    cfg = PLATFORM_CONFIG.get(platform)
+    if not cfg:
+        return []
+
+    return [
+        {"_phase": "Z", "_title": "=== CLEANUP ==="},
+        {
+            "action": "kill_app",
+            "package": cfg["package"],
+            "description": f"Close {platform} (clean state for next item)",
+        },
+    ]
 
 
 def convert_step(step, index, rec_w, rec_h):

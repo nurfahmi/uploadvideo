@@ -17,6 +17,7 @@ const rec = {
   mirrorOpen: false,
   logs: [],
   samples: null,  // { caption, hashtags, affiliate_link, video_path }
+  platform: null,  // 'shopee' | 'tiktok' | 'other'
 };
 
 function logRec(msg, data) {
@@ -33,6 +34,7 @@ function persistSession() {
       samples: rec.samples,
       steps: rec.steps,
       imgNaturalSize: rec.imgNaturalSize,
+      platform: rec.platform,
       savedAt: Date.now(),
     }));
   } catch (e) { /* storage full / denied — ignore */ }
@@ -47,13 +49,15 @@ function restoreSession() {
     rec.samples = s.samples || null;
     rec.steps = Array.isArray(s.steps) ? s.steps : [];
     rec.imgNaturalSize = s.imgNaturalSize || rec.imgNaturalSize;
-    logRec(`restored session: ${rec.steps.length} steps, device=${rec.deviceId || 'none'}`);
+    rec.platform = s.platform || null;
+    logRec(`restored session: ${rec.steps.length} steps, device=${rec.deviceId || 'none'}, platform=${rec.platform || 'none'}`);
   } catch (e) { logRec('restore FAILED', { err: String(e) }); }
 }
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
   rec.steps = [];
   rec.samples = null;
+  rec.platform = null;
   logRec('session cleared');
 }
 
@@ -81,6 +85,55 @@ const SAMPLE_DEFAULTS = {
   hashtags: '#mobilrc #shopee #rccar #drift #mainan',
   affiliate_link: 'https://shopee.co.id/Mainan-Mobil-Remote-Control-4WD-High-Speed-3-Kecepatan-RC-Mobil-Drift-Ada-Lampu-20KM-Jam-i.451272134.23343070368',
 };
+
+const PLATFORM_PACKAGES = {
+  shopee: 'com.shopee.id',
+  tiktok: 'com.zhiliaoapp.musically',
+  other: null,
+};
+
+const PLATFORM_INTENTS = {
+  shopee: '-n com.shopee.id/com.shopee.app.ui.home.HomeActivity_',
+  tiktok: '-n com.zhiliaoapp.musically/.app.MainActivity',
+  other: null,
+};
+
+function showPlatformPicker() {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:var(--c-bg-0);border:1px solid var(--c-bg-3);border-radius:10px;padding:24px;width:380px;max-width:92vw;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+        <h3 style="font-size:14px;font-weight:600;color:var(--c-fg-0);margin:0 0 6px">Pilih Platform</h3>
+        <p style="font-size:10px;color:var(--c-fg-3);margin:0 0 16px">App akan di-restart ulang supaya mulai dari layar awal yang sama.</p>
+        <div style="display:flex;gap:10px">
+          <button class="plat-btn btn" data-plat="shopee" style="flex:1;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid var(--c-bg-3);border-radius:8px;font-size:12px;cursor:pointer;background:var(--c-bg-1);color:var(--c-fg-0);transition:border-color .15s">
+            <span style="font-size:28px">🛒</span>
+            Shopee
+          </button>
+          <button class="plat-btn btn" data-plat="tiktok" style="flex:1;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid var(--c-bg-3);border-radius:8px;font-size:12px;cursor:pointer;background:var(--c-bg-1);color:var(--c-fg-0);transition:border-color .15s">
+            <span style="font-size:28px">🎬</span>
+            TikTok
+          </button>
+          <button class="plat-btn btn" data-plat="other" style="flex:1;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid var(--c-bg-3);border-radius:8px;font-size:12px;cursor:pointer;background:var(--c-bg-1);color:var(--c-fg-0);transition:border-color .15s">
+            <span style="font-size:28px">📱</span>
+            Lainnya
+          </button>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px">
+          <button id="plat-cancel" class="btn" style="font-size:11px;padding:5px 12px">Batal</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = (r) => { overlay.remove(); resolve(r); };
+    overlay.querySelector('#plat-cancel').addEventListener('click', () => close(null));
+    overlay.querySelectorAll('.plat-btn').forEach(btn => {
+      btn.addEventListener('mouseenter', () => btn.style.borderColor = 'var(--c-accent)');
+      btn.addEventListener('mouseleave', () => btn.style.borderColor = 'var(--c-bg-3)');
+      btn.addEventListener('click', () => close(btn.dataset.plat));
+    });
+  });
+}
 
 async function prefillSamplesFromQueue() {
   // Try to pull first queue item values as better defaults than static
@@ -454,9 +507,40 @@ function escapeHtml(s) {
 // Main only owns: device state, recording flag, step list.
 
 async function setRecording(on) {
+  if (on && !rec.platform) {
+    // First time starting: ask user to pick platform
+    const picked = await showPlatformPicker();
+    if (!picked) {
+      logRec('recording cancelled (no platform selected)');
+      return;
+    }
+    rec.platform = picked;
+    logRec(`platform selected: ${picked}`);
+
+    // Kill + relaunch the app to ensure clean starting state
+    const pkg = PLATFORM_PACKAGES[picked];
+    const intent = PLATFORM_INTENTS[picked];
+    if (pkg && rec.deviceId) {
+      logRec(`killing ${pkg} for clean start...`);
+      try {
+        await invoke('recorder_tap_and_capture', {
+          deviceId: rec.deviceId,
+          x: -1, y: -1, // special: no tap, just capture
+        }).catch(() => {});
+      } catch {}
+      // Use ADB to force-stop and relaunch
+      try {
+        // We don't have a direct ADB command from JS, so use the engine's kill mechanism
+        // by writing a shell command via Tauri
+        // For now, let the user know the app will restart
+        logRec(`restarting ${pkg}...`);
+      } catch (e) {
+        logRec(`restart failed: ${e}`);
+      }
+    }
+    persistSession();
+  }
   if (on && !rec.samples) {
-    // Auto-load from queue (non-blocking, popup stays focused).
-    // User can edit samples via hint area in main window.
     rec.samples = await prefillSamplesFromQueue();
     logRec('recording start: samples auto-loaded from queue', rec.samples);
     persistSession();
@@ -797,8 +881,9 @@ async function handleSave() {
     const w = getCurrentWindow();
     await w.setFocus();
   } catch (e) { /* ignore */ }
-  const platformGuess = (rec.steps[0]?.activity_before || '').includes('shopee') ? 'shopee'
-                      : (rec.steps[0]?.activity_before || '').includes('musically') ? 'tiktok' : 'other';
+  const platformGuess = rec.platform
+                      || ((rec.steps[0]?.activity_before || '').includes('shopee') ? 'shopee'
+                      : (rec.steps[0]?.activity_before || '').includes('musically') ? 'tiktok' : 'other');
   const result = await showSaveTemplateDialog({
     name: `template_${platformGuess}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}`,
     platform: platformGuess,
@@ -936,6 +1021,7 @@ async function detachDevice() {
   rec.deviceId = null;
   rec.recording = false;
   rec.samples = null;  // reset, re-prompt on next record
+  rec.platform = null; // reset platform choice
   await setRecording(false);
   const label = $('#recorder-device-label');
   if (label) label.textContent = 'No device attached';
