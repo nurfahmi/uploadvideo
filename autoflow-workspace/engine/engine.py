@@ -571,42 +571,65 @@ def action_u2_click(device_id, step, flow_path):
     Use this for elements that don't respond to regular input tap.
     Selectors: text, textContains, resourceId, className, description.
     Falls back to fallback_tap_pct (percentage coords) if element not found.
+    textContains is automatically case-insensitive via textMatches regex.
     """
     try:
         import uiautomator2 as u2
     except ImportError:
         log("  -> ERROR: uiautomator2 not installed. Run: pip install uiautomator2")
-        # Fallback to percentage tap, then absolute tap
         return _u2_fallback(device_id, step, flow_path)
 
     try:
         d = u2.connect(device_id)
+        timeout = step.get("timeout", 10)
 
-        # Build selector from step params (only UI selector keys)
-        selector_keys = ["text", "textContains", "textStartsWith",
-                         "resourceId", "className", "contentDescription"]
-        selector = {}
-        for key in selector_keys:
-            if step.get(key):
-                selector[key] = step[key]
+        # Build selector from step params
+        selector = _build_u2_selector(step)
 
         if not selector:
             log("  -> ERROR: No selector provided for u2_click")
             return _u2_fallback(device_id, step, flow_path)
 
         el = d(**selector)
-        timeout = step.get("timeout", 10)
 
         if el.wait(timeout=timeout):
             el.click()
             log(f"  -> u2_click: clicked element {selector}")
             return True
-        else:
-            log(f"  -> u2_click: element not found {selector}")
-            return _u2_fallback(device_id, step, flow_path)
+
+        # If textContains or text failed, retry with case-insensitive regex
+        text_val = step.get("textContains") or step.get("text")
+        if text_val:
+            import re
+            pattern = f"(?i).*{re.escape(text_val)}.*"
+            retry_selector = {}
+            if step.get("resourceId"):
+                retry_selector["resourceId"] = step["resourceId"]
+            retry_selector["textMatches"] = pattern
+            log(f"  -> Retrying case-insensitive: {retry_selector}")
+            el2 = d(**retry_selector)
+            if el2.wait(timeout=5):
+                el2.click()
+                log(f"  -> u2_click: clicked (case-insensitive) {retry_selector}")
+                return True
+
+        log(f"  -> u2_click: element not found {selector}")
+        return _u2_fallback(device_id, step, flow_path)
     except Exception as e:
         log(f"  -> u2_click error: {e}")
         return _u2_fallback(device_id, step, flow_path)
+
+
+def _build_u2_selector(step):
+    """Build uiautomator2 selector dict from step params."""
+    selector_keys = ["text", "textContains", "textStartsWith",
+                     "resourceId", "className", "contentDescription",
+                     "textMatches"]
+    selector = {}
+    for key in selector_keys:
+        if step.get(key):
+            selector[key] = step[key]
+    return selector
 
 
 def _u2_fallback(device_id, step, flow_path):
