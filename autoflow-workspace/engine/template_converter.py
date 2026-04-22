@@ -151,6 +151,28 @@ def build_cleanup_steps(platform):
     ]
 
 
+# Known Shopee UI texts that vary between phone models / app versions.
+# Map to shortest common substring that works with textContains.
+VARIABLE_TEXTS = [
+    # "Tambah Produk dan Voucher" (Itel) vs "Klik untuk tambah produk" (Samsung)
+    ("tambah produk", "Tambah Produk"),
+    # "Tambah keterangan pada Video-mu" — placeholder text, varies
+    ("tambah keterangan", "Tambah keterangan"),
+    # "Tambah(1)" vs "Tambah (1)" — number may vary
+    ("tambah(", "Tambah"),
+]
+
+
+def normalize_button_text(text):
+    """Check if text matches a known variable Shopee UI text and return the
+    shortest common core that works with textContains on any phone."""
+    lower = text.lower().strip()
+    for pattern, replacement in VARIABLE_TEXTS:
+        if pattern in lower:
+            return replacement
+    return None
+
+
 def convert_step(step, index, rec_w, rec_h):
     """Convert a single recorder step to a hybrid flow step."""
     action = step.get("action", "tap")
@@ -211,10 +233,18 @@ def convert_tap(step, index, rec_w, rec_h):
         if has_resource_id:
             result["resourceId"] = element["resourceId"]
         if has_text:
-            # Only use text if it's short and meaningful
             text = element["text"]
-            if len(text) <= 40:
+            # Normalize known variable Shopee texts to their common core
+            normalized = normalize_button_text(text)
+            if normalized:
+                result["textContains"] = normalized
+            elif len(text) <= 12:
+                # Short labels are stable across versions: OK, Import, Video, Posting, Lanjutkan
                 result["text"] = text
+            elif len(text) <= 40:
+                # Longer labels may vary — use textContains with key words
+                result["textContains"] = text
+            # Skip very long text (placeholder text in EditText fields)
         if has_content_desc:
             result["contentDescription"] = element["contentDescription"]
 

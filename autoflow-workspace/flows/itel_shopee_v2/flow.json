@@ -151,7 +151,7 @@
     {
       "action": "u2_click",
       "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_add_product_tip",
-      "text": "Tambah Produk dan Voucher",
+      "textContains": "Tambah Produk",
       "description": "Step 13: tap",
       "fallback_tap_pct": {
         "x_pct": 0.5986,

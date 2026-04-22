@@ -1,0 +1,753 @@
+{
+  "description": "",
+  "device_id": "1170915464009347",
+  "health": {
+    "last_failure": 1776856068,
+    "last_run": 1776856068,
+    "runs": 2,
+    "success": 1
+  },
+  "name": "itelBarubaru",
+  "platform": "other",
+  "record_device": {
+    "android_major": 13,
+    "android_version": "13",
+    "brand": "Itel",
+    "model": "itel S666LN",
+    "screen_h": 1612,
+    "screen_w": 720
+  },
+  "recorded_at": "2026-04-22T10:59:53.929Z",
+  "samples": {
+    "affiliate_link": "https://shopee.co.id/Mainan-Mobil-Remote-Control-4WD-High-Speed-3-Kecepatan-RC-Mobil-Drift-Ada-Lampu-20KM-Jam-i.451272134.23343070368",
+    "caption": "Motor hebat #testing",
+    "hashtags": "#mobilrc #shopee #rccar #drift #mainan"
+  },
+  "screen_size": {
+    "h": 1612,
+    "w": 720
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_before": "com.transsion.itel.launcher/com.android.quickstep.src.com.android.launcher3.uioverrides.QuickstepLauncher",
+      "activity_changed": true,
+      "coord": {
+        "x": 92,
+        "y": 346
+      },
+      "coord_pct": {
+        "x_pct": 0.1278,
+        "y_pct": 0.2146
+      },
+      "element": {
+        "bounds": [
+          16,
+          278,
+          176,
+          451
+        ],
+        "className": "android.widget.TextView",
+        "clickable": false,
+        "contentDescription": "Shopee",
+        "resourceId": "com.transsion.itel.launcher:id/icon",
+        "text": "Shopee"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855377437
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_changed": false,
+      "coord": {
+        "x": 360,
+        "y": 1472
+      },
+      "coord_pct": {
+        "x_pct": 0.5,
+        "y_pct": 0.9132
+      },
+      "element": {
+        "bounds": [
+          335,
+          1444,
+          385,
+          1494
+        ],
+        "className": "android.widget.ImageView",
+        "clickable": false,
+        "contentDescription": "tab_bar_button_video_and_live",
+        "resourceId": "com.shopee.id:id/icon",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855393098
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity",
+      "activity_before": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_changed": true,
+      "coord": {
+        "x": 668,
+        "y": 137
+      },
+      "coord_pct": {
+        "x_pct": 0.9278,
+        "y_pct": 0.085
+      },
+      "element": {
+        "bounds": [
+          644,
+          114,
+          692,
+          162
+        ],
+        "className": "android.view.ViewGroup",
+        "clickable": true,
+        "contentDescription": "click top right create icon",
+        "resourceId": "",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855402816
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity",
+      "activity_changed": false,
+      "coord": {
+        "x": 578,
+        "y": 1257
+      },
+      "coord_pct": {
+        "x_pct": 0.8028,
+        "y_pct": 0.7798
+      },
+      "element": {
+        "bounds": [
+          531,
+          1210,
+          619,
+          1298
+        ],
+        "className": "android.widget.ImageView",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id:id/iv_album_icon",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855409358
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity",
+      "activity_changed": false,
+      "coord": {
+        "x": 354,
+        "y": 241
+      },
+      "coord_pct": {
+        "x_pct": 0.4917,
+        "y_pct": 0.1495
+      },
+      "element": {
+        "bounds": [
+          324,
+          219,
+          396,
+          257
+        ],
+        "className": "android.widget.TextView",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": "Video"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855415558
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.mediasdk.album.preview.activity.SSZBasePreviewActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.mediasdk.ui.activity.SSZMediaActivity",
+      "activity_changed": true,
+      "coord": {
+        "x": 102,
+        "y": 383
+      },
+      "coord_pct": {
+        "x_pct": 0.1417,
+        "y_pct": 0.2376
+      },
+      "element": {
+        "bounds": [
+          0,
+          284,
+          178,
+          462
+        ],
+        "className": "android.widget.RelativeLayout",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855420551
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.mediasdk.editpage.SSZMultipleEditActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.mediasdk.album.preview.activity.SSZBasePreviewActivity",
+      "activity_changed": true,
+      "coord": {
+        "x": 582,
+        "y": 1448
+      },
+      "coord_pct": {
+        "x_pct": 0.8083,
+        "y_pct": 0.8983
+      },
+      "element": {
+        "bounds": [
+          488,
+          1414,
+          680,
+          1476
+        ],
+        "className": "android.widget.TextView",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": "Lanjutkan"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855430538
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.mediasdk.editpage.SSZMultipleEditActivity",
+      "activity_changed": true,
+      "coord": {
+        "x": 582,
+        "y": 1448
+      },
+      "coord_pct": {
+        "x_pct": 0.8083,
+        "y_pct": 0.8983
+      },
+      "element": {
+        "bounds": [
+          512,
+          1418,
+          680,
+          1474
+        ],
+        "className": "android.widget.TextView",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id:id/tv_compress",
+        "text": "Lanjutkan"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855438928
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_changed": false,
+      "coord": {
+        "x": 295,
+        "y": 244
+      },
+      "coord_pct": {
+        "x_pct": 0.4097,
+        "y_pct": 0.1514
+      },
+      "element": {
+        "bounds": [
+          256,
+          201,
+          720,
+          396
+        ],
+        "className": "android.widget.EditText",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+        "text": "Tambah keterangan pada Video-mu"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855445489
+    },
+    {
+      "action": "type",
+      "activity_after": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_changed": false,
+      "append": false,
+      "element": {
+        "bounds": [
+          256,
+          201,
+          720,
+          396
+        ],
+        "className": "android.widget.EditText",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id.dfpluginshopee16:id/et_caption",
+        "text": "Tambah keterangan pada Video-mu"
+      },
+      "text": "{{caption}}",
+      "ts": 1776855454931
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_before": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_changed": false,
+      "coord": {
+        "x": 663,
+        "y": 120
+      },
+      "coord_pct": {
+        "x_pct": 0.9208,
+        "y_pct": 0.0744
+      },
+      "element": {
+        "bounds": [
+          614,
+          80,
+          720,
+          168
+        ],
+        "className": "android.widget.TextView",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_right",
+        "text": "OK"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855467419
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_changed": true,
+      "coord": {
+        "x": 508,
+        "y": 549
+      },
+      "coord_pct": {
+        "x_pct": 0.7056,
+        "y_pct": 0.3406
+      },
+      "element": {
+        "bounds": [
+          332,
+          533,
+          640,
+          566
+        ],
+        "className": "android.widget.TextView",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id.dfpluginshopee16:id/tv_add_product_tip",
+        "text": "Tambah Produk dan Voucher"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855474624
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": false,
+      "coord": {
+        "x": 665,
+        "y": 124
+      },
+      "coord_pct": {
+        "x_pct": 0.9236,
+        "y_pct": 0.0769
+      },
+      "element": {
+        "bounds": [
+          0,
+          0,
+          720,
+          1532
+        ],
+        "className": "android.widget.LinearLayout",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id:id/action_bar_root",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855483057
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": false,
+      "coord": {
+        "x": 89,
+        "y": 306
+      },
+      "coord_pct": {
+        "x_pct": 0.1236,
+        "y_pct": 0.1898
+      },
+      "element": {
+        "bounds": [
+          48,
+          272,
+          672,
+          578
+        ],
+        "className": "android.widget.EditText",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": "Hanya berlaku untuk link produk Shopee. Masukkan 1 grup produk link ATAU maksimal 50 produk link tunggal"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855489076
+    },
+    {
+      "action": "type",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": false,
+      "append": false,
+      "element": {
+        "bounds": [
+          48,
+          272,
+          672,
+          578
+        ],
+        "className": "android.widget.EditText",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": "Hanya berlaku untuk link produk Shopee. Masukkan 1 grup produk link ATAU maksimal 50 produk link tunggal"
+      },
+      "text": "{{affiliate_link}}",
+      "ts": 1776855497810
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": false,
+      "coord": {
+        "x": 354,
+        "y": 688
+      },
+      "coord_pct": {
+        "x_pct": 0.4917,
+        "y_pct": 0.4268
+      },
+      "element": {
+        "bounds": [
+          334,
+          675,
+          430,
+          707
+        ],
+        "className": "android.widget.TextView",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": "Import"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855504111
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": false,
+      "coord": {
+        "x": 40,
+        "y": 1008
+      },
+      "coord_pct": {
+        "x_pct": 0.0556,
+        "y_pct": 0.6253
+      },
+      "element": {
+        "bounds": [
+          24,
+          976,
+          60,
+          1012
+        ],
+        "className": "android.view.ViewGroup",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855511974
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": true,
+      "coord": {
+        "x": 409,
+        "y": 1401
+      },
+      "coord_pct": {
+        "x_pct": 0.5681,
+        "y_pct": 0.8691
+      },
+      "element": {
+        "bounds": [
+          394,
+          1389,
+          550,
+          1429
+        ],
+        "className": "android.widget.TextView",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "",
+        "text": "Tambah(1)"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855517151
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_before": "com.shopee.id/com.shopee.sz.luckyvideo.publishvideo.PublishVideoActivity",
+      "activity_changed": true,
+      "coord": {
+        "x": 369,
+        "y": 1466
+      },
+      "coord_pct": {
+        "x_pct": 0.5125,
+        "y_pct": 0.9094
+      },
+      "element": {
+        "bounds": [
+          138,
+          1417,
+          688,
+          1508
+        ],
+        "className": "android.widget.TextView",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id.dfpluginshopee16:id/btn_post",
+        "text": "Posting"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855524132
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_changed": false,
+      "coord": {
+        "x": 249,
+        "y": 921
+      },
+      "coord_pct": {
+        "x_pct": 0.3458,
+        "y_pct": 0.5713
+      },
+      "element": {
+        "bounds": [
+          50,
+          875,
+          359,
+          971
+        ],
+        "className": "android.widget.TextView",
+        "clickable": true,
+        "contentDescription": "",
+        "resourceId": "com.shopee.id:id/buttonDefaultNegative",
+        "text": "Kembali"
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855534007
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_before": "com.shopee.id/com.shopee.app.ui.home.HomeActivity_",
+      "activity_changed": true,
+      "coord": {
+        "x": 49,
+        "y": 137
+      },
+      "coord_pct": {
+        "x_pct": 0.0681,
+        "y_pct": 0.085
+      },
+      "element": {
+        "bounds": [
+          28,
+          114,
+          76,
+          162
+        ],
+        "className": "android.view.ViewGroup",
+        "clickable": true,
+        "contentDescription": "click me page icon",
+        "resourceId": "",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855541209
+    },
+    {
+      "action": "screenshot",
+      "output": "_shot_1776855547747.png",
+      "ts": 1776855547747
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.transsion.itel.launcher/com.android.quickstep.src.com.android.launcher3.uioverrides.QuickstepLauncher",
+      "activity_before": "com.shopee.id/com.shopee.app.react.ReactActivity_",
+      "activity_changed": true,
+      "coord": {
+        "x": 178,
+        "y": 1574
+      },
+      "coord_pct": {
+        "x_pct": 0.2472,
+        "y_pct": 0.9764
+      },
+      "element": {
+        "bounds": [
+          100,
+          1532,
+          260,
+          1612
+        ],
+        "className": "android.widget.ImageView",
+        "clickable": true,
+        "contentDescription": "Ringkasan",
+        "resourceId": "com.android.systemui:id/recent_apps",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855558928
+    },
+    {
+      "action": "tap",
+      "activity_after": "com.transsion.itel.launcher/com.android.quickstep.src.com.android.launcher3.uioverrides.QuickstepLauncher",
+      "activity_before": "com.transsion.itel.launcher/com.android.quickstep.src.com.android.launcher3.uioverrides.QuickstepLauncher",
+      "activity_changed": false,
+      "coord": {
+        "x": 363,
+        "y": 1472
+      },
+      "coord_pct": {
+        "x_pct": 0.5042,
+        "y_pct": 0.9132
+      },
+      "element": {
+        "bounds": [
+          318,
+          1432,
+          402,
+          1516
+        ],
+        "className": "android.widget.LinearLayout",
+        "clickable": false,
+        "contentDescription": "",
+        "resourceId": "com.transsion.itel.launcher:id/recents_memory_container",
+        "text": ""
+      },
+      "screen_size": {
+        "height": 1612,
+        "width": 720
+      },
+      "ts": 1776855563852
+    }
+  ]
+}
