@@ -3,10 +3,11 @@
 // spawns engine with a single-item batch, and flags state.testMode so the
 // completion handler in app.js updates templateTests.
 
-import state, { set, emit, markTestRunning, markTestPass, markTestFail } from './state.js';
+import state, { set, emit, markTestRunning, markTestPass, markTestFail, setActiveTemplate } from './state.js';
 import { appendLog } from './components/console-panel.js';
 import { navigate } from './router.js';
 import { toast } from './components/toast.js';
+import { detectPlatformFromTemplate } from './utils/templateMatch.js';
 
 const { invoke } = window.__TAURI__.core;
 
@@ -100,14 +101,21 @@ export function handleTestCompletion({ success, failStep, failReason }) {
 
   if (success) {
     markTestPass(deviceId, templateName);
-    toast.success(`Template "${templateName}" berhasil diuji di HP ini.`, {
+    // Auto-promote: a just-passed test signals user's intent to use this
+    // template. Three things happen together so batch run is 1-click away:
+    //   1. Mark as active for (device, platform) — queue HP column updates
+    //   2. Set as global selectedTemplate — queue guard clears, Jobs accessible
+    //   3. Add this device to selectedDevices — batch defaults include it
+    const tpl = state.templatesData?.[templateName];
+    const platform = tpl ? detectPlatformFromTemplate(tpl) : 'other';
+    setActiveTemplate(deviceId, platform, templateName);
+    set('selectedTemplate', templateName);
+    state.selectedDevices.add(deviceId);
+    toast.success(`Aktif untuk HP ini (${platform}). Tinggal ke Job.`, {
       title: 'Test berhasil',
       action: {
-        label: 'Pakai sekarang',
-        onClick: () => {
-          set('selectedTemplate', templateName);
-          navigate('devices');
-        },
+        label: 'Ke Job →',
+        onClick: () => navigate('queue'),
       },
     });
   } else {

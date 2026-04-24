@@ -33,9 +33,7 @@ export function renderSidebar() {
   sb.innerHTML = `
     <!-- Brand -->
     <div style="display:flex;${c ? 'flex-direction:column;align-items:center;gap:4px' : 'align-items:center;gap:7px'};padding:10px 10px 6px">
-      <div style="width:${c ? '30' : '26'}px;height:${c ? '30' : '26'}px;border-radius:6px;background:linear-gradient(135deg,var(--c-accent),var(--c-purple));display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="${c ? '15' : '13'}" height="${c ? '15' : '13'}" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      </div>
+      <img src="./logo.png" alt="AUV" style="width:${c ? '30' : '28'}px;height:${c ? '30' : '28'}px;border-radius:6px;object-fit:contain;flex-shrink:0" />
       ${c ? '' : '<span style="font-size:13px;font-weight:700;color:var(--c-fg-0)">AUV</span>'}
       <button id="btn-collapse" title="${c ? t('nav.expand') : t('nav.collapse')}" style="${c ? '' : 'margin-left:auto;'}background:none;border:none;cursor:pointer;color:var(--c-fg-2);padding:4px;line-height:0;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--c-fg-0)';this.style.background='var(--c-bg-2)'" onmouseout="this.style.color='var(--c-fg-2)';this.style.background='none'">
         <svg width="${c ? '20' : '16'}" height="${c ? '20' : '16'}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">

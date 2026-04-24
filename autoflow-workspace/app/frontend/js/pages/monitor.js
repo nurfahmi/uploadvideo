@@ -3,6 +3,7 @@
 import { $, esc } from '../utils/helpers.js';
 import state, { set, on, emit } from '../state.js';
 import { navigate } from '../router.js';
+import { t } from '../i18n.js';
 
 export function init() {
   const panel = $('#page-monitor');
@@ -16,6 +17,7 @@ export function init() {
 
   on('isRunning', render);
   on('testMode', render);
+  on('lang', render);
   on('progress', () => { if (state.activeRoute === 'monitor') render(); });
 }
 
@@ -37,12 +39,22 @@ export function render() {
     return renderTestMode(panel, { isRunning, isDone, progress });
   }
 
-  const devices = [...state.selectedDevices].map(devId => {
-    const short = devId.length > 8 ? devId.slice(-6) : devId;
+  // Iterate active engines (shortIds) rather than selectedDevices — Sprint B
+  // batch may spawn multiple engines per device if templates differ per item,
+  // and totalEngines is per-group not per-device.
+  const engineShorts = state.engineItems && Object.keys(state.engineItems).length
+    ? Object.keys(state.engineItems)
+    : [...state.selectedDevices].map(id => id.length > 8 ? id.slice(-6) : id);
+  const devices = engineShorts.map(short => {
+    // Find matching device by shortId suffix
+    const devId = [...state.selectedDevices].find(id => id.endsWith(short))
+      || state.devices.find(d => d[0].endsWith(short))?.[0]
+      || short;
     const h = state.deviceHealth[devId] || {};
+    const nickname = state.deviceLabels?.[devId];
     const brand = h.brand ? h.brand.charAt(0).toUpperCase() + h.brand.slice(1).toLowerCase() : '';
-    const model = brand || h.model || state.devices.find(d => d[0] === devId)?.[1] || short;
-    const p = progress[short] || { step: 'Waiting...', percent: 0, status: 'waiting' };
+    const model = nickname || brand || h.model || state.devices.find(d => d[0] === devId)?.[1] || short;
+    const p = progress[short] || { step: t('mon.waiting_dots'), percent: 0, status: 'waiting' };
     return { devId, short, model, ...p };
   });
 
@@ -54,18 +66,18 @@ export function render() {
     <!-- Header bar -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:12px">
-        <h2 style="font-size:15px;font-weight:700;color:var(--c-fg-0);margin:0">Live Monitor</h2>
+        <h2 style="font-size:15px;font-weight:700;color:var(--c-fg-0);margin:0">${t('mon.title2')}</h2>
         <span class="badge ${isDone ? 'b-green' : isRunning ? 'b-amber pulse' : 'b-gray'}">
-          ${isDone ? 'Completed' : isRunning ? 'Running' : 'Idle'}
+          ${isDone ? t('mon.badge_done') : isRunning ? t('mon.badge_running') : t('mon.badge_idle')}
         </span>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         ${isRunning ? `
-          <button class="mon-icon-btn" data-action="stop-all" title="Stop All">
+          <button class="mon-icon-btn" data-action="stop-all" title="${esc(t('mon.stop_title'))}">
             <svg width="16" height="16" fill="var(--c-red)" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
           </button>
         ` : ''}
-        <button class="mon-icon-btn" data-action="back-queue" title="Back to Queue">
+        <button class="mon-icon-btn" data-action="back-queue" title="${esc(t('mon.back_title'))}">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>
         </button>
       </div>
@@ -79,19 +91,19 @@ export function render() {
           <svg width="20" height="20" fill="none" stroke="var(--c-green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
         <div>
-          <p style="font-size:14px;font-weight:700;color:var(--c-fg-0);margin:0">Upload Complete</p>
-          <p style="font-size:11px;color:var(--c-fg-2);margin:0">${totalItems} video${totalItems > 1 ? 's' : ''} processed</p>
+          <p style="font-size:14px;font-weight:700;color:var(--c-fg-0);margin:0">${t('mon.done_title2')}</p>
+          <p style="font-size:11px;color:var(--c-fg-2);margin:0">${t('mon.done_body', { n: totalItems })}</p>
         </div>
       </div>
       <div style="display:flex;gap:20px">
         <div style="display:flex;align-items:center;gap:6px">
           <div style="width:8px;height:8px;border-radius:50%;background:var(--c-green)"></div>
-          <span style="font-size:13px;font-weight:600;color:var(--c-green)">${successCount} success</span>
+          <span style="font-size:13px;font-weight:600;color:var(--c-green)">${t('mon.done_success', { n: successCount })}</span>
         </div>
         ${failedCount > 0 ? `
         <div style="display:flex;align-items:center;gap:6px">
           <div style="width:8px;height:8px;border-radius:50%;background:var(--c-red)"></div>
-          <span style="font-size:13px;font-weight:600;color:var(--c-red)">${failedCount} failed</span>
+          <span style="font-size:13px;font-weight:600;color:var(--c-red)">${t('mon.done_failed', { n: failedCount })}</span>
         </div>
         ` : ''}
       </div>
@@ -104,10 +116,13 @@ export function render() {
         const c = colors[idx % colors.length];
         const isDevDone = d.status === 'done' || d.status === 'error';
         const badgeClass = d.status === 'error' ? 'b-red' : isDevDone ? 'b-green' : d.status === 'waiting' ? 'b-gray' : 'b-amber';
-        const badgeLabel = d.status === 'error' ? 'Failed' : isDevDone ? 'Done' : d.status === 'waiting' ? 'Waiting' : 'Uploading';
+        const badgeLabel = d.status === 'error' ? t('mon.card_failed') : isDevDone ? t('mon.card_done') : d.status === 'waiting' ? t('mon.dev_waiting') : t('mon.card_running');
+        const cardState = d.status === 'error' ? 'mc-error'
+                        : d.status === 'done' ? 'mc-done'
+                        : d.status === 'running' ? 'mc-running' : '';
 
         return `
-          <div class="monitor-card">
+          <div class="monitor-card ${cardState}">
             <div class="progress-bg" style="width:${d.percent}%;background:${c}"></div>
             <div style="position:relative;z-index:1">
               <!-- Device header -->
@@ -147,8 +162,8 @@ export function render() {
       }).join('') : `
         <div style="text-align:center;padding:40px 20px;color:var(--c-fg-3)">
           <svg width="40" height="40" fill="none" stroke="var(--c-bg-2)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:8px"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-          <p style="font-size:12px;margin:0">No active automation</p>
-          <p style="font-size:10px;color:var(--c-bg-3);margin-top:4px">Start an upload from the Queue page</p>
+          <p style="font-size:12px;margin:0">${t('mon.empty_title')}</p>
+          <p style="font-size:10px;color:var(--c-bg-3);margin-top:4px">${t('mon.empty_hint')}</p>
         </div>
       `}
     </div>
@@ -164,7 +179,7 @@ function renderTestMode(panel, { isRunning, isDone, progress }) {
   const h = devId ? (state.deviceHealth[devId] || {}) : {};
   const devLabel = state.deviceLabels?.[devId] || `${h.brand || '?'} ${h.model || short}`.trim();
 
-  const p = progress[short] || { step: isRunning ? 'Menyiapkan...' : 'Menunggu...', percent: 0, status: 'waiting' };
+  const p = progress[short] || { step: isRunning ? t('mon.preparing') : t('mon.waiting_dots'), percent: 0, status: 'waiting' };
   const item = state.queue[0] || {};
   const itemStatus = item._status || 'queued';
   const passed = isDone && itemStatus === 'success';
@@ -176,16 +191,16 @@ function renderTestMode(panel, { isRunning, isDone, progress }) {
       <div style="display:flex;align-items:center;gap:var(--sp-3);background:var(--c-amber-a12);border:1px solid var(--c-amber-a20);border-radius:var(--r-lg);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4)">
         <span style="font-size:22px">🧪</span>
         <div style="flex:1">
-          <div class="t-md t-strong" style="color:var(--c-amber)">TEST MODE</div>
-          <div class="t-xs t-muted">Menjalankan <strong>${esc(tplName)}</strong> di <strong>${esc(devLabel)}</strong> — 1 iterasi verifikasi.</div>
+          <div class="t-md t-strong" style="color:var(--c-amber)">${t('mon.test_banner_title')}</div>
+          <div class="t-xs t-muted">${t('mon.test_banner_body', { tpl: esc(tplName), device: esc(devLabel) })}</div>
         </div>
         ${isRunning ? `
           <button class="btn btn-danger btn-sm" data-action="stop-all">
             <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="margin-right:4px"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-            Hentikan
+            ${t('job.action_stop')}
           </button>
         ` : `
-          <button class="btn btn-ghost btn-sm" data-action="back-devices">← Perangkat</button>
+          <button class="btn btn-ghost btn-sm" data-action="back-devices">${t('mon.back_devices')}</button>
         `}
       </div>
 
@@ -198,9 +213,9 @@ function renderTestMode(panel, { isRunning, isDone, progress }) {
             </div>
             <div style="flex:1;min-width:0">
               <div class="t-md t-strong">${esc(devLabel)}</div>
-              <div class="t-xs t-muted" style="margin-top:2px">${esc(p.step || 'Menunggu...')}${p.stepDesc ? ' — ' + esc(p.stepDesc) : ''}</div>
+              <div class="t-xs t-muted" style="margin-top:2px">${esc(p.step || t('mon.waiting_dots'))}${p.stepDesc ? ' — ' + esc(p.stepDesc) : ''}</div>
             </div>
-            <span class="ui-chip ui-chip-warn t-xs">Berjalan</span>
+            <span class="ui-chip ui-chip-warn t-xs">${t('mon.card_running')}</span>
           </div>
           <div style="display:flex;align-items:center;gap:var(--sp-3)">
             <div style="flex:1;height:6px;background:var(--c-bg-2);border-radius:3px;overflow:hidden">
@@ -218,11 +233,11 @@ function renderTestMode(panel, { isRunning, isDone, progress }) {
               <svg width="24" height="24" fill="none" stroke="var(--c-green)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
             </div>
             <div>
-              <div class="t-lg t-strong" style="color:var(--c-green)">Test berhasil</div>
-              <div class="t-sm t-muted">Template "<strong>${esc(tplName)}</strong>" siap dipakai untuk batch di HP ini.</div>
+              <div class="t-lg t-strong" style="color:var(--c-green)">${t('mon.test_passed')}</div>
+              <div class="t-sm t-muted">${t('mon.test_passed_body', { name: esc(tplName) })}</div>
             </div>
           </div>
-          <button class="btn btn-primary" style="width:100%" data-action="back-devices">← Kembali ke Perangkat</button>
+          <button class="btn btn-primary" style="width:100%" data-action="back-devices">${t('mon.back_devices_long')}</button>
         </div>
       ` : ''}
 
@@ -233,12 +248,12 @@ function renderTestMode(panel, { isRunning, isDone, progress }) {
               <svg width="24" height="24" fill="none" stroke="var(--c-red)" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div>
-              <div class="t-lg t-strong" style="color:var(--c-red)">Test gagal</div>
-              <div class="t-sm t-muted">Template belum siap untuk batch. Cek konsol untuk detail langkah.</div>
+              <div class="t-lg t-strong" style="color:var(--c-red)">${t('mon.test_failed')}</div>
+              <div class="t-sm t-muted">${t('mon.test_failed_body')}</div>
             </div>
           </div>
           <div style="display:flex;gap:var(--sp-2)">
-            <button class="btn btn-secondary" style="flex:1" data-action="back-devices">← Perangkat</button>
+            <button class="btn btn-secondary" style="flex:1" data-action="back-devices">${t('mon.back_devices')}</button>
           </div>
         </div>
       ` : ''}

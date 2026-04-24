@@ -2,7 +2,7 @@
 // In-app USB debugging guide per brand, accessible from Devices tab
 // and auto-shown when Scan Devices finds no devices.
 
-const hpGuide = {
+window.hpGuide = {
   _visible: false,
 
   show() {
@@ -22,7 +22,7 @@ const hpGuide = {
 
   async scanAndRetry() {
     const btn = document.getElementById('hp-guide-scan-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Memindai...'; }
 
     try {
       const { invoke } = window.__TAURI__.core;
@@ -33,15 +33,15 @@ const hpGuide = {
       } else {
         const msg = document.getElementById('hp-guide-msg');
         if (msg) {
-          msg.textContent = 'Phone still not detected. Please review the steps above.';
+          msg.textContent = 'HP masih belum terdeteksi. Cek ulang langkah di atas.';
           msg.classList.remove('hidden');
           setTimeout(() => { if (msg) msg.classList.add('hidden'); }, 4000);
         }
-        if (btn) { btn.disabled = false; btn.textContent = 'Try Scan Again'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Pindai Lagi'; }
       }
     } catch (err) {
       console.error('Scan failed:', err);
-      if (btn) { btn.disabled = false; btn.textContent = 'Try Scan Again'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Pindai Lagi'; }
     }
   },
 
@@ -52,11 +52,11 @@ const hpGuide = {
         icon: 'S',
         color: 'from-blue-500 to-blue-600',
         steps: [
-          'Open <code class="text-indigo-400">Settings</code> > <code class="text-indigo-400">About Phone</code> > <code class="text-indigo-400">Software Information</code>',
-          'Tap <code class="text-indigo-400">Build Number</code> 7 times until "Developer mode enabled" appears',
-          'Go back to Settings > <code class="text-indigo-400">Developer Options</code>',
-          'Enable <code class="text-indigo-400">USB Debugging</code>',
-          'Also enable <code class="text-indigo-400">USB Configuration</code> if available',
+          'Buka <code class="text-indigo-400">Pengaturan</code> > <code class="text-indigo-400">Tentang HP</code> > <code class="text-indigo-400">Software Information</code>',
+          'Tap <code class="text-indigo-400">Build Number</code> 7 kali sampai muncul "Mode pengembang aktif"',
+          'Balik ke Pengaturan > <code class="text-indigo-400">Opsi Pengembang</code>',
+          'Aktifkan <code class="text-indigo-400">USB Debugging</code>',
+          'Kalau ada, aktifkan juga <code class="text-indigo-400">USB Configuration</code> jika ada',
         ],
       },
       {
@@ -64,11 +64,11 @@ const hpGuide = {
         icon: 'Mi',
         color: 'from-orange-500 to-orange-600',
         steps: [
-          'Open <code class="text-indigo-400">Settings</code> > <code class="text-indigo-400">About Phone</code>',
-          'Tap <code class="text-indigo-400">MIUI Version</code> 7 times',
-          'Go back to Settings > <code class="text-indigo-400">Additional Settings</code> > <code class="text-indigo-400">Developer Options</code>',
-          'Enable <code class="text-indigo-400">USB Debugging</code>',
-          'Also enable <code class="text-indigo-400">Install via USB</code>',
+          'Buka <code class="text-indigo-400">Pengaturan</code> > <code class="text-indigo-400">Tentang HP</code>',
+          'Tap <code class="text-indigo-400">MIUI Version</code> 7 kali',
+          'Balik ke Pengaturan > <code class="text-indigo-400">Pengaturan Tambahan</code> > <code class="text-indigo-400">Opsi Pengembang</code>',
+          'Aktifkan <code class="text-indigo-400">USB Debugging</code>',
+          'Kalau ada, aktifkan juga <code class="text-indigo-400">Install via USB</code>',
         ],
       },
       {
@@ -76,11 +76,11 @@ const hpGuide = {
         icon: 'O',
         color: 'from-green-500 to-green-600',
         steps: [
-          'Open <code class="text-indigo-400">Settings</code> > <code class="text-indigo-400">About Phone</code>',
-          'Tap <code class="text-indigo-400">Build Number</code> 7 times',
-          'Go back to Settings > <code class="text-indigo-400">System Settings</code> > <code class="text-indigo-400">Developer Options</code>',
-          'Enable <code class="text-indigo-400">USB Debugging</code>',
-          'Path may slightly differ depending on ColorOS version',
+          'Buka <code class="text-indigo-400">Pengaturan</code> > <code class="text-indigo-400">Tentang HP</code>',
+          'Tap <code class="text-indigo-400">Build Number</code> 7 kali',
+          'Balik ke Pengaturan > <code class="text-indigo-400">Pengaturan Sistem</code> > <code class="text-indigo-400">Opsi Pengembang</code>',
+          'Aktifkan <code class="text-indigo-400">USB Debugging</code>',
+          'Path bisa beda dikit tergantung versi ColorOS',
         ],
       },
       {
@@ -88,11 +88,11 @@ const hpGuide = {
         icon: 'V',
         color: 'from-violet-500 to-violet-600',
         steps: [
-          'Open <code class="text-indigo-400">Settings</code> > <code class="text-indigo-400">About Phone</code>',
-          'Tap <code class="text-indigo-400">Software Version</code> 7 times',
-          'Go back to Settings > <code class="text-indigo-400">System Management</code> > <code class="text-indigo-400">Developer Options</code>',
-          'Enable <code class="text-indigo-400">USB Debugging</code>',
-          'Funtouch OS version may differ',
+          'Buka <code class="text-indigo-400">Pengaturan</code> > <code class="text-indigo-400">Tentang HP</code>',
+          'Tap <code class="text-indigo-400">Software Version</code> 7 kali',
+          'Balik ke Pengaturan > <code class="text-indigo-400">System Management</code> > <code class="text-indigo-400">Opsi Pengembang</code>',
+          'Aktifkan <code class="text-indigo-400">USB Debugging</code>',
+          'Versi Funtouch OS mungkin sedikit beda',
         ],
       },
     ];
@@ -102,8 +102,8 @@ const hpGuide = {
       <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden">
         <div class="px-5 pt-4 pb-3 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div>
-            <h2 class="text-base font-bold text-white">Android Phone Setup Guide</h2>
-            <p class="text-[10px] text-slate-500 mt-0.5">Enable USB Debugging to connect your phone to AutoFlow</p>
+            <h2 class="text-base font-bold text-white">Panduan Setup HP Android</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Aktifkan USB Debugging biar HP bisa konek ke AutoFlow</p>
           </div>
           <button onclick="hpGuide.hide()" class="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -132,25 +132,25 @@ const hpGuide = {
           `).join('')}
 
           <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
-            <p class="text-xs font-semibold text-indigo-400 mb-2">After USB Debugging is enabled:</p>
+            <p class="text-xs font-semibold text-indigo-400 mb-2">Setelah USB Debugging aktif:</p>
             <div class="space-y-1.5 text-xs text-slate-400">
-              <p>1. Connect your phone to your computer via USB cable</p>
-              <p>2. Select <code class="text-indigo-400">File Transfer (MTP)</code> mode on your phone</p>
-              <p>3. Tap <code class="text-indigo-400">Allow</code> on the "Allow USB Debugging?" popup</p>
-              <p>4. Check "Always allow from this computer" to avoid being asked again</p>
+              <p>1. Colok HP ke laptop pake kabel USB</p>
+              <p>2. Pilih mode <code class="text-indigo-400">Transfer File (MTP)</code> di HP</p>
+              <p>3. Tap <code class="text-indigo-400">Izinkan</code> saat muncul popup "Izinkan USB Debugging?"</p>
+              <p>4. Centang "Selalu izinkan dari komputer ini" biar gak ditanya terus</p>
             </div>
           </div>
 
           <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-            <p class="text-xs font-semibold text-amber-400 mb-2">Still not detected?</p>
+            <p class="text-xs font-semibold text-amber-400 mb-2">Masih belum terdeteksi?</p>
             <div class="space-y-1 text-xs text-slate-400">
-              <p>- Make sure USB Debugging is <span class="text-slate-300">ON</span></p>
-              <p>- Make sure you've tapped <span class="text-slate-300">Allow</span> on the phone popup</p>
-              <p>- USB mode must be <span class="text-slate-300">File Transfer</span> (not Charging only)</p>
-              <p>- Make sure cable supports <span class="text-slate-300">data transfer</span> (not charging-only)</p>
-              <p>- Try <span class="text-slate-300">unplugging and replugging</span> the USB cable</p>
-              <p>- Try <span class="text-slate-300">restarting your phone</span></p>
-              <p>- Try a different USB port on your computer</p>
+              <p>- Pastikan USB Debugging <span class="text-slate-300">AKTIF</span></p>
+              <p>- Pastikan udah tap <span class="text-slate-300">Izinkan</span> di popup HP</p>
+              <p>- Mode USB harus <span class="text-slate-300">Transfer File</span> (bukan cuma Charging)</p>
+              <p>- Pastikan kabel support <span class="text-slate-300">transfer data</span> (bukan cuma charging)</p>
+              <p>- Coba <span class="text-slate-300">cabut dan colok ulang</span> kabel USB</p>
+              <p>- Coba <span class="text-slate-300">restart HP</span></p>
+              <p>- Coba port USB lain di laptop</p>
             </div>
           </div>
         </div>
@@ -158,11 +158,11 @@ const hpGuide = {
         <div class="px-5 py-3 border-t border-slate-800 flex items-center justify-between shrink-0">
           <span id="hp-guide-msg" class="hidden text-xs text-amber-400 max-w-[250px] truncate"></span>
           <div class="flex gap-2 ml-auto">
-            <button onclick="hpGuide.hide()" class="text-xs text-slate-500 hover:text-slate-300 px-3 py-2 transition-colors cursor-pointer">Close</button>
+            <button onclick="hpGuide.hide()" class="text-xs text-slate-500 hover:text-slate-300 px-3 py-2 transition-colors cursor-pointer">Tutup</button>
             <button id="hp-guide-scan-btn" onclick="hpGuide.scanAndRetry()"
               class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              Try Scan Again
+              Pindai Lagi
             </button>
           </div>
         </div>

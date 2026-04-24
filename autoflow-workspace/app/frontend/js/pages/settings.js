@@ -22,8 +22,9 @@ function autoSave() {
       delay_max: parseInt($('#set-delay-max')?.value) || 120,
       max_uploads_per_day: parseInt($('#set-max-uploads')?.value) || 30,
       distribution: $('#set-distribution')?.value || 'uniform',
+      hp_mode: $('#set-hp-mode')?.value || 'parallel',
       license_key: $('#set-license')?.value || '',
-      language: $('#set-lang')?.value || 'en',
+      language: getLanguage(),
     };
     try {
       await invoke('save_config', { config });
@@ -44,63 +45,77 @@ export function render() {
   const lang = getLanguage();
 
   panel.innerHTML = `
-    <div style="margin-bottom:16px">
-      <h2 style="font-size:15px;font-weight:700;color:var(--c-fg-0)">${t('settings.title')}</h2>
-      <p style="font-size:10px;color:var(--c-fg-3);margin-top:2px">${t('settings.subtitle')}</p>
+    <div style="margin-bottom:var(--sp-4)">
+      <h2 class="t-lg t-strong" style="margin:0">${t('settings.title')}</h2>
+      <p class="t-sm t-muted" style="margin-top:2px">${t('settings.subtitle')}</p>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;flex-direction:column;gap:var(--sp-4)">
+
+      <!-- Mode HP (Parallel vs Serial) -->
+      <div>
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.hp_mode')}</p>
+        <div class="card" style="padding:var(--sp-4)">
+          <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.hp_mode_label')}</label>
+          <select id="set-hp-mode" class="inp" style="width:100%">
+            <option value="parallel" ${(c.hp_mode || 'parallel') === 'parallel' ? 'selected' : ''}>${t('settings.hp_mode_parallel')}</option>
+            <option value="serial" ${c.hp_mode === 'serial' ? 'selected' : ''}>${t('settings.hp_mode_serial')}</option>
+          </select>
+          <p class="t-xs t-muted" style="margin-top:var(--sp-2);line-height:1.5">${t('settings.hp_mode_hint')}</p>
+        </div>
+      </div>
 
       <!-- Delay & Safety -->
       <div>
-        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">${t('settings.delay_safety')}</p>
-        <div class="card" style="padding:16px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.delay_safety')}</p>
+        <div class="card" style="padding:var(--sp-4)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
             <div>
-              <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.delay_min')}</label>
+              <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.delay_min')}</label>
               <input type="number" id="set-delay-min" value="${c.delay_min ?? 30}" min="1" max="600" class="inp" style="width:100%">
             </div>
             <div>
-              <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.delay_max')}</label>
+              <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.delay_max')}</label>
               <input type="number" id="set-delay-max" value="${c.delay_max ?? 120}" min="1" max="600" class="inp" style="width:100%">
             </div>
-            <div>
-              <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.distribution')}</label>
-              <select id="set-distribution" style="width:100%">
-                <option value="uniform" ${c.distribution !== 'gaussian' ? 'selected' : ''}>${t('settings.distribution_uniform')}</option>
-                <option value="gaussian" ${c.distribution === 'gaussian' ? 'selected' : ''}>${t('settings.distribution_gaussian')}</option>
+            <div style="grid-column:1/-1">
+              <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.dist_label')}</label>
+              <select id="set-distribution" class="inp" style="width:100%">
+                <option value="uniform" ${c.distribution !== 'gaussian' ? 'selected' : ''}>${t('settings.dist_uniform')}</option>
+                <option value="gaussian" ${c.distribution === 'gaussian' ? 'selected' : ''}>${t('settings.dist_gaussian')}</option>
               </select>
+              <p class="t-xs t-muted" style="margin-top:var(--sp-1);line-height:1.5">${t('settings.dist_hint')}</p>
             </div>
-            <div>
-              <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.max_uploads')}</label>
+            <div style="grid-column:1/-1">
+              <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.max_uploads')}</label>
               <input type="number" id="set-max-uploads" value="${c.max_uploads_per_day ?? 30}" min="1" max="1000" class="inp" style="width:100%">
             </div>
           </div>
-          <p style="font-size:9px;color:var(--c-fg-3);margin-top:8px">${t('settings.delay_hint')}</p>
+          <p class="t-xs t-muted" style="margin-top:var(--sp-3);line-height:1.5">${t('settings.delay_hint')}</p>
         </div>
       </div>
 
       <!-- License -->
       <div>
-        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">${t('settings.license')}</p>
-        <div class="card" style="padding:16px">
-          <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.license_key')}</label>
-          <div style="display:flex;gap:6px">
-            <input type="text" id="set-license" value="${c.license_key || ''}" class="inp" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:10px" placeholder="XXXX-XXXX-XXXX-XXXX">
-            <button class="btn" id="btn-validate-license">${t('settings.validate')}</button>
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.license')}</p>
+        <div class="card" style="padding:var(--sp-4)">
+          <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.license_key')}</label>
+          <div style="display:flex;gap:var(--sp-2)">
+            <input type="text" id="set-license" value="${c.license_key || ''}" class="inp" style="flex:1;font-family:'IBM Plex Mono',monospace" placeholder="XXXX-XXXX-XXXX-XXXX">
+            <button class="btn btn-secondary btn-sm" id="btn-validate-license">${t('settings.validate')}</button>
           </div>
           ${c.license_key ? `
-            <div style="margin-top:10px;padding:10px 12px;background:var(--c-green-a06);border-radius:8px">
-              <div style="display:flex;align-items:center;gap:6px">
-                <svg width="12" height="12" fill="none" stroke="var(--c-green)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span style="font-size:10px;color:var(--c-green);font-weight:600">${t('settings.pro_active')}</span>
+            <div style="margin-top:var(--sp-3);padding:var(--sp-3);background:var(--c-green-a08);border:1px solid var(--c-green-a15);border-radius:var(--r-md)">
+              <div style="display:flex;align-items:center;gap:var(--sp-2)">
+                <svg width="14" height="14" fill="none" stroke="var(--c-green)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="t-sm t-strong" style="color:var(--c-green)">${t('settings.pro_active')}</span>
               </div>
-              <p style="font-size:9px;color:var(--c-fg-3);margin-top:3px">${t('settings.pro_desc')}</p>
+              <p class="t-xs t-muted" style="margin-top:var(--sp-1)">${t('settings.pro_desc')}</p>
             </div>
           ` : `
-            <div style="margin-top:10px;padding:10px 12px;background:var(--c-gray-a04);border-radius:8px">
-              <span style="font-size:10px;color:var(--c-fg-2)">${t('settings.free_plan')}</span>
-              <p style="font-size:9px;color:var(--c-fg-3);margin-top:2px">${t('settings.free_desc')}</p>
+            <div style="margin-top:var(--sp-3);padding:var(--sp-3);background:var(--c-bg-1);border-radius:var(--r-md)">
+              <span class="t-sm">${t('settings.free_plan')}</span>
+              <p class="t-xs t-muted" style="margin-top:2px">${t('settings.free_desc')}</p>
             </div>
           `}
         </div>
@@ -108,76 +123,69 @@ export function render() {
 
       <!-- Application -->
       <div>
-        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">${t('settings.application')}</p>
-        <div class="card" style="padding:16px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.application')}</p>
+        <div class="card" style="padding:var(--sp-4)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
             <div>
-              <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.language')}</label>
-              <select id="set-lang" style="width:100%">
-                <option value="en" ${lang !== 'id' ? 'selected' : ''}>English</option>
+              <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.language')}</label>
+              <select id="set-lang" class="inp" style="width:100%">
                 <option value="id" ${lang === 'id' ? 'selected' : ''}>Bahasa Indonesia</option>
+                <option value="en" ${lang !== 'id' ? 'selected' : ''}>English</option>
               </select>
             </div>
             <div>
-              <label style="font-size:10px;color:var(--c-fg-2);display:block;margin-bottom:4px">${t('settings.theme')}</label>
-              <select id="set-theme" style="width:100%">
+              <label class="t-xs t-muted" style="display:block;margin-bottom:var(--sp-2);font-weight:600">${t('settings.theme')}</label>
+              <select id="set-theme" class="inp" style="width:100%">
                 <option value="dark" ${getTheme() === 'dark' ? 'selected' : ''}>${t('settings.theme_dark')}</option>
                 <option value="light" ${getTheme() === 'light' ? 'selected' : ''}>${t('settings.theme_light')}</option>
               </select>
             </div>
-          </div>
-          <div style="margin-top:10px">
-            <button class="btn" id="btn-replay-wizard" style="width:100%">${t('settings.replay_wizard')}</button>
           </div>
         </div>
       </div>
 
       <!-- Data & Storage -->
       <div>
-        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">${t('settings.data_storage')}</p>
-        <div class="card" style="padding:16px">
-          <div style="display:flex;flex-direction:column;gap:0">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--c-border-30)">
-              <span style="font-size:11px;color:var(--c-fg-1)">${t('settings.upload_history')}</span>
-              <span style="font-size:11px;color:var(--c-fg-2);font-family:'IBM Plex Mono',monospace">${historyCount} ${t('settings.records')}</span>
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.data_storage')}</p>
+        <div class="card" style="padding:var(--sp-4)">
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2) 0;border-bottom:1px solid var(--c-border-30)">
+              <span class="t-sm">${t('settings.upload_history')}</span>
+              <span class="t-sm t-muted" style="font-family:'IBM Plex Mono',monospace">${historyCount} ${t('settings.records')}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--c-border-30)">
-              <span style="font-size:11px;color:var(--c-fg-1)">${t('settings.connected_devices')}</span>
-              <span style="font-size:11px;color:var(--c-fg-2);font-family:'IBM Plex Mono',monospace">${devCount} ${t('settings.phones')}</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2) 0;border-bottom:1px solid var(--c-border-30)">
+              <span class="t-sm">${t('settings.connected_devices')}</span>
+              <span class="t-sm t-muted" style="font-family:'IBM Plex Mono',monospace">${devCount} ${t('settings.phones')}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
-              <span style="font-size:11px;color:var(--c-fg-1)">${t('settings.queue_items')}</span>
-              <span style="font-size:11px;color:var(--c-fg-2);font-family:'IBM Plex Mono',monospace">${state.queue.length} ${t('settings.videos')}</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2) 0">
+              <span class="t-sm">${t('settings.queue_items')}</span>
+              <span class="t-sm t-muted" style="font-family:'IBM Plex Mono',monospace">${state.queue.length} ${t('settings.videos')}</span>
             </div>
           </div>
-          <div style="display:flex;gap:6px;margin-top:12px">
-            <button class="btn btn-danger" id="btn-clear-history">${t('settings.clear_history')}</button>
-            <button class="btn btn-danger" id="btn-clear-queue">${t('settings.clear_queue')}</button>
+          <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-3);justify-content:flex-end">
+            <button class="btn btn-ghost btn-sm" id="btn-clear-history" style="color:var(--c-red)" ${historyCount === 0 ? 'disabled' : ''}>
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              ${t('settings.clear_history')}
+            </button>
+            <button class="btn btn-ghost btn-sm" id="btn-clear-queue" style="color:var(--c-red)" ${state.queue.length === 0 ? 'disabled' : ''}>
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+              ${t('settings.clear_queue')}
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Lanjutan (Advanced) -->
+      <!-- Lanjutan -->
       <div>
-        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">Lanjutan</p>
-        <div class="card" style="padding:0">
-          <button class="set-advanced-row" data-nav-route="editor" style="width:100%;display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:none;border:none;cursor:pointer;text-align:left;font-family:inherit;border-bottom:1px solid var(--c-border-30)" onmouseover="this.style.background='var(--c-hover-15)'" onmouseout="this.style.background='none'">
-            <div style="width:32px;height:32px;border-radius:var(--r-sm);background:var(--c-purple-a12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="16" height="16" fill="none" stroke="var(--c-purple)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 3h6l2 2v4l-2 2H9L7 9V5l2-2zM7 13h4l2 2v4l-2 2H7l-2-2v-4l2-2zm6 0h4l2 2v4l-2 2h-4l-2-2v-4l2-2z"/></svg>
-            </div>
-            <div style="flex:1;min-width:0">
-              <div class="t-sm t-strong">Template Editor</div>
-              <div class="t-xs t-muted" style="margin-top:2px">Edit flow step-by-step (untuk power user)</div>
-            </div>
-            <svg width="14" height="14" fill="none" stroke="var(--c-fg-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.advanced')}</p>
+        <div class="card" style="padding:0;overflow:hidden">
           <button class="set-advanced-row" data-nav-route="recorder" style="width:100%;display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:none;border:none;cursor:pointer;text-align:left;font-family:inherit" onmouseover="this.style.background='var(--c-hover-15)'" onmouseout="this.style.background='none'">
             <div style="width:32px;height:32px;border-radius:var(--r-sm);background:var(--c-red-a12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
               <svg width="16" height="16" fill="none" stroke="var(--c-red)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
             </div>
             <div style="flex:1;min-width:0">
-              <div class="t-sm t-strong">Perekam Template</div>
-              <div class="t-xs t-muted" style="margin-top:2px">Rekam flow baru dari layar HP (standalone)</div>
+              <div class="t-sm t-strong">${t('settings.adv_recorder_title')}</div>
+              <div class="t-xs t-muted" style="margin-top:2px">${t('settings.adv_recorder_hint')}</div>
             </div>
             <svg width="14" height="14" fill="none" stroke="var(--c-fg-3)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
           </button>
@@ -186,17 +194,17 @@ export function render() {
 
       <!-- About -->
       <div>
-        <p style="font-size:9px;font-weight:600;color:var(--c-fg-3);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;margin-bottom:6px">${t('settings.about')}</p>
-        <div class="card" style="padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--c-border-30)">
-            <span style="font-size:11px;color:var(--c-fg-1)">${t('settings.app_label')}</span>
-            <span style="font-size:11px;color:var(--c-fg-2)">${t('settings.app_name')}</span>
+        <p class="t-xs t-muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:0 var(--sp-1);margin-bottom:var(--sp-2)">${t('settings.about')}</p>
+        <div class="card" style="padding:var(--sp-4)">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2) 0;border-bottom:1px solid var(--c-border-30)">
+            <span class="t-sm">${t('settings.app_label')}</span>
+            <span class="t-sm t-muted">${t('settings.app_name')}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
-            <span style="font-size:11px;color:var(--c-fg-1)">${t('settings.version')}</span>
-            <span style="font-size:11px;color:var(--c-fg-2);font-family:'IBM Plex Mono',monospace">v1.0.0</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2) 0">
+            <span class="t-sm">${t('settings.version')}</span>
+            <span class="t-sm t-muted" style="font-family:'IBM Plex Mono',monospace">v1.0.0</span>
           </div>
-          <p style="font-size:9px;color:var(--c-fg-3);margin-top:8px">${t('settings.built_by')}</p>
+          <p class="t-xs t-muted" style="margin-top:var(--sp-2)">${t('settings.built_by')}</p>
         </div>
       </div>
 
@@ -214,14 +222,12 @@ export function render() {
   });
   panel.querySelector('#set-lang')?.addEventListener('change', (e) => {
     setLanguage(e.target.value);
-    // Re-render everything in new language
+    // Re-render everything in the chosen language
     render();
     renderSidebar();
     renderHeader();
-  });
-  panel.querySelector('#btn-replay-wizard')?.addEventListener('click', () => {
-    if (window.onboarding) window.onboarding.init(() => {});
-    else appendLog('[SYSTEM] Onboarding wizard not available');
+    // Emit so other pages can re-render if currently mounted
+    import('../state.js').then(m => m.emit('lang', e.target.value));
   });
   panel.querySelectorAll('.set-advanced-row').forEach(row => {
     row.addEventListener('click', () => {

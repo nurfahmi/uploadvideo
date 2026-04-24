@@ -3,6 +3,7 @@
 const TEMPLATE_TESTS_KEY = 'auv-template-tests';
 const DEVICE_LABELS_KEY = 'auv-device-labels';
 const EXPANDED_DEVICE_KEY = 'auv-expanded-device';
+const ACTIVE_TEMPLATES_KEY = 'auv-active-templates';
 
 function loadJSON(key, fallback) {
   try {
@@ -17,7 +18,7 @@ const state = {
   sidebarCollapsed: false,
   consoleVisible: true,
   theme: 'dark',
-  lang: 'en',
+  lang: 'id',
 
   // Platform & Flow
   platform: 'tiktok_upload',
@@ -42,6 +43,7 @@ const state = {
   templatesData: {},             // { name: fullTemplateJSON } — cached on demand
   selectedTemplate: null,        // current template for wizard/run flow
   templateTests: loadJSON(TEMPLATE_TESTS_KEY, {}),  // { deviceId: { templateName: TestRecord } }
+  activeTemplates: loadJSON(ACTIVE_TEMPLATES_KEY, {}),  // { deviceId: { platform: templateName } } — user override of auto-pick
 
   // Automation
   isRunning: false,
@@ -171,6 +173,20 @@ export function removeTestsForTemplate(templateName) {
   if (changed) { persistTests(); emit('templateTests', state.templateTests); }
 }
 
+export function renameTestsForTemplate(oldName, newName) {
+  if (oldName === newName) return;
+  let changed = false;
+  for (const devId of Object.keys(state.templateTests)) {
+    const rec = state.templateTests[devId][oldName];
+    if (rec) {
+      state.templateTests[devId][newName] = rec;
+      delete state.templateTests[devId][oldName];
+      changed = true;
+    }
+  }
+  if (changed) { persistTests(); emit('templateTests', state.templateTests); }
+}
+
 // ── Device Label Helpers ──────────────────────────────
 
 export function setDeviceLabel(deviceId, label) {
@@ -182,6 +198,29 @@ export function setDeviceLabel(deviceId, label) {
 
 export function getDeviceLabel(deviceId, fallback) {
   return state.deviceLabels[deviceId] || fallback || deviceId;
+}
+
+// ── Active Template Overrides ─────────────────────────
+// User override: force a specific template as the "active" one for a given
+// (device, platform) pair. If unset, Device page auto-picks the best match.
+
+function persistActiveTemplates() {
+  try { localStorage.setItem(ACTIVE_TEMPLATES_KEY, JSON.stringify(state.activeTemplates)); } catch {}
+}
+
+export function getActiveTemplate(deviceId, platform) {
+  return state.activeTemplates?.[deviceId]?.[platform] || null;
+}
+
+export function setActiveTemplate(deviceId, platform, templateName) {
+  if (!state.activeTemplates[deviceId]) state.activeTemplates[deviceId] = {};
+  if (templateName) {
+    state.activeTemplates[deviceId][platform] = templateName;
+  } else {
+    delete state.activeTemplates[deviceId][platform];
+  }
+  persistActiveTemplates();
+  emit('activeTemplates', state.activeTemplates);
 }
 
 export function setExpandedDevice(deviceId) {
