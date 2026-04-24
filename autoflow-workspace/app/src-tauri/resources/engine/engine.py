@@ -546,11 +546,53 @@ def _u2_connect(device_id):
         return None
 
 
+def _selector_variants(step):
+    """Produce progressive selector variants for cross-device resilience.
+
+    Order (tightest → loosest):
+      1. Primary: all selectors from step (text + resourceId + className + desc)
+      2. No text: drop text constraint (text varies per Shopee version/locale)
+      3. resourceIdMatches: strip plugin version suffix and match any variant
+         (e.g. com.shopee.id.dfpluginshopee16:id/xxx → com.shopee.id.*:id/xxx)
+      4. resourceId suffix only: match any package with same :id/xxx
+         (last-resort when package name itself drifts)
+    """
+    import re
+    primary = _u2_selector(step)
+    variants = []
+    if primary:
+        variants.append(('primary', primary))
+    # Variant 2: drop text
+    if primary.get('text') or primary.get('textContains'):
+        no_text = {k: v for k, v in primary.items() if k not in ('text', 'textContains', 'textStartsWith')}
+        if no_text:
+            variants.append(('no-text', no_text))
+    # Variant 3 & 4: resourceId pattern variants
+    rid = step.get('resourceId') or ''
+    if rid and ':id/' in rid:
+        pkg, short = rid.split(':id/', 1)
+        # Variant 3: same base pkg (com.shopee.id) + any plugin suffix
+        base = pkg.split('.dfplugin')[0] if '.dfplugin' in pkg else pkg
+        if base != pkg:
+            pattern = re.escape(base) + r'(\.dfplugin\w+)?' + ':id/' + re.escape(short)
+            rid_match = {k: v for k, v in primary.items() if k != 'resourceId' and k not in ('text', 'textContains', 'textStartsWith')}
+            rid_match['resourceIdMatches'] = pattern
+            variants.append(('rid-base', rid_match))
+        # Variant 4: any package, match by :id/<short> alone
+        rid_any = {k: v for k, v in primary.items() if k != 'resourceId' and k not in ('text', 'textContains', 'textStartsWith')}
+        rid_any['resourceIdMatches'] = r'.*:id/' + re.escape(short)
+        variants.append(('rid-suffix', rid_any))
+    return variants
+
+
 def action_u2_click(device_id, step, flow_path):
-    """Click a UI element using uiautomator2. Falls back to `fallback_tap_pct`
-    (or legacy x/y) ONLY if step has wait_for (so we can verify fallback worked).
-    Without wait_for, element-not-found usually means wrong app state, and a
-    coord fallback would tap something random and worsen the divergence."""
+    """Click a UI element using uiautomator2 with progressive selector fallback.
+
+    Cross-device replay is fragile: Shopee's resourceId carries a plugin-version
+    suffix (e.g. `.dfpluginshopee16`) and localized text strings that vary per
+    app build. We try progressively looser selectors before giving up to a
+    coord-based fallback.
+    """
     def _try_fallback(reason):
         # Only attempt coord fallback when we have a verifiable transition;
         # otherwise silent fail is safer than tapping a random coord.
@@ -574,23 +616,29 @@ def action_u2_click(device_id, step, flow_path):
     if d is None:
         return _try_fallback("u2 unavailable")
 
-    selector = _u2_selector(step)
-    if not selector:
+    variants = _selector_variants(step)
+    if not variants:
         log("  -> ERROR: No selector provided for u2_click")
         return _try_fallback("no selector")
 
-    try:
-        el = d(**selector)
-        timeout = step.get("timeout", 10)
-        if el.wait(timeout=timeout):
-            el.click()
-            log(f"  -> u2_click: clicked element {selector}")
-            return True
-        log(f"  -> u2_click: element not found {selector}")
-        return _try_fallback("element not found")
-    except Exception as e:
-        log(f"  -> u2_click error: {e}")
-        return _try_fallback("click exception")
+    timeout = step.get("timeout", 10)
+    # Budget timeout across variants — spend most on first, less on fallbacks
+    per_variant = [timeout, max(2, timeout // 3), 2, 2]
+
+    for i, (name, selector) in enumerate(variants):
+        try:
+            el = d(**selector)
+            t = per_variant[i] if i < len(per_variant) else 2
+            if el.wait(timeout=t):
+                el.click()
+                tag = '' if name == 'primary' else f' (via {name})'
+                log(f"  -> u2_click: clicked element{tag} {selector}")
+                return True
+            log(f"  -> u2_click: not found with {name} selector")
+        except Exception as e:
+            log(f"  -> u2_click {name} error: {e}")
+
+    return _try_fallback("element not found with any selector variant")
 
 
 def action_u2_type(device_id, step, flow_path):
@@ -908,15 +956,38 @@ def wait_for_user_signal(timeout=60):
     return 'timeout'
 
 
+def _is_launcher(activity: str) -> bool:
+    """Launcher activities vary per OEM (QuickstepLauncher / OneUiHomeLauncher /
+    NexusLauncherActivity / LauncherActivity, etc). Treat any Launcher* as home."""
+    a = (activity or "").lower()
+    return "launcher" in a
+
+
 def check_expected_activity(device_id, step):
-    """Sprint 4c: verify phone is at step's expected_activity before running.
-    Returns (ok: bool, current_activity: str)."""
+    """Verify phone is at step's expected_activity before running.
+    Returns (ok: bool, current_activity: str).
+
+    Launcher matching is lenient: if both expected and current are launcher-like,
+    treat as match regardless of OEM-specific class name.
+    """
     expected = step.get("expected_activity")
     if not expected:
         return True, ""
     current = get_current_activity(device_id)
     if expected in current:
         return True, current
+    # Lenient launcher cross-match (different OEMs have different launcher names)
+    if _is_launcher(expected) and _is_launcher(current):
+        return True, current
+    # Auto-recover: if expected is launcher but current isn't, try HOME key once
+    if _is_launcher(expected) and not _is_launcher(current):
+        log(f"  -> [AUTO-RECOVER] expected launcher but on {current} — sending HOME key")
+        adb(device_id, "shell input keyevent KEYCODE_HOME")
+        time.sleep(1.2)
+        current = get_current_activity(device_id)
+        if _is_launcher(current) or expected in current:
+            log(f"  -> [AUTO-RECOVER] recovered to {current}")
+            return True, current
     return False, current
 
 

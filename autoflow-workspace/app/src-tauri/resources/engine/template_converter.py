@@ -199,6 +199,49 @@ def normalize_launcher_first(orig):
     }
 
 
+def build_launch_intent_step(raw_steps, target_pkg):
+    """Build a launch_intent step that opens the target app to wherever the
+    recording started. Used when the user began recording with the app already
+    open (so no launcher-tap step exists) — engine needs to re-open the app
+    after the prep phase kills it.
+
+    Scans raw steps for the first activity that belongs to the target package.
+    Falls back to package's HomeActivity if no in-app activity found.
+    """
+    if not target_pkg:
+        return None
+    # Find first activity within target package
+    first_act = None
+    for s in raw_steps:
+        for key in ('activity_before', 'activity_after'):
+            act = s.get(key) or ''
+            if act.startswith(target_pkg + '/'):
+                first_act = act
+                break
+        if first_act:
+            break
+    if not first_act:
+        # Fallback: package only — system picks default launcher activity
+        return {
+            'action': 'launch_intent',
+            'intent': f'-a android.intent.action.MAIN -p {target_pkg}',
+            'description': f'Launch {target_pkg} (auto, no activity captured)',
+            'wait_timeout': 20,
+            'retry': 2,
+            'delay_after': 3,
+        }
+    pkg, act = first_act.split('/', 1)
+    return {
+        'action': 'launch_intent',
+        'intent': f'-n {pkg}/{act}',
+        'description': 'Launch target app (auto, recording started mid-app)',
+        'wait_for': short_activity(first_act),
+        'wait_timeout': 20,
+        'retry': 2,
+        'delay_after': 3,
+    }
+
+
 def detect_target_package(steps):
     """Find the target app package from first step's activity_after or launch_intent."""
     for s in steps[:3]:
@@ -229,6 +272,45 @@ def build_prep_phase(package):
     ]
 
 
+def build_cleanup_phase(package):
+    """Cleanup: force-stop the target app deterministically. Replaces
+    OEM-specific 'tap recents → tap clear-all' sequences which break
+    cross-device (itel trash icon vs Samsung 'Tutup semua' button)."""
+    return [
+        {'action': 'kill_app', 'package': package,
+         'description': 'Cleanup: force-stop target app (cross-device)'},
+    ]
+
+
+def strip_trailing_launcher_steps(steps):
+    """Strip recorded steps at the tail that end on the launcher/home screen.
+
+    These are the user's own 'return to home + close recents' habit from
+    recording. They're OEM-specific (launcher resourceIds differ per phone)
+    and unreliable to replay cross-device. We replace them with a clean
+    kill_app step in build_cleanup_phase().
+    """
+    def _is_launcher(activity):
+        return bool(activity) and 'launcher' in activity.lower()
+
+    keep_end = len(steps)
+    for i in range(len(steps) - 1, -1, -1):
+        s = steps[i]
+        act_after = s.get('activity_after') or ''
+        rid = (s.get('element', {}) or {}).get('resourceId', '') or ''
+        is_cleanup = (
+            _is_launcher(act_after)
+            or 'recent_apps' in rid
+            or 'recents_memory' in rid
+            or 'clear_all' in rid.lower()
+        )
+        if is_cleanup:
+            keep_end = i
+        else:
+            break
+    return steps[:keep_end]
+
+
 def _normalize_screen_size(s):
     """Accept both {width,height} and {w,h} key conventions."""
     if not s: return {'width': 720, 'height': 1612}
@@ -241,7 +323,11 @@ def _normalize_screen_size(s):
 def convert_template(template_path, flow_dir, target_size=None):
     with open(template_path) as f:
         t = json.load(f)
-    steps = t['steps']
+    raw_steps = t['steps']
+    # Strip OEM-specific closing steps (tap recents + clear-all). They record
+    # on the source phone's launcher and won't match another OEM's launcher.
+    # We replace them at the end with a deterministic kill_app instead.
+    steps = strip_trailing_launcher_steps(raw_steps)
     screen_size = _normalize_screen_size(t.get('screen_size'))
     # Fallback: derive from first step's recorded screen_size if template-level missing
     if screen_size == {'width': 720, 'height': 1612} and steps:
@@ -284,10 +370,23 @@ def convert_template(template_path, flow_dir, target_size=None):
     # Auto-prepend prep phase to ensure {{video_path}} is on device before the
     # recorded flow runs (user didn't capture this during recording since it's
     # a laptop-side operation).
-    target_pkg = detect_target_package(steps)
+    # Detect against raw steps so we still find the target package even after
+    # trailing launcher steps have been stripped above.
+    target_pkg = detect_target_package(raw_steps)
     if target_pkg and 'video_path' in vars_list:
         prep = build_prep_phase(target_pkg)
+        # If the first recorded step isn't already a launch_intent (e.g. user
+        # started recording with the app already open), prepend one so the
+        # engine re-opens the app after kill_app in the prep phase.
+        needs_launch = not converted or converted[0].get('action') != 'launch_intent'
+        if needs_launch:
+            launch_step = build_launch_intent_step(raw_steps, target_pkg)
+            if launch_step:
+                converted = [launch_step] + converted
         converted = prep + converted
+    # Append cleanup phase: kill_app for deterministic cross-device cleanup.
+    if target_pkg:
+        converted = converted + build_cleanup_phase(target_pkg)
     flow = {
         'name': f"{t['name']} (template)",
         'platform': t.get('platform', 'other'),
