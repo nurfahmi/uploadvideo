@@ -491,8 +491,8 @@ fn recorder_save_template(
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
     let dir = templates_dir(&app_handle)?;
-    let safe_name = name.chars()
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+    let safe_name = name.trim().chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' || c == ' ' || c == '.' { c } else { '_' })
         .collect::<String>();
     let path = dir.join(format!("{}.json", safe_name));
     let s = serde_json::to_string_pretty(&data).map_err(|e| e.to_string())?;
@@ -532,6 +532,100 @@ fn recorder_delete_template(name: String, app_handle: tauri::AppHandle) -> Resul
     fs::remove_file(&path).map_err(|e| e.to_string())
 }
 
+/// Run an arbitrary `adb shell` command on a device. Used by the recorder
+/// to force-stop and re-launch the target app before recording starts — far
+/// cheaper than spawning a Python helper just for kill+launch (no u2
+/// initialization overhead, ~150ms vs ~2s).
+#[tauri::command]
+fn adb_shell(
+    device_id: String,
+    command: String,
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    let paths = resolve_paths(&app_handle)?;
+    let output = Command::new(&paths.adb_bin)
+        .arg("-s").arg(&device_id)
+        .arg("shell").arg(&command)
+        .output()
+        .map_err(|e| format!("adb shell failed: {}", e))?;
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    if !output.status.success() {
+        return Err(format!("exit {}: {}", output.status, stderr.trim()));
+    }
+    Ok(stdout)
+}
+
+/// Suggest the next available "_copy" slot name for a template (used by
+/// Duplicate). Checks for `_copy`, `_copy2`, `_copy3` … so the caller knows
+/// what safe filename to pass back into `recorder_save_template`.
+#[tauri::command]
+fn recorder_next_copy_name(
+    source_name: String,
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    let dir = templates_dir(&app_handle)?;
+    let src = dir.join(format!("{}.json", source_name));
+    if !src.exists() { return Err(format!("source not found: {}", source_name)); }
+    let mut candidate = format!("{}_copy", source_name);
+    let mut n = 2;
+    while dir.join(format!("{}.json", candidate)).exists() {
+        candidate = format!("{}_copy{}", source_name, n);
+        n += 1;
+        if n > 100 { return Err("too many copies".to_string()); }
+    }
+    Ok(candidate)
+}
+
+/// Rename a template file on disk. Also updates the `name` field inside the
+/// JSON so the template stays internally consistent. Rejects if target name
+/// already exists.
+///
+/// Uses `fs::rename` + in-place write (instead of write-then-delete) to avoid
+/// data loss on case-insensitive filesystems (macOS APFS default): a case-only
+/// change like "foo" → "Foo" points to the same underlying file, and a naive
+/// write-then-delete sequence ends up deleting the just-written data.
+#[tauri::command]
+fn recorder_rename_template(
+    old_name: String,
+    new_name: String,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    let dir = templates_dir(&app_handle)?;
+    // Allow alphanumeric, space, dash, underscore, and dot. Trim outer whitespace
+    // so "  Itel Baru  " becomes "Itel Baru" (avoids invisible-trim bugs).
+    let safe_new = new_name.trim().chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' || c == ' ' || c == '.' { c } else { '_' })
+        .collect::<String>();
+    if safe_new.is_empty() { return Err("new name is empty".to_string()); }
+    if safe_new == old_name { return Ok(()); }
+    let src = dir.join(format!("{}.json", old_name));
+    let dst = dir.join(format!("{}.json", safe_new));
+    if !src.exists() { return Err(format!("not found: {}", old_name)); }
+
+    // Detect case-only change: on case-insensitive filesystems, dst.exists() is
+    // true but both names refer to the same file. Compare canonicalized paths
+    // to distinguish a genuine conflict from a case-only rename.
+    let case_only = old_name.to_lowercase() == safe_new.to_lowercase();
+    if dst.exists() && !case_only {
+        return Err(format!("already exists: {}", safe_new));
+    }
+
+    // Atomic rename (same FS, preserves/updates case correctly on APFS)
+    fs::rename(&src, &dst).map_err(|e| format!("rename: {}", e))?;
+
+    // Now update the internal `name` field in-place on the renamed file
+    let content = fs::read_to_string(&dst).map_err(|e| format!("read: {}", e))?;
+    let mut v: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("parse: {}", e))?;
+    if let Some(obj) = v.as_object_mut() {
+        obj.insert("name".into(), serde_json::Value::String(safe_new.clone()));
+    }
+    let updated = serde_json::to_string_pretty(&v).map_err(|e| e.to_string())?;
+    fs::write(&dst, updated).map_err(|e| format!("write: {}", e))?;
+    Ok(())
+}
+
 /// Writes arbitrary text content to a user-chosen path. Used by CSV template
 /// export from the Job page — after the user picks a location via save dialog.
 #[tauri::command]
@@ -543,6 +637,14 @@ fn write_text_file(path: String, content: String) -> Result<(), String> {
         }
     }
     fs::write(&p, content).map_err(|e| format!("write file: {}", e))
+}
+
+/// Reads text content from a user-chosen path. Used by template JSON import
+/// after the user picks a .json file via open dialog.
+#[tauri::command]
+fn read_text_file(path: String) -> Result<String, String> {
+    let p = PathBuf::from(&path);
+    fs::read_to_string(&p).map_err(|e| format!("read file: {}", e))
 }
 
 /// Returns a recommended default path for saving exported files. Goes to
@@ -1015,11 +1117,106 @@ fn stop_automation(app_handle: tauri::AppHandle) -> Result<String, String> {
     Ok(format!("{} engine(s) stopped", count))
 }
 
+/// Build a pro-macOS-style menu bar (File / Edit / View / Window / Help).
+/// Most items use `PredefinedMenuItem` so system shortcuts (Cmd+C, Cmd+V,
+/// Cmd+Q, Cmd+M, Cmd+W, etc.) work out of the box. Custom items emit events
+/// back to the JS layer for navigation (e.g. File → New Template → navigate
+/// to recorder).
+fn build_app_menu<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<tauri::menu::Menu<R>> {
+    use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu, AboutMetadata};
+
+    // Embed the bundle icon at compile time so About dialog shows the brand
+    // instead of the generic folder icon. Any PNG in src-tauri/icons works;
+    // 128x128@2x is a good compromise between resolution and binary size.
+    let icon_bytes = include_bytes!("../icons/128x128@2x.png");
+    let icon = tauri::image::Image::from_bytes(icon_bytes).ok();
+    let about_meta = AboutMetadata {
+        name: Some("AUV".into()),
+        version: Some(env!("CARGO_PKG_VERSION").into()),
+        copyright: Some("© 2026 indosofthouse".into()),
+        icon,
+        ..Default::default()
+    };
+
+    // Application menu (macOS: appears as "AUV" to the left of File)
+    let app_submenu = Submenu::with_items(app, "AUV", true, &[
+        &PredefinedMenuItem::about(app, Some("Tentang AUV"), Some(about_meta))?,
+        &PredefinedMenuItem::separator(app)?,
+        &MenuItem::with_id(app, "menu_settings", "Pengaturan…", true, Some("CmdOrCtrl+,"))?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::services(app, None)?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::hide(app, None)?,
+        &PredefinedMenuItem::hide_others(app, None)?,
+        &PredefinedMenuItem::show_all(app, None)?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::quit(app, None)?,
+    ])?;
+
+    // File
+    let file_submenu = Submenu::with_items(app, "File", true, &[
+        &MenuItem::with_id(app, "menu_new_template", "Template Baru", true, Some("CmdOrCtrl+N"))?,
+        &MenuItem::with_id(app, "menu_import_csv",   "Impor CSV…",    true, Some("CmdOrCtrl+O"))?,
+        &MenuItem::with_id(app, "menu_export_csv",   "Unduh Template CSV", true, Some("CmdOrCtrl+Shift+S"))?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::close_window(app, None)?,
+    ])?;
+
+    // Edit (all native shortcuts — no custom)
+    let edit_submenu = Submenu::with_items(app, "Edit", true, &[
+        &PredefinedMenuItem::undo(app, None)?,
+        &PredefinedMenuItem::redo(app, None)?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::cut(app, None)?,
+        &PredefinedMenuItem::copy(app, None)?,
+        &PredefinedMenuItem::paste(app, None)?,
+        &PredefinedMenuItem::select_all(app, None)?,
+    ])?;
+
+    // View — page navigation + native fullscreen
+    let view_submenu = Submenu::with_items(app, "View", true, &[
+        &MenuItem::with_id(app, "menu_view_devices",  "Perangkat",  true, Some("CmdOrCtrl+1"))?,
+        &MenuItem::with_id(app, "menu_view_queue",    "Job",        true, Some("CmdOrCtrl+2"))?,
+        &MenuItem::with_id(app, "menu_view_settings", "Pengaturan", true, Some("CmdOrCtrl+3"))?,
+        &PredefinedMenuItem::separator(app)?,
+        &MenuItem::with_id(app, "menu_toggle_console", "Toggle Konsol", true, Some("CmdOrCtrl+`"))?,
+        &MenuItem::with_id(app, "menu_reload",         "Muat Ulang",    true, Some("CmdOrCtrl+R"))?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::fullscreen(app, None)?,
+    ])?;
+
+    // Window
+    let window_submenu = Submenu::with_items(app, "Window", true, &[
+        &PredefinedMenuItem::minimize(app, None)?,
+        &PredefinedMenuItem::maximize(app, None)?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::close_window(app, None)?,
+    ])?;
+
+    // Help
+    let help_submenu = Submenu::with_items(app, "Help", true, &[
+        &MenuItem::with_id(app, "menu_help_guide",  "Panduan Setup HP",       true, None::<&str>)?,
+        &MenuItem::with_id(app, "menu_help_github", "Laporkan Bug di GitHub", true, None::<&str>)?,
+    ])?;
+
+    Menu::with_items(app, &[&app_submenu, &file_submenu, &edit_submenu, &view_submenu, &window_submenu, &help_submenu])
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            let handle = app.handle();
+            let menu = build_app_menu(handle)?;
+            app.set_menu(menu)?;
+            Ok(())
+        })
+        .on_menu_event(|app, event| {
+            // Forward menu clicks to the webview so JS can navigate / run actions
+            let _ = app.emit("menu-event", event.id().0.as_str());
+        })
         .invoke_handler(tauri::generate_handler![
             get_available_flows,
             get_flow_details,
@@ -1053,7 +1250,11 @@ pub fn run() {
             prerun_check,
             template_record_health,
             recorder_delete_template,
+            recorder_rename_template,
+            recorder_next_copy_name,
+            adb_shell,
             write_text_file,
+            read_text_file,
             default_export_path
         ])
         .run(tauri::generate_context!())
